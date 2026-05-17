@@ -1,0 +1,33 @@
+{
+  "name": "pdf-book-store-server",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "seed:demo": "node src/utils/seedDemo.js",
+    "create:admin": "node src/utils/createAdmin.js",
+    "reset:admin": "node src/utils/resetAdmin.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.8.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.2.1",
+    "express-validator": "^7.3.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.19.4",
+    "morgan": "^1.10.1",
+    "multer": "^2.0.2",
+    "nodemailer": "^8.0.7",
+    "qrcode": "^1.5.4",
+    "razorpay": "^2.9.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}

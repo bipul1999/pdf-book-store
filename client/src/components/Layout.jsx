@@ -1,0 +1,163 @@
+import { BookOpen, Facebook, Home, Instagram, LayoutDashboard, Library, Linkedin, LogOut, Mail, Menu, MessageCircle, Phone, ShoppingCart, User, X } from "lucide-react";
+import { useState } from "react";
+import { Link, NavLink, Outlet } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
+import { useCart } from "../context/CartContext.jsx";
+import saraswatiLogo from "../assets/saraswati-logo.png";
+
+const contactEmail = "maheshbharti851127@gmail.com";
+const contactPhone = "8877941491";
+const storeName = "महेश भारती ई-बुक स्टोर";
+const storeDescription = "प्रसिद्ध लेखक महेश भारती जी की लिखी सभी किताबों का एकमात्र डिजिटल स्टोर। यहाँ आपको इतिहास, पर्यावरण और साहित्य से जुड़ी उनकी सभी पुस्तकें सीधे PDF और ई-बुक के रूप में मिलेंगी, जिन्हें आप आसानी से डाउनलोड करके कहीं भी पढ़ सकते हैं।";
+const footerDescription = "© 2026 महेश भारती ई-बुक स्टोर। सभी अधिकार सुरक्षित हैं। यहाँ उपलब्ध सभी पुस्तकें और सामग्री लेखक महेश भारती जी की बौद्धिक संपदा (Intellectual Property) हैं। बिना अनुमति के इनका व्यावसायिक उपयोग या कॉपी करना वर्जित है।";
+const socialLinks = [
+  { name: "Facebook", href: "#", icon: Facebook },
+  { name: "WhatsApp", href: `https://wa.me/91${contactPhone}`, icon: MessageCircle },
+  { name: "LinkedIn", href: "#", icon: Linkedin },
+  { name: "Instagram", href: "#", icon: Instagram }
+];
+
+function FallingLetters({ text, className = "", startDelay = 0 }) {
+  const letters =
+    typeof Intl !== "undefined" && Intl.Segmenter
+      ? Array.from(new Intl.Segmenter("hi", { granularity: "grapheme" }).segment(text), ({ segment }) => segment)
+      : Array.from(text);
+
+  return (
+    <span className={`falling-word ${className}`} aria-label={text}>
+      {letters.map((letter, index) => {
+        const x = ((index % 5) - 2) * 18;
+        const y = -58 - (index % 4) * 12;
+        const rotate = ((index % 7) - 3) * 8;
+        return (
+          <span
+            aria-hidden="true"
+            className="falling-letter"
+            key={`${letter}-${index}`}
+            style={{
+              "--letter-delay": `${startDelay + index * 0.035}s`,
+              "--letter-x": `${x}px`,
+              "--letter-y": `${y}px`,
+              "--letter-rotate": `${rotate}deg`
+            }}
+          >
+            {letter === " " ? "\u00a0" : letter}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+export default function Layout() {
+  const { logout, isAuthenticated } = useAuth();
+  const { items } = useCart();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const navClass = ({ isActive }) =>
+    `inline-flex items-center gap-2 rounded-md px-3 py-2 transition ${
+      isActive
+        ? "text-orange-300"
+        : "text-orange-50/85 hover:text-orange-200"
+    }`;
+  const closeMenu = () => setMenuOpen(false);
+
+  return (
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-30 border-b border-amber-300/25 bg-gradient-to-r from-[#073b3a] via-[#0f5b55] to-[#b45309] shadow-[0_14px_35px_rgba(15,91,85,.20)] backdrop-blur-xl">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-5 translate-y-full bg-gradient-to-b from-amber-300/20 to-transparent" />
+        <div className="relative mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-5">
+          <Link to="/" onClick={closeMenu} className="group flex min-w-0 items-center gap-3 font-black text-white">
+            <span className="relative shrink-0">
+              <span className="absolute inset-0 rounded-full bg-orange-200 blur-md opacity-70 transition group-hover:opacity-100" />
+              <img src={saraswatiLogo} alt={storeName} className="relative h-11 w-11 rounded-full border border-orange-100 bg-white object-cover p-0.5 shadow-sm sm:h-12 sm:w-12" />
+            </span>
+            <span className="min-w-0">
+              <FallingLetters text={storeName} className="block truncate text-base leading-5 sm:text-lg" />
+              <FallingLetters text="महेश भारती जी की पुस्तकें" className="hidden text-xs font-bold text-orange-200 sm:block" startDelay={0.18} />
+            </span>
+          </Link>
+          <nav className="hidden items-center gap-2 text-sm font-bold md:flex">
+            <NavLink className={navClass} to="/"><Home size={16} /> <FallingLetters text="Home" startDelay={0.28} /></NavLink>
+            <NavLink className={navClass} to="/books"><BookOpen size={16} /> <FallingLetters text="Books" startDelay={0.36} /></NavLink>
+            <NavLink className={navClass} to="/dashboard/library"><Library size={16} /> <FallingLetters text="Library" startDelay={0.44} /></NavLink>
+          </nav>
+          <div className="flex shrink-0 items-center gap-2">
+            {isAuthenticated && (
+              <Link className="btn-secondary relative !px-3" to="/cart" aria-label="Cart">
+                <ShoppingCart size={18} />
+                {items.length > 0 && <span className="absolute -right-1.5 -top-1.5 grid min-h-5 min-w-5 place-items-center rounded-full bg-orange-500 px-1.5 text-[11px] font-black leading-none text-white ring-2 ring-white">{items.length}</span>}
+              </Link>
+            )}
+            {isAuthenticated ? (
+              <>
+                <Link className="hidden btn-secondary sm:inline-flex" to="/dashboard"><LayoutDashboard size={18} /><FallingLetters text="Dashboard" className="hidden lg:inline" startDelay={0.52} /></Link>
+                <button className="btn-secondary !px-3" onClick={logout} aria-label="Logout"><LogOut size={18} /></button>
+              </>
+            ) : (
+              <Link className="btn-primary !px-3 sm:!px-4" to="/login"><User size={18} /><FallingLetters text="Login" className="hidden sm:inline" startDelay={0.52} /></Link>
+            )}
+            <button className="btn-secondary !px-3 md:hidden" onClick={() => setMenuOpen((value) => !value)} aria-label={menuOpen ? "Close menu" : "Open menu"}>
+              {menuOpen ? <X size={18} /> : <Menu size={18} />}
+            </button>
+          </div>
+        </div>
+        {menuOpen && (
+          <nav className="border-t border-amber-300/20 bg-gradient-to-r from-[#073b3a] via-[#0f5b55] to-[#b45309] px-4 py-3 text-sm font-bold shadow-sm md:hidden">
+            <div className="mx-auto grid max-w-7xl gap-2">
+              <NavLink onClick={closeMenu} className={navClass} to="/"><Home size={16} /> <FallingLetters text="Home" /></NavLink>
+              <NavLink onClick={closeMenu} className={navClass} to="/books"><BookOpen size={16} /> <FallingLetters text="Books" /></NavLink>
+              <NavLink onClick={closeMenu} className={navClass} to="/dashboard/library"><Library size={16} /> <FallingLetters text="Library" /></NavLink>
+              {isAuthenticated && <NavLink onClick={closeMenu} className={navClass} to="/dashboard"><LayoutDashboard size={16} /> <FallingLetters text="Dashboard" /></NavLink>}
+            </div>
+          </nav>
+        )}
+      </header>
+      <Outlet />
+      <footer className="bg-[#fff8f1] px-4 py-8 text-sm text-ink">
+        <div className="mx-auto max-w-7xl overflow-hidden rounded-lg border border-orange-100 bg-white shadow-soft">
+          <div className="h-1 bg-gradient-to-r from-orange-500 via-amber-300 to-orange-700" />
+          <div className="grid gap-6 p-5 sm:p-6 md:grid-cols-[1.1fr_.9fr_auto] md:items-center">
+            <div>
+              <p className="text-lg font-black">{storeName}</p>
+              <p className="mt-2 max-w-md text-sm leading-6 text-gray-600">
+                {footerDescription}
+              </p>
+            </div>
+            <div className="grid gap-2">
+              <p className="text-xs font-black uppercase tracking-wide text-orange-700">Contact Us</p>
+              <a className="inline-flex items-center gap-2 font-semibold text-gray-700 transition hover:text-orange-700" href={`mailto:${contactEmail}`}>
+                <Mail size={16} /> {contactEmail}
+              </a>
+              <a className="inline-flex items-center gap-2 font-semibold text-gray-700 transition hover:text-orange-700" href={`tel:${contactPhone}`}>
+                <Phone size={16} /> +91 {contactPhone}
+              </a>
+            </div>
+            <div>
+              <p className="mb-2 text-xs font-black uppercase tracking-wide text-orange-700 md:text-right">Follow</p>
+              <div className="flex items-center gap-2 md:justify-end">
+                {socialLinks.map(({ name, href, icon: Icon }) => (
+                  <a
+                    key={name}
+                    aria-label={name}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-orange-100 bg-orange-50 text-orange-700 transition hover:-translate-y-0.5 hover:border-orange-300 hover:bg-orange-500 hover:text-white"
+                    href={href}
+                    rel="noreferrer"
+                    target="_blank"
+                    title={name}
+                  >
+                    <Icon size={18} />
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="border-t border-orange-100 bg-orange-50/70 py-2">
+            <div className="footer-built-marquee text-xs font-black uppercase tracking-wide text-orange-700">
+              <span>Built by Bipul Singh</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}

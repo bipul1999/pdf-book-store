@@ -1,0 +1,60 @@
+import "dotenv/config";
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import morgan from "morgan";
+import path from "path";
+import { fileURLToPath } from "url";
+import authRoutes from "./routes/authRoutes.js";
+import bookRoutes from "./routes/bookRoutes.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
+import siteRoutes from "./routes/siteRoutes.js";
+import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const app = express();
+const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:5173")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    if (process.env.NODE_ENV !== "production" && (origin.endsWith(".loca.lt") || origin.endsWith(".trycloudflare.com"))) return callback(null, true);
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true
+}));
+app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true }));
+app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
+
+app.get("/api/health", (_req, res) => res.json({ status: "ok", app: "PDF Book Store" }));
+const staticOptions = {
+  setHeaders(res) {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Cache-Control", "public, max-age=86400");
+  }
+};
+app.use("/uploads/covers", express.static(path.join(__dirname, "..", "uploads", "covers"), staticOptions));
+app.use("/uploads/payments", express.static(path.join(__dirname, "..", "uploads", "payments"), staticOptions));
+app.use("/uploads/quotes", express.static(path.join(__dirname, "..", "uploads", "quotes"), staticOptions));
+app.use("/api/site", siteRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/books", bookRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/admin", adminRoutes);
+
+app.use(notFound);
+app.use(errorHandler);
+
+export default app;

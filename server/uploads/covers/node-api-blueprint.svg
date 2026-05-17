@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="960" viewBox="0 0 720 960">
+  <rect width="720" height="960" fill="#e85d4f"/>
+  <rect x="54" y="54" width="612" height="852" rx="28" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.45)" stroke-width="4"/>
+  <text x="90" y="170" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700">PDF Book Store</text>
+  <text x="90" y="420" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="900">Node API Blueprint</text>
+  <text x="90" y="505" fill="rgba(255,255,255,0.85)" font-family="Arial, Helvetica, sans-serif" font-size="30">by Aarav Mehta</text>
+  <text x="90" y="790" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="40" font-weight="800">Rs. 249</text>
+  <text x="90" y="845" fill="rgba(255,255,255,0.8)" font-family="Arial, Helvetica, sans-serif" font-size="24">Demo PDF Edition</text>
+</svg>

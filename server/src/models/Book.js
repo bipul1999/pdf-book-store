@@ -1,0 +1,20 @@
+import mongoose from "mongoose";
+
+const bookSchema = new mongoose.Schema(
+  {
+    title: { type: String, required: true, trim: true },
+    author: { type: String, required: true, trim: true },
+    category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
+    description: { type: String, required: true },
+    price: { type: Number, required: true, min: 0 },
+    coverImage: { type: String, required: true },
+    pdfPath: { type: String, required: true, select: false },
+    featured: { type: Boolean, default: false },
+    isActive: { type: Boolean, default: true }
+  },
+  { timestamps: true }
+);
+
+bookSchema.index({ title: "text", author: "text", description: "text" });
+
+export default mongoose.model("Book", bookSchema);
