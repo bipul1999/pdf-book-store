@@ -10,7 +10,7 @@ function defaultQuote() {
   return {
     quote: "किताबें केवल शब्द नहीं होतीं, वे जीवन को समझने की एक शांत रोशनी होती हैं।",
     authorName: "महेश भारती",
-    authorImage: "",
+    authorImage: "uploads/quotes/1778942745455-120118692.png",
     isActive: true
   };
 }
@@ -18,6 +18,7 @@ function defaultQuote() {
 export async function getQuoteSetting(req, res) {
   const setting = await QuoteSetting.findOne({ isActive: true }).sort("-updatedAt");
   const quote = setting ? setting.toObject() : defaultQuote();
+  if (!quote.authorImage) quote.authorImage = defaultQuote().authorImage;
   res.json({ quote: { ...quote, authorImage: fileUrl(req, quote.authorImage) } });
 }
 
