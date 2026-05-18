@@ -1,4 +1,4 @@
-import { Bot, MessageCircle, Send, X } from "lucide-react";
+import { Bot, Send, X } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import api from "../api/client.js";
@@ -12,7 +12,9 @@ export default function ChatWidget() {
   const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState(user?.phone || "");
   const [loading, setLoading] = useState(false);
-  const [reply, setReply] = useState("Hi, tell me what problem you are facing. I will inform the admin.");
+  const [messages, setMessages] = useState([
+    { role: "assistant", text: "Namaste, main AI help bot hoon. Aap apni problem likhiye, main admin ko notify kar dunga." }
+  ]);
 
   async function submitIssue(event) {
     event.preventDefault();
@@ -20,19 +22,28 @@ export default function ChatWidget() {
       toast.error("Please write your problem in a little more detail.");
       return;
     }
+    const userMessage = message.trim();
+    setMessages((items) => [...items, { role: "user", text: userMessage }]);
     setLoading(true);
     try {
       const { data } = await api.post("/support/tickets", {
         name,
         email,
         phone,
-        message,
+        message: userMessage,
         pageUrl: window.location.href
       });
-      setReply(data.reply || "Your problem has been sent to admin.");
+      setMessages((items) => [
+        ...items,
+        { role: "assistant", text: data.reply || "Aapki problem admin ko send ho gayi hai. Jaldi help milegi." }
+      ]);
       setMessage("");
       toast.success("Admin ko problem send ho gaya");
     } catch (error) {
+      setMessages((items) => [
+        ...items,
+        { role: "assistant", text: "Sorry, message send nahi ho paya. Thodi der baad fir try kijiye." }
+      ]);
       toast.error(error.response?.data?.message || "Support message send nahi ho paya");
     } finally {
       setLoading(false);
@@ -58,8 +69,23 @@ export default function ChatWidget() {
             </button>
           </div>
           <div className="space-y-3 p-4">
-            <div className="rounded-2xl bg-orange-50 px-3 py-2 text-sm font-semibold leading-6 text-slate-700">
-              {reply}
+            <div className="max-h-64 space-y-3 overflow-y-auto rounded-2xl bg-slate-50 p-3">
+              {messages.map((item, index) => (
+                <div className={`flex ${item.role === "user" ? "justify-end" : "justify-start"}`} key={`${item.role}-${index}`}>
+                  {item.role === "assistant" && (
+                    <span className="mr-2 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-orange-100 text-orange-700">
+                      <Bot size={17} />
+                    </span>
+                  )}
+                  <p className={`max-w-[78%] rounded-2xl px-3 py-2 text-sm font-semibold leading-6 ${
+                    item.role === "user"
+                      ? "rounded-br-sm bg-orange-500 text-white"
+                      : "rounded-bl-sm bg-white text-slate-700 shadow-sm"
+                  }`}>
+                    {item.text}
+                  </p>
+                </div>
+              ))}
             </div>
             <form className="space-y-3" onSubmit={submitIssue}>
               {!user && (
@@ -83,11 +109,11 @@ export default function ChatWidget() {
         </section>
       )}
       <button
-        className="fixed bottom-24 right-4 z-40 grid h-14 w-14 place-items-center rounded-full bg-orange-500 text-white shadow-[0_12px_30px_rgba(249,115,22,.35)] transition hover:bg-orange-600 sm:bottom-6 sm:right-6"
+        className="fixed bottom-24 right-4 z-40 grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-[#073b3a] to-orange-500 text-white shadow-[0_12px_30px_rgba(249,115,22,.35)] ring-4 ring-white transition hover:scale-105 sm:bottom-6 sm:right-6"
         onClick={() => setOpen((value) => !value)}
         aria-label="Open AI help chat"
       >
-        {open ? <X size={24} /> : <MessageCircle size={24} />}
+        {open ? <X size={24} /> : <Bot size={30} />}
       </button>
     </>
   );
