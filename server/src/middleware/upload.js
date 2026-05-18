@@ -22,10 +22,12 @@ const storage = multer.diskStorage({
 });
 
 const imageExtensions = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
+const imageMimeTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const maxFiles = 3;
 
 function hasAllowedImageType(file) {
   const ext = path.extname(file.originalname).toLowerCase();
-  return imageExtensions.has(ext) && file.mimetype.startsWith("image/");
+  return imageExtensions.has(ext) && imageMimeTypes.has(file.mimetype);
 }
 
 function hasAllowedPdfType(file) {
@@ -35,7 +37,7 @@ function hasAllowedPdfType(file) {
 
 export const uploadBookFiles = multer({
   storage,
-  limits: { fileSize: 50 * 1024 * 1024 },
+  limits: { fileSize: 50 * 1024 * 1024, files: 2, fields: 20, parts: 24 },
   fileFilter: (_req, file, cb) => {
     if (file.fieldname === "pdf" && !hasAllowedPdfType(file)) return cb(new Error("PDF file required"));
     if (file.fieldname === "cover" && !hasAllowedImageType(file)) return cb(new Error("Image cover required"));
@@ -48,7 +50,7 @@ export const uploadBookFiles = multer({
 
 export const uploadPaymentProof = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 5, parts: maxFiles + 5 },
   fileFilter: (_req, file, cb) => {
     if (!hasAllowedImageType(file)) return cb(new Error("Payment proof image required"));
     cb(null, true);
@@ -57,7 +59,7 @@ export const uploadPaymentProof = multer({
 
 export const uploadPaymentQr = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 5, parts: maxFiles + 5 },
   fileFilter: (_req, file, cb) => {
     if (!hasAllowedImageType(file)) return cb(new Error("QR image required"));
     cb(null, true);
@@ -66,7 +68,7 @@ export const uploadPaymentQr = multer({
 
 export const uploadQuoteImage = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 5, parts: maxFiles + 5 },
   fileFilter: (_req, file, cb) => {
     if (!hasAllowedImageType(file)) return cb(new Error("Author image required"));
     cb(null, true);

@@ -20,6 +20,19 @@ export const authLimiter = rateLimit({
   }
 });
 
+export const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 600,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      message: "Too many requests. Please slow down.",
+      retryAfterSeconds: retryAfterSeconds(req)
+    });
+  }
+});
+
 export const otpLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 5,
@@ -28,6 +41,32 @@ export const otpLimiter = rateLimit({
   handler: (req, res) => {
     res.status(429).json({
       message: "Too many OTP requests. Please wait before requesting another OTP.",
+      retryAfterSeconds: retryAfterSeconds(req)
+    });
+  }
+});
+
+export const paymentLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      message: "Too many payment attempts. Please wait before trying again.",
+      retryAfterSeconds: retryAfterSeconds(req)
+    });
+  }
+});
+
+export const adminWriteLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 80,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      message: "Too many admin changes. Please wait before trying again.",
       retryAfterSeconds: retryAfterSeconds(req)
     });
   }

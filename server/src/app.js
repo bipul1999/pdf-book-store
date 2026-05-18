@@ -15,6 +15,7 @@ import siteRoutes from "./routes/siteRoutes.js";
 import { createRazorpayOrder, verifyRazorpaySignature } from "./controllers/paymentController.js";
 import { protect } from "./middleware/authMiddleware.js";
 import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
+import { apiLimiter, paymentLimiter } from "./middleware/rateLimiters.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,7 +26,27 @@ const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:5173")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
-app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+app.disable("x-powered-by");
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      baseUri: ["'self'"],
+      frameAncestors: ["'none'"],
+      objectSrc: ["'none'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      scriptSrc: ["'self'", "https://checkout.razorpay.com"],
+      connectSrc: ["'self'", "https://api.razorpay.com"],
+      frameSrc: ["https://api.razorpay.com", "https://checkout.razorpay.com"],
+      formAction: ["'self'"]
+    }
+  },
+  hsts: process.env.NODE_ENV === "production"
+    ? { maxAge: 15552000, includeSubDomains: true, preload: true }
+    : false,
+  referrerPolicy: { policy: "no-referrer" }
+}));
 app.use(cors({
   origin(origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
@@ -38,6 +59,7 @@ app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
+app.use("/api", apiLimiter);
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok", app: "PDF Book Store" }));
 const staticOptions = {
@@ -46,16 +68,16 @@ const staticOptions = {
     res.setHeader("Cache-Control", "public, max-age=86400");
   }
 };
-app.use("/uploads/covers", express.static(path.join(__dirname, "..", "uploads", "covers"), staticOptions));
-app.use("/uploads/payments", express.static(path.join(__dirname, "..", "uploads", "payments"), staticOptions));
-app.use("/uploads/quotes", express.static(path.join(__dirname, "..", "uploads", "quotes"), staticOptions));
+app.use("/uploads/covers", express.static(path.join(__dirname, "..", "uploads", "covers"), { ...staticOptions, index: false }));
+app.use("/uploads/payments", express.static(path.join(__dirname, "..", "uploads", "payments"), { ...staticOptions, index: false }));
+app.use("/uploads/quotes", express.static(path.join(__dirname, "..", "uploads", "quotes"), { ...staticOptions, index: false }));
 app.use("/api/site", siteRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/books", bookRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/payments", paymentRoutes);
-app.post("/api/create-order", protect, createRazorpayOrder);
-app.post("/api/verify-payment", protect, verifyRazorpaySignature);
+app.post("/api/create-order", paymentLimiter, protect, createRazorpayOrder);
+app.post("/api/verify-payment", paymentLimiter, protect, verifyRazorpaySignature);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 
