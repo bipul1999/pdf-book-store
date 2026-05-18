@@ -19,6 +19,19 @@ export async function protect(req, res, next) {
   }
 }
 
+export async function optionalProtect(req, _res, next) {
+  try {
+    const header = req.headers.authorization;
+    const token = header?.startsWith("Bearer ") ? header.split(" ")[1] : null;
+    if (!token || !process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) return next();
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await User.findById(decoded.id);
+    return next();
+  } catch {
+    return next();
+  }
+}
+
 export function requireRole(...roles) {
   return (req, res, next) => {
     if (!roles.includes(req.user?.role)) return res.status(403).json({ message: "Forbidden" });

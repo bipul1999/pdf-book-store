@@ -71,3 +71,16 @@ export const adminWriteLimiter = rateLimit({
     });
   }
 });
+
+export const supportLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 8,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      message: "Too many support messages. Please wait before sending another message.",
+      retryAfterSeconds: retryAfterSeconds(req)
+    });
+  }
+});

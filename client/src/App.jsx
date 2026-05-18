@@ -27,6 +27,7 @@ import ManageOrders from "./pages/admin/ManageOrders.jsx";
 import ManageUsers from "./pages/admin/ManageUsers.jsx";
 import PaymentSettings from "./pages/admin/PaymentSettings.jsx";
 import QuoteSettings from "./pages/admin/QuoteSettings.jsx";
+import SupportTickets from "./pages/admin/SupportTickets.jsx";
 
 export default function App() {
   return (
@@ -43,6 +44,7 @@ export default function App() {
           <Route path="orders" element={<ManageOrders />} />
           <Route path="payment" element={<PaymentSettings />} />
           <Route path="quote" element={<QuoteSettings />} />
+          <Route path="support" element={<SupportTickets />} />
           <Route path="users" element={<ManageUsers />} />
         </Route>
         <Route element={<Layout />}>

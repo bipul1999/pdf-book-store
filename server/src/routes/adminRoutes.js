@@ -2,6 +2,7 @@ import { Router } from "express";
 import { dashboardStats, listOrders, listUsers } from "../controllers/adminController.js";
 import { getPaymentSettings, updateOrderStatus, updatePaymentSettings } from "../controllers/paymentController.js";
 import { getQuoteSetting, updateQuoteSetting } from "../controllers/quoteController.js";
+import { listSupportTickets, updateSupportTicket } from "../controllers/supportController.js";
 import { protect, requireRole } from "../middleware/authMiddleware.js";
 import { adminWriteLimiter } from "../middleware/rateLimiters.js";
 import { uploadPaymentQr, uploadQuoteImage } from "../middleware/upload.js";
@@ -11,6 +12,8 @@ router.use(protect, requireRole("admin"));
 
 router.get("/stats", dashboardStats);
 router.get("/users", listUsers);
+router.get("/support-tickets", listSupportTickets);
+router.patch("/support-tickets/:id", adminWriteLimiter, updateSupportTicket);
 router.get("/orders", listOrders);
 router.patch("/orders/:id/status", adminWriteLimiter, updateOrderStatus);
 router.get("/payment-settings", getPaymentSettings);

@@ -4,6 +4,7 @@ import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
 import saraswatiLogo from "../assets/saraswati-logo.png";
+import ChatWidget from "./ChatWidget.jsx";
 
 const contactEmail = "maheshbharti851127@gmail.com";
 const contactPhone = "8877941491";
@@ -59,11 +60,19 @@ export default function Layout() {
         ? "text-orange-300"
         : "text-orange-50/85 hover:text-orange-200"
     }`;
+  const bottomNavClass = ({ isActive }) =>
+    `flex flex-col items-center justify-center gap-0.5 rounded-xl px-2 py-1.5 text-[11px] font-black ${
+      isActive ? "bg-orange-50 text-orange-700" : "text-slate-500"
+    }`;
   const closeMenu = () => setMenuOpen(false);
+  const handleLogout = () => {
+    closeMenu();
+    logout();
+  };
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-amber-300/25 bg-gradient-to-r from-[#073b3a] via-[#0f5b55] to-[#b45309] shadow-[0_10px_28px_rgba(15,91,85,.20)] backdrop-blur-xl">
+      <header className="mobile-fixed-header sticky top-0 z-50 border-b border-amber-300/25 bg-gradient-to-r from-[#073b3a] via-[#0f5b55] to-[#b45309] shadow-[0_10px_28px_rgba(15,91,85,.20)] backdrop-blur-xl">
         <div className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-5 translate-y-full bg-gradient-to-b from-amber-300/20 to-transparent sm:block" />
         <div className="relative mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-2.5 sm:gap-3 sm:px-5 sm:py-3">
           <Link to="/" onClick={closeMenu} className="group flex min-w-0 flex-1 items-center gap-2 font-black text-white sm:gap-3">
@@ -90,8 +99,8 @@ export default function Layout() {
             )}
             {isAuthenticated ? (
               <>
-                <Link className="hidden btn-secondary sm:inline-flex" to="/dashboard"><LayoutDashboard size={18} /><FallingLetters text="Dashboard" className="hidden lg:inline" startDelay={0.52} /></Link>
-                <button className="btn-secondary !min-h-10 !px-2.5 sm:!min-h-11 sm:!px-3" onClick={logout} aria-label="Logout"><LogOut size={18} /></button>
+                <Link className="btn-secondary !hidden md:!inline-flex" to="/dashboard"><LayoutDashboard size={18} /><FallingLetters text="Dashboard" className="hidden lg:inline" startDelay={0.52} /></Link>
+                <button className="btn-secondary !hidden !min-h-10 !px-2.5 sm:!min-h-11 sm:!px-3 md:!inline-flex" onClick={handleLogout} aria-label="Logout"><LogOut size={18} /></button>
               </>
             ) : (
               <Link className="btn-primary !min-h-10 !px-2.5 sm:!min-h-11 sm:!px-4" to="/login"><User size={18} /><FallingLetters text="Login" className="hidden sm:inline" startDelay={0.52} /></Link>
@@ -108,11 +117,23 @@ export default function Layout() {
               <NavLink onClick={closeMenu} className={navClass} to="/books"><BookOpen size={16} /> <FallingLetters text="Books" /></NavLink>
               <NavLink onClick={closeMenu} className={navClass} to="/dashboard/library"><Library size={16} /> <FallingLetters text="Library" /></NavLink>
               {isAuthenticated && <NavLink onClick={closeMenu} className={navClass} to="/dashboard"><LayoutDashboard size={16} /> <FallingLetters text="Dashboard" /></NavLink>}
+              {isAuthenticated && (
+                <button onClick={handleLogout} className={`${navClass({ isActive: false })} text-left`}>
+                  <LogOut size={16} /> <FallingLetters text="Logout" />
+                </button>
+              )}
             </div>
           </nav>
         )}
       </header>
       <Outlet />
+      <nav className="fixed inset-x-3 bottom-3 z-40 grid grid-cols-4 gap-1 rounded-2xl border border-slate-200 bg-white/95 p-1 shadow-[0_16px_40px_rgba(15,23,42,.18)] backdrop-blur md:hidden">
+        <NavLink className={bottomNavClass} to="/"><Home size={20} /> Home</NavLink>
+        <NavLink className={bottomNavClass} to="/books"><BookOpen size={20} /> Books</NavLink>
+        <NavLink className={bottomNavClass} to="/cart"><ShoppingCart size={20} /> Cart</NavLink>
+        <NavLink className={bottomNavClass} to={isAuthenticated ? "/dashboard/library" : "/login"}>{isAuthenticated ? <Library size={20} /> : <User size={20} />}{isAuthenticated ? "Library" : "Login"}</NavLink>
+      </nav>
+      <ChatWidget />
       <footer className="bg-[#fff8f1] px-4 py-8 text-sm text-ink">
         <div className="mx-auto max-w-7xl overflow-hidden rounded-lg border border-orange-100 bg-white shadow-soft">
           <div className="h-1 bg-gradient-to-r from-orange-500 via-amber-300 to-orange-700" />

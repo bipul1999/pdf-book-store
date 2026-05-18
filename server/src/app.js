@@ -12,6 +12,7 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import siteRoutes from "./routes/siteRoutes.js";
+import supportRoutes from "./routes/supportRoutes.js";
 import { createRazorpayOrder, verifyRazorpaySignature } from "./controllers/paymentController.js";
 import { protect } from "./middleware/authMiddleware.js";
 import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
@@ -79,6 +80,7 @@ app.use("/api/payments", paymentRoutes);
 app.post("/api/create-order", paymentLimiter, protect, createRazorpayOrder);
 app.post("/api/verify-payment", paymentLimiter, protect, verifyRazorpaySignature);
 app.use("/api/users", userRoutes);
+app.use("/api/support", supportRoutes);
 app.use("/api/admin", adminRoutes);
 
 app.use(notFound);
