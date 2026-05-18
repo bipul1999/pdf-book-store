@@ -3,10 +3,32 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api/client.js";
+import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
+
+function loadRazorpayScript() {
+  if (window.Razorpay) return Promise.resolve(true);
+  const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+  if (existing) {
+    return new Promise((resolve) => {
+      existing.addEventListener("load", () => resolve(true), { once: true });
+      existing.addEventListener("error", () => resolve(false), { once: true });
+    });
+  }
+
+  return new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
 
 export default function Checkout() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { items, total, clear } = useCart();
   const [method, setMethod] = useState("razorpay");
   const [loading, setLoading] = useState(false);
@@ -28,26 +50,44 @@ export default function Checkout() {
         toast.success("UPI payment details ready");
         return;
       }
-      const script = document.createElement("script");
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
-      document.body.appendChild(script);
-      script.onload = () => {
-        const rz = new window.Razorpay({
-          key: data.razorpay.keyId,
-          amount: data.razorpay.amount,
-          currency: data.razorpay.currency,
-          name: "महेश भारती ई-बुक स्टोर",
-          order_id: data.razorpay.orderId,
-          handler: async (response) => {
+
+      const scriptReady = await loadRazorpayScript();
+      if (!scriptReady) {
+        toast.error("Could not load Razorpay. Please use UPI payment.");
+        return;
+      }
+
+      const rz = new window.Razorpay({
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || data.razorpay.keyId,
+        amount: data.razorpay.amount,
+        currency: data.razorpay.currency,
+        name: "Mahesh Bharti E-book Store",
+        description: `${items.length} PDF book${items.length === 1 ? "" : "s"}`,
+        order_id: data.razorpay.orderId,
+        prefill: {
+          name: user?.name || "",
+          email: user?.email || "",
+          contact: user?.phone ? `+91${String(user.phone).replace(/\D/g, "").slice(-10)}` : ""
+        },
+        theme: { color: "#f97316" },
+        modal: {
+          ondismiss: () => toast.error("Payment cancelled")
+        },
+        handler: async (response) => {
+          try {
             await api.post("/payments/verify", { orderId: data.order._id, ...response });
             toast.success("Payment verified. Your PDF is ready to download.");
             clear();
             navigate("/dashboard/library");
+          } catch (error) {
+            toast.error(error.response?.data?.message || "Payment verification failed");
           }
-        });
-        rz.open();
-      };
-      script.onerror = () => toast.error("Could not load Razorpay. Please use UPI payment.");
+        }
+      });
+      rz.on("payment.failed", (response) => {
+        toast.error(response.error?.description || "Payment failed. Please try again.");
+      });
+      rz.open();
     } catch (error) {
       toast.error(error.response?.data?.message || "Payment could not start");
     } finally {
@@ -79,34 +119,34 @@ export default function Checkout() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-6 sm:py-8">
-      <h1 className="mb-5 text-2xl font-black sm:text-3xl">Checkout</h1>
+    <main className="mx-auto max-w-4xl px-4 py-4 sm:py-8">
+      <h1 className="mb-4 text-2xl font-black sm:text-3xl">Checkout</h1>
       <div className="panel p-4 sm:p-5">
         <div className="space-y-3">
           {items.map((item) => (
             <div className="grid grid-cols-[56px_1fr] gap-3 border-b border-gray-100 pb-3 last:border-0 sm:grid-cols-[56px_1fr_auto] sm:items-center" key={item._id}>
-              <img className="h-20 w-14 rounded bg-orange-50 object-contain p-1" src={item.coverImage} alt={item.title} />
+              <img className="h-20 w-14 rounded-xl bg-orange-50 object-contain p-1" src={item.coverImage} alt={item.title} />
               <div className="min-w-0">
                 <Link className="font-bold hover:text-orange-600" to={`/books/${item._id}`}>{item.title}</Link>
                 <p className="text-sm text-gray-600">{item.author}</p>
               </div>
-              <strong className="col-start-2 sm:col-auto">Rs. {item.price}</strong>
+              <strong className="price-text col-start-2 sm:col-auto">Rs. {item.price}</strong>
             </div>
           ))}
         </div>
         <p className="mt-4">{items.length} books selected</p>
-        <strong className="mt-2 block text-3xl">Rs. {total}</strong>
+        <strong className="price-text mt-2 block text-3xl">Rs. {total}</strong>
 
         {!payment ? (
           <div className="mt-6 space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
-              <button type="button" className={`rounded-lg border p-4 text-left ${method === "upi_manual" ? "border-orange-500 bg-orange-50" : "border-gray-200"}`} onClick={() => setMethod("upi_manual")}>
+              <button type="button" className={`rounded-2xl border p-4 text-left ${method === "upi_manual" ? "border-orange-500 bg-orange-50" : "border-gray-200 bg-white"}`} onClick={() => setMethod("upi_manual")}>
                 <Smartphone className="mb-2 text-orange-600" />
                 <strong>Manual UPI</strong>
                 <p className="mt-1 text-sm text-gray-600">Fallback option. Admin review is required.</p>
               </button>
-              <button type="button" className={`rounded-lg border p-4 text-left ${method === "razorpay" ? "border-orange-500 bg-orange-50" : "border-gray-200"}`} onClick={() => setMethod("razorpay")}>
-                <CreditCard className="mb-2 text-orange-500" />
+              <button type="button" className={`rounded-2xl border p-4 text-left ${method === "razorpay" ? "border-orange-500 bg-orange-50" : "border-gray-200 bg-white"}`} onClick={() => setMethod("razorpay")}>
+                <CreditCard className="mb-2 text-orange-600" />
                 <strong>Auto UPI QR / Online payment</strong>
                 <p className="mt-1 text-sm text-gray-600">Auto verifies successful payments and unlocks PDFs.</p>
               </button>

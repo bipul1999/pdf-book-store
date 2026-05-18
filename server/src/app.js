@@ -12,6 +12,8 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import siteRoutes from "./routes/siteRoutes.js";
+import { createRazorpayOrder, verifyRazorpaySignature } from "./controllers/paymentController.js";
+import { protect } from "./middleware/authMiddleware.js";
 import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -52,6 +54,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/books", bookRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/payments", paymentRoutes);
+app.post("/api/create-order", protect, createRazorpayOrder);
+app.post("/api/verify-payment", protect, verifyRazorpaySignature);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 

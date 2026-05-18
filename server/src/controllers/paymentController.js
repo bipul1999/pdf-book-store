@@ -7,6 +7,27 @@ import User from "../models/User.js";
 import { getRazorpay } from "../config/razorpay.js";
 import { sendEmail } from "../utils/email.js";
 
+const MIN_RAZORPAY_AMOUNT = 100;
+
+function razorpayErrorResponse(error, res) {
+  const isAuthError =
+    error?.statusCode === 401 ||
+    (error?.error?.code === "BAD_REQUEST_ERROR" && error?.error?.description?.toLowerCase().includes("authentication"));
+  const status = isAuthError
+    ? 401
+    : 500;
+  return res.status(status).json({
+    message: status === 401 ? "Razorpay authentication failed" : "Could not create Razorpay order"
+  });
+}
+
+function signaturesMatch(expected, received) {
+  if (!expected || !received) return false;
+  const expectedBuffer = Buffer.from(expected);
+  const receivedBuffer = Buffer.from(received);
+  return expectedBuffer.length === receivedBuffer.length && crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
+}
+
 async function unlockBooks(order) {
   const ids = order.items.map((item) => item.book);
   await User.findByIdAndUpdate(order.user, { $addToSet: { purchasedBooks: { $each: ids } } });
@@ -129,11 +150,17 @@ export async function createOrder(req, res) {
 
   if (razorpay && paymentMethod !== "upi_manual") {
     provider = "razorpay";
-    razorpayOrder = await razorpay.orders.create({
-      amount: Math.round(amount * 100),
-      currency,
-      receipt: `order_${Date.now()}`
-    });
+    const amountInPaise = Math.round(amount * 100);
+    if (amountInPaise < MIN_RAZORPAY_AMOUNT) return res.status(422).json({ message: "Minimum online payment amount is Rs. 1" });
+    try {
+      razorpayOrder = await razorpay.orders.create({
+        amount: amountInPaise,
+        currency,
+        receipt: `order_${Date.now()}`
+      });
+    } catch (error) {
+      return razorpayErrorResponse(error, res);
+    }
   }
 
   const order = await Order.create({
@@ -190,6 +217,11 @@ export async function confirmManualPayment(req, res) {
 
 export async function verifyPayment(req, res) {
   const { orderId, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+  if (!orderId || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    return res.status(400).json({ message: "Missing Razorpay verification fields" });
+  }
+  if (!process.env.RAZORPAY_KEY_SECRET) return res.status(401).json({ message: "Razorpay is not configured" });
+
   const order = await Order.findOne({ _id: orderId, user: req.user._id });
   if (!order) return res.status(404).json({ message: "Order not found" });
 
@@ -198,7 +230,7 @@ export async function verifyPayment(req, res) {
     .update(`${razorpay_order_id}|${razorpay_payment_id}`)
     .digest("hex");
 
-  if (expected !== razorpay_signature || order.razorpayOrderId !== razorpay_order_id) {
+  if (!signaturesMatch(expected, razorpay_signature) || order.razorpayOrderId !== razorpay_order_id) {
     order.status = "failed";
     await order.save();
     await sendPaymentStatusEmail(order);
@@ -212,6 +244,48 @@ export async function verifyPayment(req, res) {
   await unlockBooks(order);
   await sendPaymentStatusEmail(order);
   res.json({ message: "Payment verified", order });
+}
+
+export async function createRazorpayOrder(req, res) {
+  const amount = Number(req.body.amount);
+  const currency = req.body.currency || process.env.RAZORPAY_CURRENCY || "INR";
+  const receipt = String(req.body.receipt || `receipt_${Date.now()}`).slice(0, 40);
+  const razorpay = getRazorpay();
+
+  if (!Number.isInteger(amount) || amount < MIN_RAZORPAY_AMOUNT) {
+    return res.status(400).json({ message: "Amount must be at least 100 paise" });
+  }
+  if (!razorpay) return res.status(401).json({ message: "Razorpay is not configured" });
+
+  try {
+    const order = await razorpay.orders.create({ amount, currency, receipt });
+    res.status(201).json({
+      order_id: order.id,
+      amount: order.amount,
+      currency: order.currency
+    });
+  } catch (error) {
+    return razorpayErrorResponse(error, res);
+  }
+}
+
+export async function verifyRazorpaySignature(req, res) {
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    return res.status(400).json({ message: "Missing Razorpay verification fields" });
+  }
+  if (!process.env.RAZORPAY_KEY_SECRET) return res.status(401).json({ message: "Razorpay is not configured" });
+
+  const expected = crypto
+    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+    .digest("hex");
+
+  if (!signaturesMatch(expected, razorpay_signature)) {
+    return res.status(400).json({ success: false, message: "Payment verification failed" });
+  }
+
+  res.json({ success: true, message: "Payment verified" });
 }
 
 export async function razorpayWebhook(req, res) {
