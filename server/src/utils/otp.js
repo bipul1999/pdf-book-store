@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import Otp from "../models/Otp.js";
 import { isEmailConfigured, sendEmail } from "./email.js";
+import { isSmsConfigured, sendOtpSms } from "./sms.js";
 
 export async function createAndSendOtp({ email, phone, purpose }) {
   const code = String(Math.floor(100000 + Math.random() * 900000));
@@ -13,20 +14,33 @@ export async function createAndSendOtp({ email, phone, purpose }) {
     expiresAt: new Date(Date.now() + 10 * 60 * 1000)
   });
 
+  let delivered = false;
+  try {
+    delivered = await sendOtpSms({ phone, code }) || delivered;
+  } catch (error) {
+    console.error(`OTP SMS failed for ${phone}:`, error.message);
+  }
+
   try {
     await sendEmail({
       to: email,
       subject: "Your PDF Book Store OTP",
       html: `<p>Your OTP is <strong>${code}</strong>. It expires in 10 minutes.</p>`
     });
+    delivered = true;
   } catch (error) {
     console.error(`OTP email failed for ${email}:`, error.message);
   }
 
-  if (!isEmailConfigured() || process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== "production") {
     console.log(`Development OTP for ${email} (${purpose}): ${code}`);
   }
-  return code;
+
+  if (!delivered && process.env.NODE_ENV === "production") {
+    throw new Error("Could not send OTP. Please try again later.");
+  }
+
+  return process.env.NODE_ENV === "production" ? undefined : code;
 }
 
 export async function verifyOtp({ email, purpose, code }) {

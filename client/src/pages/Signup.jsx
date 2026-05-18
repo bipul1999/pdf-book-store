@@ -15,11 +15,11 @@ export default function Signup() {
       const { data } = await api.post("/auth/signup", form);
       if (data.loginOtp) {
         toast.success("Account exists. Login OTP sent");
-        navigate(`/login?email=${encodeURIComponent(data.email)}&identifier=${encodeURIComponent(form.email)}&otpSent=true${data.devOtp ? `&otp=${encodeURIComponent(data.devOtp)}` : ""}`);
+        navigate(`/login?email=${encodeURIComponent(data.email)}&identifier=${encodeURIComponent(form.email)}&otpSent=true`);
         return;
       }
       toast.success("OTP sent");
-      navigate(`/verify-otp?email=${encodeURIComponent(form.email)}${data.devOtp ? `&otp=${encodeURIComponent(data.devOtp)}` : ""}`);
+      navigate(`/verify-otp?email=${encodeURIComponent(form.email)}`);
     } catch (error) {
       toast.error(error.response?.data?.message || "Signup failed");
     } finally {
