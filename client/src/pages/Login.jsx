@@ -10,7 +10,8 @@ export default function Login() {
   const redirectTo = params.get("redirect") || "/dashboard";
   const [identifier, setIdentifier] = useState(params.get("identifier") || "");
   const [email, setEmail] = useState(params.get("email") || "");
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(params.get("otp") || "");
+  const [visibleOtp, setVisibleOtp] = useState(params.get("otp") || "");
   const [otpSent, setOtpSent] = useState(params.get("otpSent") === "true");
   const [resendIn, setResendIn] = useState(params.get("otpSent") === "true" ? 60 : 0);
   const [expiresIn, setExpiresIn] = useState(params.get("otpSent") === "true" ? 600 : 0);
@@ -42,6 +43,10 @@ export default function Login() {
     try {
       const { data } = await api.post("/auth/login/request-otp", { identifier });
       setEmail(data.email);
+      if (data.devOtp) {
+        setCode(data.devOtp);
+        setVisibleOtp(data.devOtp);
+      }
       setOtpSent(true);
       startOtpTimers(data);
       toast.success("OTP sent");
@@ -79,6 +84,12 @@ export default function Login() {
       ) : (
         <form onSubmit={verifyOtp} className="space-y-3">
           <input className="input" value={email} readOnly />
+          {visibleOtp && (
+            <div className="rounded-md border border-orange-200 bg-orange-50 p-3 text-center">
+              <p className="text-xs font-bold uppercase text-orange-700">Your OTP</p>
+              <p className="mt-1 text-2xl font-black tracking-widest text-ink">{visibleOtp}</p>
+            </div>
+          )}
           <input className="input" maxLength={6} placeholder="6 digit OTP" value={code} onChange={(e) => setCode(e.target.value)} required />
           <p className="text-sm font-semibold text-gray-600">OTP expires in {formatSeconds(expiresIn)}</p>
           <button className="btn-primary w-full" disabled={loading}>{loading ? "Verifying..." : "Verify and login"}</button>

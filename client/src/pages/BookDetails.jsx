@@ -38,12 +38,14 @@ export default function BookDetails() {
   }
   if (!book) return <main className="p-8">Loading...</main>;
   return (
-    <main className="mx-auto grid max-w-6xl gap-6 px-4 py-6 sm:py-10 md:grid-cols-[320px_1fr] lg:grid-cols-[360px_1fr]">
+    <main className="mx-auto grid max-w-6xl gap-5 px-3 py-5 sm:px-4 sm:py-10 md:grid-cols-[320px_1fr] lg:grid-cols-[360px_1fr]">
       <img src={book.coverImage} className="max-h-[520px] w-full rounded-lg bg-orange-50 object-contain p-3 shadow-soft" alt={book.title} />
-      <section className="space-y-5">
-        <h1 className="text-3xl font-black sm:text-4xl">{book.title}</h1>
-        <p className="text-gray-600">By {book.author}</p>
-        <p className="leading-7 text-gray-700">{book.description}</p>
+      <section className="space-y-4">
+        <div>
+          <h1 className="text-2xl font-black leading-tight sm:text-4xl">{book.title}</h1>
+          <p className="mt-1 text-sm font-semibold text-gray-600 sm:text-base">By {book.author}</p>
+        </div>
+        <p className="text-[15px] leading-7 text-gray-700 sm:text-base">{book.description}</p>
         <div className="panel bg-paper p-5">
           <p className="text-sm font-semibold text-gray-600">PDF price</p>
           <strong className="mt-1 block text-2xl sm:text-3xl">Rs. {book.price}</strong>

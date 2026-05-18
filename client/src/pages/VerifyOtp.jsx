@@ -8,7 +8,8 @@ import { formatSeconds, otpToastMessage } from "../utils/otpUi.js";
 
 export default function VerifyOtp() {
   const [params] = useSearchParams();
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(params.get("otp") || "");
+  const [visibleOtp, setVisibleOtp] = useState(params.get("otp") || "");
   const [resendIn, setResendIn] = useState(60);
   const [expiresIn, setExpiresIn] = useState(600);
   const [loading, setLoading] = useState(false);
@@ -42,6 +43,10 @@ export default function VerifyOtp() {
     setLoading(true);
     try {
       const { data } = await api.post("/auth/signup/resend-otp", { email });
+      if (data.devOtp) {
+        setCode(data.devOtp);
+        setVisibleOtp(data.devOtp);
+      }
       setResendIn(data.resendAfterSeconds || 60);
       setExpiresIn(data.otpExpiresInSeconds || 600);
       toast.success("OTP resent");
@@ -56,6 +61,12 @@ export default function VerifyOtp() {
     <AuthCard title="Verify OTP">
       <form onSubmit={submit} className="space-y-3">
         <input className="input" value={email} readOnly />
+        {visibleOtp && (
+          <div className="rounded-md border border-orange-200 bg-orange-50 p-3 text-center">
+            <p className="text-xs font-bold uppercase text-orange-700">Your OTP</p>
+            <p className="mt-1 text-2xl font-black tracking-widest text-ink">{visibleOtp}</p>
+          </div>
+        )}
         <input className="input" maxLength={6} placeholder="6 digit OTP" value={code} onChange={(e) => setCode(e.target.value)} required />
         <p className="text-sm font-semibold text-gray-600">OTP expires in {formatSeconds(expiresIn)}</p>
         <button className="btn-primary w-full" disabled={loading}>{loading ? "Please wait..." : "Verify"}</button>

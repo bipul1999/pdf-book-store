@@ -34,19 +34,19 @@ export default function BookCard({ book }) {
   }
 
   return (
-    <article className="panel flex h-full flex-col overflow-hidden">
+    <article className="panel flex h-full flex-col overflow-hidden transition hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(124,45,18,.16)]">
       <Link to={`/books/${book._id}`} className="block">
-        <img src={book.coverImage} alt={book.title} className="h-44 w-full bg-orange-50 object-contain p-2 transition hover:scale-[1.02] sm:h-48 lg:h-52" />
+        <img src={book.coverImage} alt={book.title} className="h-64 w-full bg-orange-50 object-contain p-3 transition hover:scale-[1.02] sm:h-48 lg:h-52" />
       </Link>
-      <div className="flex flex-1 flex-col p-3 sm:p-3.5">
+      <div className="flex flex-1 flex-col p-4 sm:p-3.5">
         <div>
-          <Link to={`/books/${book._id}`} className="mt-1 block line-clamp-2 text-base font-bold hover:text-orange-600">{book.title}</Link>
-          <p className="text-sm text-gray-600">{book.author}</p>
-          <p className="mt-1.5 line-clamp-1 text-sm text-gray-600">{book.description}</p>
-          <Link className="mt-1 inline-block text-sm font-bold text-orange-600 hover:text-orange-800" to={`/books/${book._id}`}>Read more</Link>
+          <Link to={`/books/${book._id}`} className="mt-1 block line-clamp-2 text-lg font-black leading-snug hover:text-orange-600 sm:text-base">{book.title}</Link>
+          <p className="mt-1 text-sm font-semibold text-gray-600">{book.author}</p>
+          <p className="mt-2 line-clamp-2 text-sm leading-6 text-gray-600 sm:line-clamp-1">{book.description}</p>
+          <Link className="mt-2 inline-block text-sm font-bold text-orange-600 hover:text-orange-800" to={`/books/${book._id}`}>Read more</Link>
         </div>
-        <div className="mt-auto space-y-2.5 pt-3">
-          <strong className="block text-lg">Rs. {book.price}</strong>
+        <div className="mt-auto space-y-3 pt-4">
+          <strong className="block text-xl sm:text-lg">Rs. {book.price}</strong>
           <button className="btn-primary w-full" onClick={buyPdf}><CreditCard size={18} /> Buy PDF</button>
           <div className="flex gap-2">
             <Link className="btn-secondary !px-3" to={`/books/${book._id}`} title="View details"><Eye size={18} /></Link>

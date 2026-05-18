@@ -21,13 +21,12 @@ export async function createAndSendOtp({ email, phone, purpose }) {
     });
   } catch (error) {
     console.error(`OTP email failed for ${email}:`, error.message);
-    if (process.env.NODE_ENV === "production") throw error;
   }
 
   if (!isEmailConfigured() || process.env.NODE_ENV !== "production") {
     console.log(`Development OTP for ${email} (${purpose}): ${code}`);
   }
-  return undefined;
+  return code;
 }
 
 export async function verifyOtp({ email, purpose, code }) {
