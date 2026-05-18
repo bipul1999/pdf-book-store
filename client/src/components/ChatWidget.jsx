@@ -1,53 +1,146 @@
 import { Bot, Send, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import api from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
+const welcomeText = "Welcome to Mahesh Bharti Library";
+
 export default function ChatWidget() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  const [message, setMessage] = useState("");
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState(user?.phone || "");
   const [loading, setLoading] = useState(false);
-  const [messages, setMessages] = useState([
-    { role: "assistant", text: "Namaste, main AI help bot hoon. Aap apni problem likhiye, main admin ko notify kar dunga." }
-  ]);
+  const [messages, setMessages] = useState([]);
+  const [step, setStep] = useState("welcome");
+  const [input, setInput] = useState("");
+  const [started, setStarted] = useState(false);
+  const timers = useRef([]);
+  const chatEndRef = useRef(null);
 
-  async function submitIssue(event) {
-    event.preventDefault();
-    if (message.trim().length < 8) {
-      toast.error("Please write your problem in a little more detail.");
-      return;
-    }
-    const userMessage = message.trim();
-    setMessages((items) => [...items, { role: "user", text: userMessage }]);
+  const placeholders = {
+    name: "Apna naam likhiye",
+    email: "Apna email likhiye",
+    phone: "Mobile number likhiye",
+    problem: "Ab apni problem detail me likhiye..."
+  };
+
+  function clearTimers() {
+    timers.current.forEach((timer) => clearTimeout(timer));
+    timers.current = [];
+  }
+
+  function speakWelcome() {
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(welcomeText);
+    utterance.lang = "en-IN";
+    utterance.rate = 0.95;
+    utterance.pitch = 1;
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function addBotMessage(text, delay = 450) {
+    const timer = setTimeout(() => {
+      setMessages((items) => [...items, { role: "assistant", text }]);
+    }, delay);
+    timers.current.push(timer);
+  }
+
+  function startConversation() {
+    clearTimers();
+    setStarted(true);
+    setStep("welcome");
+    setInput("");
+    setMessages([{ role: "assistant", text: welcomeText }]);
+    speakWelcome();
+    timers.current.push(setTimeout(() => {
+      setMessages([]);
+      setStep("name");
+      addBotMessage("Sabse pehle apna naam bataiye.", 150);
+    }, 2300));
+  }
+
+  useEffect(() => () => clearTimers(), []);
+
+  useEffect(() => {
+    if (open && !started) startConversation();
+    if (!open && "speechSynthesis" in window) window.speechSynthesis.cancel();
+  }, [open, started]);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages, loading]);
+
+  async function sendIssue(problemText) {
     setLoading(true);
+    addBotMessage("Thanks, main aapki problem admin ko send kar raha hoon.", 250);
     try {
       const { data } = await api.post("/support/tickets", {
         name,
         email,
         phone,
-        message: userMessage,
+        message: problemText,
         pageUrl: window.location.href
       });
-      setMessages((items) => [
-        ...items,
-        { role: "assistant", text: data.reply || "Aapki problem admin ko send ho gayi hai. Jaldi help milegi." }
-      ]);
-      setMessage("");
+      addBotMessage(data.reply || "Aapki problem admin ko send ho gayi hai. Jaldi help milegi.", 700);
+      setStep("done");
       toast.success("Admin ko problem send ho gaya");
     } catch (error) {
-      setMessages((items) => [
-        ...items,
-        { role: "assistant", text: "Sorry, message send nahi ho paya. Thodi der baad fir try kijiye." }
-      ]);
+      addBotMessage("Sorry, message send nahi ho paya. Thodi der baad fir try kijiye.", 700);
+      setStep("problem");
       toast.error(error.response?.data?.message || "Support message send nahi ho paya");
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleChatSubmit(event) {
+    event.preventDefault();
+    const value = input.trim();
+    if (loading || step === "welcome" || step === "done" || !value) return;
+
+    if (step === "name" && value.length < 2) {
+      toast.error("Naam thoda clearly likhiye");
+      return;
+    }
+    if (step === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      toast.error("Valid email likhiye");
+      return;
+    }
+    if (step === "phone" && value.replace(/\D/g, "").length < 8) {
+      toast.error("Valid mobile number likhiye");
+      return;
+    }
+    if (step === "problem" && value.length < 8) {
+      toast.error("Problem thoda detail me likhiye");
+      return;
+    }
+
+    setMessages((items) => [...items, { role: "user", text: value }]);
+    setInput("");
+
+    if (step === "name") {
+      setName(value);
+      setStep("email");
+      addBotMessage(`Thanks ${value}. Ab apna email bataiye.`, 450);
+      return;
+    }
+    if (step === "email") {
+      setEmail(value);
+      setStep("phone");
+      addBotMessage("Ab mobile number likhiye, taaki admin zarurat pade to contact kar sake.", 450);
+      return;
+    }
+    if (step === "phone") {
+      setPhone(value);
+      setStep("problem");
+      addBotMessage("Ab bataiye aapko kya problem aa rahi hai?", 450);
+      return;
+    }
+    await sendIssue(value);
   }
 
   return (
@@ -69,7 +162,7 @@ export default function ChatWidget() {
             </button>
           </div>
           <div className="space-y-3 p-4">
-            <div className="max-h-64 space-y-3 overflow-y-auto rounded-2xl bg-slate-50 p-3">
+            <div className="max-h-72 space-y-3 overflow-y-auto rounded-2xl bg-slate-50 p-3">
               {messages.map((item, index) => (
                 <div className={`flex ${item.role === "user" ? "justify-end" : "justify-start"}`} key={`${item.role}-${index}`}>
                   {item.role === "assistant" && (
@@ -86,24 +179,34 @@ export default function ChatWidget() {
                   </p>
                 </div>
               ))}
-            </div>
-            <form className="space-y-3" onSubmit={submitIssue}>
-              {!user && (
-                <div className="grid gap-2">
-                  <input className="input !min-h-10" placeholder="Your name" value={name} onChange={(event) => setName(event.target.value)} />
-                  <input className="input !min-h-10" placeholder="Email for reply" type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
-                  <input className="input !min-h-10" placeholder="Mobile number" value={phone} onChange={(event) => setPhone(event.target.value)} />
+              {loading && (
+                <div className="flex justify-start">
+                  <span className="mr-2 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-orange-100 text-orange-700">
+                    <Bot size={17} />
+                  </span>
+                  <p className="rounded-2xl rounded-bl-sm bg-white px-3 py-2 text-sm font-black text-slate-500 shadow-sm">Typing...</p>
                 </div>
               )}
-              <textarea
-                className="input min-h-28 resize-none"
-                placeholder="Problem likhiye, jaise OTP nahi aa raha, payment issue, PDF download nahi ho raha..."
-                value={message}
-                onChange={(event) => setMessage(event.target.value)}
+              <div ref={chatEndRef} />
+            </div>
+            <form className="flex gap-2" onSubmit={handleChatSubmit}>
+              <input
+                className="input !min-h-11 flex-1"
+                disabled={loading || step === "welcome" || step === "done"}
+                placeholder={step === "done" ? "Ticket admin ko send ho gaya" : placeholders[step] || "Type here..."}
+                type={step === "email" ? "email" : "text"}
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
               />
-              <button className="btn-primary w-full" disabled={loading}>
-                <Send size={16} /> {loading ? "Sending..." : "Send to admin"}
-              </button>
+              {step === "done" ? (
+                <button className="btn-secondary !min-h-11 !px-3" type="button" onClick={startConversation}>
+                  New
+                </button>
+              ) : (
+                <button className="btn-primary !min-h-11 !px-3" disabled={loading || step === "welcome"}>
+                  <Send size={16} />
+                </button>
+              )}
             </form>
           </div>
         </section>
