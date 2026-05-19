@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>PDF Book Store Project Description</title>
+  <style>
+    body { font-family: "Nirmala UI", "Segoe UI", Arial, sans-serif; line-height: 1.55; color: #222; }
+    h1 { color: #0f5b55; font-size: 26px; }
+    h2 { color: #b45309; font-size: 20px; margin-top: 24px; }
+    h3 { color: #0f5b55; font-size: 16px; margin-top: 18px; }
+    p, li { font-size: 12.5pt; }
+    code { background: #f3f4f6; padding: 2px 5px; border-radius: 4px; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #fff3e4; }
+  </style>
+</head>
+<body>
+  <h1>Mahesh Bharti PDF Book Store - Project Description</h1>
+  <p>
+    Ye project ek full-stack PDF e-book selling website hai. Isme user books browse karta hai, login/signup OTP se account verify karta hai,
+    payment karta hai, aur successful payment ke baad apni purchased PDF library me book read kar sakta hai. Admin panel se books,
+    orders, payment settings, quote section, users aur support tickets manage kiye ja sakte hain.
+  </p>
+
+  <h2>1. Technology Stack</h2>
+  <table>
+    <tr><th>Part</th><th>Technology</th><th>Kaam</th></tr>
+    <tr><td>Frontend</td><td>React, Vite, Tailwind CSS</td><td>User interface, routes, cart, checkout, dashboard, admin panel</td></tr>
+    <tr><td>Backend</td><td>Node.js, Express.js</td><td>REST API, authentication, payment verification, admin APIs</td></tr>
+    <tr><td>Database</td><td>MongoDB with Mongoose</td><td>Users, books, orders, OTP, settings, support tickets store karna</td></tr>
+    <tr><td>Auth</td><td>JWT + OTP</td><td>Secure login/signup, one active session, protected pages</td></tr>
+    <tr><td>Payment</td><td>Razorpay + Manual UPI</td><td>Online payment verification aur UPI screenshot admin verification</td></tr>
+    <tr><td>Deployment</td><td>Vercel frontend, Render backend</td><td>Live hosting</td></tr>
+  </table>
+
+  <h2>2. Folder Structure</h2>
+  <p><code>client</code> folder me frontend code hai. <code>server</code> folder me backend API code hai.</p>
+  <ul>
+    <li><code>client/src/pages</code>: user pages jaise Home, Books, Checkout, Login, Library, Admin pages.</li>
+    <li><code>client/src/components</code>: shared UI components jaise Layout, BookCard, AdminShell.</li>
+    <li><code>client/src/context</code>: AuthContext aur CartContext, jisse login state aur cart app me share hota hai.</li>
+    <li><code>server/src/controllers</code>: business logic, jaise auth, books, payment, admin, quote, support.</li>
+    <li><code>server/src/models</code>: MongoDB schemas, jaise User, Book, Order, Otp.</li>
+    <li><code>server/src/routes</code>: API endpoints ko controllers se connect karta hai.</li>
+    <li><code>server/src/middleware</code>: authentication, validation, upload, rate limit, error handling.</li>
+  </ul>
+
+  <h2>3. Frontend Kaise Kaam Karta Hai</h2>
+  <p>
+    Frontend React single-page app hai. User page change karta hai to browser reload nahi hota; React Router route ke hisaab se component dikhata hai.
+    Ab pages lazy-load hote hain, matlab first load par sirf zaroori code download hota hai. Isse slow internet par website jaldi open hoti hai.
+  </p>
+  <h3>Main User Flow</h3>
+  <ol>
+    <li>User Home page par quote section, hero books aur featured books dekhta hai.</li>
+    <li>Books page par search karke books dekh sakta hai.</li>
+    <li>Book details page par price, description aur buy button hota hai.</li>
+    <li>Cart me add karke checkout par ja sakta hai.</li>
+    <li>Payment successful hone ke baad Library me book unlock hoti hai.</li>
+    <li>PDF Reader secure in-app reading ke liye PDF ko authenticated API se blob ke form me open karta hai.</li>
+  </ol>
+
+  <h3>Frontend Performance Improvements</h3>
+  <ul>
+    <li>React routes lazy-loaded kiye gaye, isse initial JavaScript bundle chhota hua.</li>
+    <li>Images me <code>loading="lazy"</code> aur <code>decoding="async"</code> add kiya gaya.</li>
+    <li>Book detail cover image ko high priority diya gaya taki main image fast dikhe.</li>
+    <li>Quote animation CSS level par chalti hai, jisse page khula rahe tab bhi visible rahe.</li>
+  </ul>
+
+  <h2>4. Backend Kaise Kaam Karta Hai</h2>
+  <p>
+    Backend Express server hai. Ye APIs provide karta hai, database se data read/write karta hai, JWT authentication verify karta hai,
+    OTP generate/verify karta hai, payment verify karta hai, aur admin panel ke actions handle karta hai.
+  </p>
+
+  <h3>Important Backend APIs</h3>
+  <ul>
+    <li><code>/api/auth/signup</code>: user signup aur OTP send.</li>
+    <li><code>/api/auth/verify-otp</code>: signup OTP verify karke account active.</li>
+    <li><code>/api/auth/login/request-otp</code>: login OTP send.</li>
+    <li><code>/api/auth/login/verify-otp</code>: OTP verify karke JWT token issue.</li>
+    <li><code>/api/books</code>: public book listing.</li>
+    <li><code>/api/books/:id/download</code>: protected PDF download/read endpoint.</li>
+    <li><code>/api/payments/create-order</code>: Razorpay ya manual UPI order create.</li>
+    <li><code>/api/payments/verify</code>: Razorpay signature verify karke order success.</li>
+    <li><code>/api/payments/confirm-manual</code>: UPI payment screenshot submit.</li>
+    <li><code>/api/admin/orders/:id/status</code>: admin order approve/fail karta hai.</li>
+  </ul>
+
+  <h3>Backend Performance Improvements</h3>
+  <ul>
+    <li>Public book listing aur book details queries me <code>lean()</code> use kiya gaya, jisse MongoDB read faster hota hai.</li>
+    <li>Books API par short browser/proxy cache header lagaya gaya.</li>
+    <li>Quote API par cache header lagaya gaya taki repeat requests fast ho.</li>
+    <li>Static covers, quote images aur QR images cacheable hain.</li>
+  </ul>
+
+  <h2>5. Authentication and OTP</h2>
+  <p>
+    User signup/login OTP based hai. OTP email/SMS ke through send hota hai. OTP bcrypt hash ke form me database me store hota hai,
+    plain OTP database me save nahi hota. OTP expire time 10 minutes hai. Wrong OTP par ab card ke andar input ke niche
+    <b>Invalid OTP</b> message dikhata hai, generic server error nahi.
+  </p>
+  <p>
+    Login ke baad backend JWT token deta hai. Token me user id, role aur active session id hota hai. Agar user dusre device par login karta hai,
+    old session invalid ho jata hai. Isse account sharing aur unauthorized access ka risk kam hota hai.
+  </p>
+
+  <h2>6. Payment System</h2>
+  <h3>Razorpay Online Payment</h3>
+  <ol>
+    <li>User checkout par Razorpay choose karta hai.</li>
+    <li>Backend Razorpay order create karta hai.</li>
+    <li>Frontend Razorpay checkout open karta hai.</li>
+    <li>Payment ke baad Razorpay response backend ko bheja jata hai.</li>
+    <li>Backend secret key se HMAC signature generate karke received signature se compare karta hai.</li>
+    <li>Signature match hone par order success hota hai aur PDF library unlock hoti hai.</li>
+  </ol>
+
+  <h3>Manual UPI Payment</h3>
+  <ol>
+    <li>User UPI option choose karta hai.</li>
+    <li>Backend order amount ke saath UPI QR/payment URI generate karta hai.</li>
+    <li>User payment karke screenshot upload karta hai.</li>
+    <li>Order status submitted hota hai.</li>
+    <li>Admin panel se proof check karke success ya failed status set karta hai.</li>
+    <li>Success hone par PDF unlock hoti hai.</li>
+  </ol>
+
+  <h2>7. Security Measures</h2>
+  <ul>
+    <li>JWT secret minimum 32 characters required hai.</li>
+    <li>Protected APIs me Bearer token verify hota hai.</li>
+    <li>Admin APIs role check ke bina accessible nahi hain.</li>
+    <li>Razorpay signature timing-safe compare se verify hota hai.</li>
+    <li>Razorpay webhook signature bhi timing-safe compare se verify hota hai.</li>
+    <li>Payment proof images public folder se remove karke admin-only protected API se open hoti hain.</li>
+    <li>Manual payment proof already submitted/success order par dobara submit nahi ho sakta.</li>
+    <li>PDF download sirf paid success order aur 30-day access window me allowed hai.</li>
+    <li>PDF file path upload directory ke andar lock kiya gaya hai.</li>
+    <li>File upload me image/PDF type aur size limit check hota hai.</li>
+    <li>Rate limiting login, OTP, payment aur admin writes par active hai.</li>
+    <li>Helmet security headers aur CORS origin restrictions enabled hain.</li>
+    <li>Email HTML content escape kiya gaya hai, jisse injection risk kam hota hai.</li>
+  </ul>
+
+  <h2>8. Admin Panel</h2>
+  <p>
+    Admin panel me dashboard stats, books management, orders, payment settings, quote settings, users aur support tickets manage hote hain.
+    Admin signup Gmail OTP se verify hota hai. Agar ek verified admin exist karta hai to new admin signup block hota hai.
+  </p>
+
+  <h2>9. Quote Section</h2>
+  <p>
+    Home page ke top par quote card hai. Admin panel se quote, author name aur author image update ho sakta hai.
+    Quote content 4 hours ke slot ke hisaab se rotate hota hai. Quote text par navbar jaisa falling-letter animation sirf quote ke letters par lagaya gaya hai.
+  </p>
+
+  <h2>10. Deployment Setup</h2>
+  <h3>Backend on Render</h3>
+  <p>
+    <code>render.yaml</code> file backend deployment define karti hai. Root directory <code>server</code>, build command <code>npm install</code>,
+    start command <code>npm start</code> hai. Important environment variables: <code>MONGO_URI</code>, <code>JWT_SECRET</code>,
+    <code>CLIENT_URL</code>, SMTP settings, Razorpay keys, UPI settings.
+  </p>
+
+  <h3>Frontend on Vercel</h3>
+  <p>
+    Frontend <code>client</code> folder se deploy hota hai. Build command <code>npm run build</code> hai aur output directory <code>dist</code>.
+    Environment variable <code>VITE_API_URL</code> backend API URL par set hoti hai.
+  </p>
+
+  <h2>11. Local Setup Steps</h2>
+  <ol>
+    <li>Project folder open karein.</li>
+    <li>Server dependencies install: <code>npm install --prefix server</code></li>
+    <li>Client dependencies install: <code>npm install --prefix client</code></li>
+    <li>Server me <code>.env</code> file banakar MongoDB, JWT, SMTP, Razorpay, UPI values set karein.</li>
+    <li>Backend run: <code>npm run dev --prefix server</code></li>
+    <li>Frontend run: <code>npm run dev --prefix client</code></li>
+    <li>Browser me Vite URL open karein, normally <code>http://localhost:5173</code>.</li>
+  </ol>
+
+  <h2>12. Recent Work Summary</h2>
+  <ul>
+    <li>Wrong OTP server error ko invalid OTP inline message me convert kiya.</li>
+    <li>Quote animation sirf quote text par visible infinite falling effect banaya.</li>
+    <li>Quote content 4 hours me change hone wala logic add kiya.</li>
+    <li>Payment flow aur PDF access security harden kiya.</li>
+    <li>Manual payment proofs ko private/protected banaya.</li>
+    <li>Frontend lazy loading aur image optimization add kiya.</li>
+    <li>Backend public reads fast karne ke liye lean queries aur cache headers add kiye.</li>
+    <li>Client/server production dependency audit me 0 vulnerabilities confirm hua.</li>
+  </ul>
+
+  <h2>13. Testing and Verification</h2>
+  <ul>
+    <li>Frontend production build: <code>npm run build</code> successful.</li>
+    <li>Server changed files syntax check successful.</li>
+    <li>Client production dependencies audit: 0 vulnerabilities.</li>
+    <li>Server production dependencies audit: 0 vulnerabilities.</li>
+    <li>Payment and PDF access flow manually reviewed for security risks.</li>
+  </ul>
+
+  <h2>14. Simple Explanation for Presentation</h2>
+  <p>
+    Is project me humne ek digital PDF book store banaya hai jahan user secure OTP login ke through account banata hai,
+    books browse karta hai, Razorpay ya UPI ke through payment karta hai, aur successful payment ke baad secure library me PDF read kar sakta hai.
+    Backend payment verification, user authentication, PDF access control aur admin management handle karta hai. Frontend user-friendly mobile aur laptop UI provide karta hai.
+    Security ke liye token-based login, OTP hashing, rate limiting, protected admin APIs, private payment proofs aur verified payment ke bina PDF access block kiya gaya hai.
+  </p>
+</body>
+</html>

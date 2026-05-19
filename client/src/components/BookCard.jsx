@@ -36,7 +36,7 @@ export default function BookCard({ book }) {
   return (
     <article className="panel flex h-full flex-col overflow-hidden transition hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(124,45,18,.16)]">
       <Link to={`/books/${book._id}`} className="block">
-        <img src={book.coverImage} alt={book.title} className="h-64 w-full bg-orange-50 object-contain p-3 transition hover:scale-[1.02] sm:h-48 lg:h-52" />
+        <img src={book.coverImage} alt={book.title} className="h-64 w-full bg-orange-50 object-contain p-3 transition hover:scale-[1.02] sm:h-48 lg:h-52" decoding="async" loading="lazy" sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw" />
       </Link>
       <div className="flex flex-1 flex-col p-4 sm:p-3.5">
         <div>

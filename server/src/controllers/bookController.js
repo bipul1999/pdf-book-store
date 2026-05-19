@@ -21,13 +21,15 @@ export async function listBooks(req, res) {
   if (category) filter.category = category;
   if (featured) filter.featured = featured === "true";
   if (min || max) filter.price = { ...(min ? { $gte: Number(min) } : {}), ...(max ? { $lte: Number(max) } : {}) };
-  const books = await Book.find(filter).populate("category").sort("-createdAt");
+  const books = await Book.find(filter).populate("category").sort("-createdAt").lean();
+  res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
   res.json({ books: books.map((book) => serializeBook(req, book)) });
 }
 
 export async function getBook(req, res) {
-  const book = await Book.findOne({ _id: req.params.id, isActive: true }).populate("category");
+  const book = await Book.findOne({ _id: req.params.id, isActive: true }).populate("category").lean();
   if (!book) return res.status(404).json({ message: "Book not found" });
+  res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
   res.json({ book: serializeBook(req, book) });
 }
 

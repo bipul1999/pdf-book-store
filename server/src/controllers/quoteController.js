@@ -16,9 +16,10 @@ function defaultQuote() {
 }
 
 export async function getQuoteSetting(req, res) {
-  const setting = await QuoteSetting.findOne({ isActive: true }).sort("-updatedAt");
-  const quote = setting ? setting.toObject() : defaultQuote();
+  const setting = await QuoteSetting.findOne({ isActive: true }).sort("-updatedAt").lean();
+  const quote = setting || defaultQuote();
   if (!quote.authorImage) quote.authorImage = defaultQuote().authorImage;
+  res.setHeader("Cache-Control", "public, max-age=300, stale-while-revalidate=3600");
   res.json({ quote: { ...quote, authorImage: fileUrl(req, quote.authorImage) } });
 }
 

@@ -106,7 +106,7 @@ export default function Home() {
             <div className="relative grid items-center gap-3 sm:gap-6 md:grid-cols-[120px_1fr]">
               <div className="flex justify-center">
                 {activeQuote.authorImage ? (
-                  <img className="h-24 w-24 shrink-0 rounded-full object-cover shadow-soft ring-4 ring-orange-100" src={activeQuote.authorImage} alt={activeQuote.authorName} />
+                  <img className="h-24 w-24 shrink-0 rounded-full object-cover shadow-soft ring-4 ring-orange-100" src={activeQuote.authorImage} alt={activeQuote.authorName} decoding="async" loading="lazy" />
                 ) : (
                   <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-orange-500 text-3xl font-black text-white shadow-soft ring-4 ring-orange-100">
                     {activeQuote.authorName?.[0] || "म"}
@@ -149,7 +149,7 @@ export default function Home() {
           }`}>
             {heroBooks.map((book) => (
               <Link key={book._id} to={`/books/${book._id}`} className="group relative overflow-hidden rounded-lg shadow-soft transition duration-300 hover:-translate-y-1">
-                <img src={book.coverImage} className="h-44 w-full bg-orange-50 object-contain p-2 transition duration-300 group-hover:scale-105 sm:h-52" alt={book.title} />
+                <img src={book.coverImage} className="h-44 w-full bg-orange-50 object-contain p-2 transition duration-300 group-hover:scale-105 sm:h-52" alt={book.title} decoding="async" loading="lazy" sizes="(min-width: 768px) 25vw, 50vw" />
                 <span className="absolute bottom-2 left-2 right-2 line-clamp-2 rounded-md bg-white/95 px-2 py-1 text-[11px] font-bold leading-4 text-ink sm:text-xs">
                   {book.title}
                 </span>

@@ -126,7 +126,7 @@ export default function Checkout() {
         <div className="space-y-3">
           {items.map((item) => (
             <div className="grid grid-cols-[56px_1fr] gap-3 border-b border-gray-100 pb-3 last:border-0 sm:grid-cols-[56px_1fr_auto] sm:items-center" key={item._id}>
-              <img className="h-20 w-14 rounded-xl bg-orange-50 object-contain p-1" src={item.coverImage} alt={item.title} />
+              <img className="h-20 w-14 rounded-xl bg-orange-50 object-contain p-1" src={item.coverImage} alt={item.title} decoding="async" loading="lazy" />
               <div className="min-w-0">
                 <Link className="font-bold hover:text-orange-600" to={`/books/${item._id}`}>{item.title}</Link>
                 <p className="text-sm text-gray-600">{item.author}</p>
