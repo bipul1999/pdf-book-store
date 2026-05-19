@@ -1,7 +1,7 @@
 import { body } from "express-validator";
 import User from "../models/User.js";
 import { createAndSendOtp, verifyOtp } from "../utils/otp.js";
-import { publicUser, signToken } from "../utils/tokens.js";
+import { issueSessionToken, publicUser } from "../utils/tokens.js";
 
 const otpMeta = { otpExpiresInSeconds: 10 * 60, resendAfterSeconds: 60 };
 
@@ -57,7 +57,7 @@ export async function verifySignupOtp(req, res) {
   await verifyOtp({ email, purpose: "signup", code });
   const user = await User.findOneAndUpdate({ email }, { isVerified: true }, { new: true });
   if (!user) return res.status(404).json({ message: "User not found" });
-  res.json({ token: signToken(user), user: publicUser(user) });
+  res.json({ token: await issueSessionToken(user), user: publicUser(user) });
 }
 
 export async function adminStatus(_req, res) {
@@ -113,7 +113,7 @@ export async function verifyAdminSignupOtp(req, res) {
     { new: true }
   );
   if (!admin) return res.status(404).json({ message: "Pending admin profile not found" });
-  res.json({ token: signToken(admin), user: publicUser(admin) });
+  res.json({ token: await issueSessionToken(admin), user: publicUser(admin) });
 }
 
 export async function login(req, res) {
@@ -123,7 +123,7 @@ export async function login(req, res) {
   }).select("+password");
   if (!user || !(await user.comparePassword(password))) return res.status(401).json({ message: "Invalid credentials" });
   if (!user.isVerified) return res.status(403).json({ message: "Please verify your email before login" });
-  res.json({ token: signToken(user), user: publicUser(user) });
+  res.json({ token: await issueSessionToken(user), user: publicUser(user) });
 }
 
 export async function requestLoginOtp(req, res) {
@@ -148,7 +148,7 @@ export async function verifyLoginOtp(req, res) {
   await verifyOtp({ email, purpose: "login", code });
   const user = await User.findOne({ email, role: "user", isVerified: true });
   if (!user) return res.status(404).json({ message: "User not found" });
-  res.json({ token: signToken(user), user: publicUser(user) });
+  res.json({ token: await issueSessionToken(user), user: publicUser(user) });
 }
 
 export async function forgotPassword(req, res) {

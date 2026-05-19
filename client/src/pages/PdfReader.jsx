@@ -52,10 +52,10 @@ export default function PdfReader() {
         </div>
         <button className="btn-primary w-full sm:w-auto" onClick={openFullscreen}><Maximize2 size={16} /> Full screen</button>
       </div>
-      <section ref={readerRef} className="panel overflow-hidden bg-white">
+      <section ref={readerRef} className="panel pdf-reader-shell overflow-hidden bg-white">
         {error && <p className="p-8 text-center text-red-600">{error}</p>}
         {!error && !pdfUrl && <p className="p-8 text-center text-gray-600">Opening PDF...</p>}
-        {pdfUrl && <iframe className="h-[78vh] w-full bg-white" title={book?.title || "PDF Reader"} src={pdfUrl} />}
+        {pdfUrl && <iframe className="pdf-reader-frame h-[78vh] w-full bg-white" title={book?.title || "PDF Reader"} src={pdfUrl} />}
       </section>
     </main>
   );

@@ -30,6 +30,25 @@ a { color: inherit; text-decoration: none; }
   color: #073b3a;
 }
 
+.pdf-reader-frame {
+  display: block;
+}
+
+.pdf-reader-shell:fullscreen,
+.pdf-reader-shell:-webkit-full-screen {
+  width: 100vw;
+  height: 100dvh;
+  border-radius: 0;
+  border: 0;
+  background: #fff;
+}
+
+.pdf-reader-shell:fullscreen .pdf-reader-frame,
+.pdf-reader-shell:-webkit-full-screen .pdf-reader-frame {
+  width: 100%;
+  height: 100dvh;
+}
+
 @keyframes quote-drift {
   0%, 100% { transform: translateX(-10px); }
   50% { transform: translateX(10px); }
