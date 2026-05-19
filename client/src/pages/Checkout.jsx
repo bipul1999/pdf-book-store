@@ -59,7 +59,7 @@ export default function Checkout() {
       }
 
       const rz = new window.Razorpay({
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || data.razorpay.keyId,
+        key: data.razorpay.keyId,
         amount: data.razorpay.amount,
         currency: data.razorpay.currency,
         name: "Mahesh Bharti E-book Store",
@@ -141,15 +141,15 @@ export default function Checkout() {
         {!payment ? (
           <div className="mt-6 space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
+              <button type="button" className={`rounded-2xl border p-4 text-left ${method === "razorpay" ? "border-orange-500 bg-orange-50" : "border-gray-200 bg-white"}`} onClick={() => setMethod("razorpay")}>
+                <CreditCard className="mb-2 text-orange-600" />
+                <strong>Razorpay online payment</strong>
+                <p className="mt-1 text-sm text-gray-600">Auto verifies successful payments and unlocks PDFs.</p>
+              </button>
               <button type="button" className={`rounded-2xl border p-4 text-left ${method === "upi_manual" ? "border-orange-500 bg-orange-50" : "border-gray-200 bg-white"}`} onClick={() => setMethod("upi_manual")}>
                 <Smartphone className="mb-2 text-orange-600" />
                 <strong>Manual UPI</strong>
-                <p className="mt-1 text-sm text-gray-600">Fallback option. Admin review is required.</p>
-              </button>
-              <button type="button" className={`rounded-2xl border p-4 text-left ${method === "razorpay" ? "border-orange-500 bg-orange-50" : "border-gray-200 bg-white"}`} onClick={() => setMethod("razorpay")}>
-                <CreditCard className="mb-2 text-orange-600" />
-                <strong>Auto UPI QR / Online payment</strong>
-                <p className="mt-1 text-sm text-gray-600">Auto verifies successful payments and unlocks PDFs.</p>
+                <p className="mt-1 text-sm text-gray-600">Pay by UPI and upload screenshot for admin review.</p>
               </button>
             </div>
             <button disabled={!items.length || loading} onClick={startPayment} className="btn-primary w-full">
