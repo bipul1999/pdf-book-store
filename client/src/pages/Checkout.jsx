@@ -45,6 +45,7 @@ export default function Checkout() {
     setLoading(true);
     try {
       const { data } = await api.post("/payments/create-order", { bookIds: items.map((item) => item._id), paymentMethod: method });
+      if (data.message) toast.error(data.message);
       if (!data.razorpay) {
         setPayment(data);
         toast.success("UPI payment details ready");

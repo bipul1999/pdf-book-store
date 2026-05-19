@@ -9,10 +9,15 @@ import { sendEmail } from "../utils/email.js";
 
 const MIN_RAZORPAY_AMOUNT = 100;
 
-function razorpayErrorResponse(error, res) {
-  const isAuthError =
+function isRazorpayAuthError(error) {
+  return (
     error?.statusCode === 401 ||
-    (error?.error?.code === "BAD_REQUEST_ERROR" && error?.error?.description?.toLowerCase().includes("authentication"));
+    (error?.error?.code === "BAD_REQUEST_ERROR" && error?.error?.description?.toLowerCase().includes("authentication"))
+  );
+}
+
+function razorpayErrorResponse(error, res) {
+  const isAuthError = isRazorpayAuthError(error);
   const status = isAuthError
     ? 401
     : 500;
@@ -143,6 +148,7 @@ export async function createOrder(req, res) {
   const razorpay = getRazorpay();
   let razorpayOrder = null;
   let provider = "upi_manual";
+  let paymentWarning = "";
 
   if (paymentMethod === "razorpay" && !razorpay) {
     return res.status(422).json({ message: "Online card/payment gateway is not configured yet. Please use UPI." });
@@ -159,7 +165,10 @@ export async function createOrder(req, res) {
         receipt: `order_${Date.now()}`
       });
     } catch (error) {
-      return razorpayErrorResponse(error, res);
+      if (!isRazorpayAuthError(error)) return razorpayErrorResponse(error, res);
+      console.error("Razorpay authentication failed. Falling back to manual UPI payment.");
+      paymentWarning = "Razorpay authentication failed. Please use manual UPI for this order.";
+      provider = "upi_manual";
     }
   }
 
@@ -182,6 +191,7 @@ export async function createOrder(req, res) {
   const upiQrDataUrl = razorpayOrder ? null : await QRCode.toDataURL(upiUri, { width: 320, margin: 2 });
 
   res.status(201).json({
+    message: paymentWarning,
     order,
     razorpay: razorpayOrder
       ? { keyId: process.env.RAZORPAY_KEY_ID, orderId: razorpayOrder.id, amount: razorpayOrder.amount, currency }
