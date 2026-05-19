@@ -3,13 +3,14 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../api/client.js";
 import { AuthCard } from "./Login.jsx";
-import { formatSeconds, otpToastMessage } from "../utils/otpUi.js";
+import { formatSeconds, otpInlineMessage, otpToastMessage } from "../utils/otpUi.js";
 
 export default function ResetPassword() {
   const [params] = useSearchParams();
   const [form, setForm] = useState({ code: "", password: "" });
   const [resendIn, setResendIn] = useState(60);
   const [expiresIn, setExpiresIn] = useState(600);
+  const [otpError, setOtpError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const email = params.get("email") || "";
@@ -25,12 +26,13 @@ export default function ResetPassword() {
   async function submit(e) {
     e.preventDefault();
     setLoading(true);
+    setOtpError("");
     try {
       await api.post("/auth/reset-password", { email, ...form });
       toast.success("Password reset");
       navigate("/login");
     } catch (error) {
-      toast.error(otpToastMessage(error, "Password reset failed"));
+      setOtpError(otpInlineMessage(error, "Invalid OTP"));
     } finally {
       setLoading(false);
     }
@@ -54,7 +56,8 @@ export default function ResetPassword() {
     <AuthCard title="Reset password">
       <form onSubmit={submit} className="space-y-3">
         <input className="input" value={email} readOnly />
-        <input className="input" placeholder="OTP" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} required />
+        <input className="input" placeholder="OTP" value={form.code} onChange={(e) => { setForm({ ...form, code: e.target.value }); setOtpError(""); }} required />
+        {otpError && <p className="text-sm font-bold text-red-600">{otpError}</p>}
         <input className="input" type="password" placeholder="New password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
         <p className="text-sm font-semibold text-gray-600">OTP expires in {formatSeconds(expiresIn)}</p>
         <button className="btn-primary w-full" disabled={loading}>{loading ? "Please wait..." : "Reset"}</button>

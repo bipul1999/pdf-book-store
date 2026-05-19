@@ -2,6 +2,8 @@ import User from "../models/User.js";
 import Order from "../models/Order.js";
 import Book from "../models/Book.js";
 import Category from "../models/Category.js";
+import fs from "fs";
+import path from "path";
 
 export async function dashboardStats(_req, res) {
   const [users, books, orders, categories, revenue] = await Promise.all([
@@ -24,9 +26,19 @@ export async function listOrders(_req, res) {
   res.json({
     orders: orders.map((order) => ({
       ...order.toObject(),
-      paymentProof: order.paymentProof?.startsWith("uploads")
-        ? `${_req.protocol}://${_req.get("host")}/${order.paymentProof.replaceAll("\\", "/")}`
-        : order.paymentProof
+      paymentProof: order.paymentProof ? `/api/admin/orders/${order._id}/proof` : ""
     }))
   });
+}
+
+export async function viewOrderProof(req, res) {
+  const order = await Order.findById(req.params.id);
+  if (!order?.paymentProof) return res.status(404).json({ message: "Payment proof not found" });
+  const uploadRoot = path.resolve(process.env.UPLOAD_DIR || "uploads");
+  const absolute = path.resolve(order.paymentProof);
+  if (!absolute.startsWith(`${uploadRoot}${path.sep}`) || !fs.existsSync(absolute)) {
+    return res.status(404).json({ message: "Payment proof file missing" });
+  }
+  res.setHeader("Cache-Control", "private, no-store, max-age=0");
+  res.sendFile(absolute);
 }

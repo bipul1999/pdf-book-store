@@ -3,6 +3,12 @@ import Otp from "../models/Otp.js";
 import { isEmailConfigured, sendEmail } from "./email.js";
 import { isSmsConfigured, sendOtpSms } from "./sms.js";
 
+function otpError(message, statusCode = 422) {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  return error;
+}
+
 export async function createAndSendOtp({ email, phone, purpose }) {
   const code = String(Math.floor(100000 + Math.random() * 900000));
   await Otp.updateMany({ email, purpose, consumed: false }, { consumed: true });
@@ -45,15 +51,15 @@ export async function createAndSendOtp({ email, phone, purpose }) {
 
 export async function verifyOtp({ email, purpose, code }) {
   const otp = await Otp.findOne({ email, purpose, consumed: false }).sort({ createdAt: -1 });
-  if (!otp) throw new Error("OTP not found or already used");
-  if (otp.expiresAt < new Date()) throw new Error("OTP expired");
-  if (otp.attempts >= 5) throw new Error("Too many OTP attempts");
+  if (!otp) throw otpError("OTP not found or already used", 404);
+  if (otp.expiresAt < new Date()) throw otpError("OTP expired");
+  if (otp.attempts >= 5) throw otpError("Too many OTP attempts", 429);
 
   otp.attempts += 1;
   const ok = await bcrypt.compare(code, otp.codeHash);
   if (!ok) {
     await otp.save();
-    throw new Error("Invalid OTP");
+    throw otpError("Invalid OTP");
   }
   otp.consumed = true;
   await otp.save();

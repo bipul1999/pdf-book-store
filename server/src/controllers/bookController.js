@@ -77,8 +77,11 @@ export async function downloadBook(req, res) {
     : await Order.exists({ user: req.user._id, status: "success", updatedAt: { $gte: accessWindowStart }, "items.book": book._id });
   const owns = Boolean(successfulOrder);
   if (!owns) return res.status(403).json({ message: "Purchase required or access expired for this PDF" });
+  const uploadRoot = path.resolve(process.env.UPLOAD_DIR || "uploads");
   const absolute = path.resolve(book.pdfPath);
-  if (!fs.existsSync(absolute)) return res.status(404).json({ message: "PDF file missing" });
+  if (!absolute.startsWith(`${uploadRoot}${path.sep}`) || !fs.existsSync(absolute)) {
+    return res.status(404).json({ message: "PDF file missing" });
+  }
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader("Content-Disposition", `inline; filename="${encodeURIComponent(book.title)}.pdf"`);
   res.setHeader("Cache-Control", "private, no-store, max-age=0");

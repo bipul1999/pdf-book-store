@@ -8,6 +8,16 @@ import { getRazorpay } from "../config/razorpay.js";
 import { sendEmail } from "../utils/email.js";
 
 const MIN_RAZORPAY_AMOUNT = 100;
+const ORDER_STATUSES = new Set(["pending", "submitted", "success", "failed"]);
+
+function escapeHtml(value = "") {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
 
 function isRazorpayAuthError(error) {
   return (
@@ -57,7 +67,7 @@ async function sendPaymentStatusEmail(order) {
       to: populated.user.email,
       subject,
       html: `
-        <p>Hello ${populated.user.name || "Reader"},</p>
+        <p>Hello ${escapeHtml(populated.user.name || "Reader")},</p>
         <p>${message}</p>
         <p><strong>Order:</strong> ${order._id}</p>
         <p><strong>Amount:</strong> Rs. ${order.amount}</p>
@@ -73,8 +83,7 @@ async function sendAdminPaymentProofEmail(req, order) {
     const populated = await order.populate("user", "name email phone");
     const adminEmail = process.env.ADMIN_NOTIFY_EMAIL || process.env.ADMIN_EMAIL || process.env.SMTP_USER;
     if (!adminEmail) return;
-    const proofUrl = fileUrl(req, order.paymentProof);
-    const books = order.items.map((item) => `<li>${item.title} - Rs. ${item.price}</li>`).join("");
+    const books = order.items.map((item) => `<li>${escapeHtml(item.title)} - Rs. ${item.price}</li>`).join("");
 
     await sendEmail({
       to: adminEmail,
@@ -83,13 +92,13 @@ async function sendAdminPaymentProofEmail(req, order) {
         <p>A user has submitted UPI payment proof. Please verify the order from the admin panel.</p>
         <p><strong>Order:</strong> ${order._id}</p>
         <p><strong>Amount:</strong> Rs. ${order.amount}</p>
-        <p><strong>User:</strong> ${populated.user?.name || "Unknown"}</p>
-        <p><strong>Email:</strong> ${populated.user?.email || "N/A"}</p>
-        <p><strong>Phone:</strong> ${populated.user?.phone || "N/A"}</p>
-        <p><strong>Payment note / transaction ID:</strong> ${order.paymentNote || "Not provided"}</p>
+        <p><strong>User:</strong> ${escapeHtml(populated.user?.name || "Unknown")}</p>
+        <p><strong>Email:</strong> ${escapeHtml(populated.user?.email || "N/A")}</p>
+        <p><strong>Phone:</strong> ${escapeHtml(populated.user?.phone || "N/A")}</p>
+        <p><strong>Payment note / transaction ID:</strong> ${escapeHtml(order.paymentNote || "Not provided")}</p>
         <p><strong>Books:</strong></p>
         <ul>${books}</ul>
-        ${proofUrl ? `<p><strong>Proof:</strong> <a href="${proofUrl}">${proofUrl}</a></p>` : ""}
+        <p>Open the admin panel to view and verify the uploaded proof.</p>
       `
     });
   } catch (error) {
@@ -110,8 +119,9 @@ function publicBook(req, book) {
 
 function fileUrl(req, filePath) {
   if (!filePath?.startsWith("uploads")) return filePath;
-  const normalized = filePath.replaceAll("\\", "/").replace("uploads/payments/", "");
-  return `${req.protocol}://${req.get("host")}/uploads/payments/${normalized}`;
+  const normalized = filePath.replaceAll("\\", "/");
+  if (normalized.startsWith("uploads/payment-qrs/")) return `${req.protocol}://${req.get("host")}/${normalized}`;
+  return "";
 }
 
 async function paymentSettings() {
@@ -215,6 +225,7 @@ export async function confirmManualPayment(req, res) {
   const order = await Order.findOne({ _id: req.body.orderId, user: req.user._id });
   if (!order) return res.status(404).json({ message: "Order not found" });
   if (order.provider !== "upi_manual") return res.status(422).json({ message: "This order is not a UPI manual order" });
+  if (!["pending", "failed"].includes(order.status)) return res.status(409).json({ message: "This payment proof has already been submitted or verified" });
   if (!req.file) return res.status(422).json({ message: "Upload payment screenshot for verification" });
   order.status = "submitted";
   order.paymentProof = req.file.path;
@@ -304,7 +315,7 @@ export async function razorpayWebhook(req, res) {
 
   const signature = req.headers["x-razorpay-signature"];
   const expected = crypto.createHmac("sha256", secret).update(req.body).digest("hex");
-  if (signature !== expected) return res.status(400).json({ message: "Invalid webhook signature" });
+  if (!signaturesMatch(expected, signature)) return res.status(400).json({ message: "Invalid webhook signature" });
 
   const event = JSON.parse(req.body.toString("utf8"));
   if (event.event !== "payment.captured") return res.json({ received: true });
@@ -349,6 +360,7 @@ export async function myLibrary(req, res) {
 export async function updateOrderStatus(req, res) {
   const order = await Order.findById(req.params.id);
   if (!order) return res.status(404).json({ message: "Order not found" });
+  if (!ORDER_STATUSES.has(req.body.status)) return res.status(422).json({ message: "Invalid order status" });
   const previousStatus = order.status;
   order.status = req.body.status;
   await order.save();

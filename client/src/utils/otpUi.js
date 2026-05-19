@@ -9,3 +9,8 @@ export function otpToastMessage(error, fallback) {
   if (data?.retryAfterSeconds) return `${data.message} Try again in ${formatSeconds(data.retryAfterSeconds)}.`;
   return data?.message || fallback;
 }
+
+export function otpInlineMessage(error, fallback = "Invalid OTP") {
+  const message = error.response?.data?.message || fallback;
+  return /invalid otp/i.test(message) ? "Invalid OTP" : message;
+}

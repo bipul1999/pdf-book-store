@@ -18,14 +18,14 @@ const socialLinks = [
   { name: "Instagram", href: "#", icon: Instagram }
 ];
 
-function FallingLetters({ text, className = "", startDelay = 0 }) {
+export function FallingLetters({ text, className = "", startDelay = 0, wrap = false }) {
   const letters =
     typeof Intl !== "undefined" && Intl.Segmenter
       ? Array.from(new Intl.Segmenter("hi", { granularity: "grapheme" }).segment(text), ({ segment }) => segment)
       : Array.from(text);
 
   return (
-    <span className={`falling-word ${className}`} aria-label={text}>
+    <span className={`falling-word ${wrap ? "falling-word-wrap" : ""} ${className}`} aria-label={text}>
       {letters.map((letter, index) => {
         const x = ((index % 5) - 2) * 18;
         const y = -58 - (index % 4) * 12;

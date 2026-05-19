@@ -7,14 +7,18 @@ const uploadRoot = process.env.UPLOAD_DIR || "uploads";
 const coverDir = path.join(uploadRoot, "covers");
 const pdfDir = path.join(uploadRoot, "pdfs");
 const paymentDir = path.join(uploadRoot, "payments");
+const paymentProofDir = path.join(uploadRoot, "payment-proofs");
+const paymentQrDir = path.join(uploadRoot, "payment-qrs");
 const quoteDir = path.join(uploadRoot, "quotes");
 fs.mkdirSync(coverDir, { recursive: true });
 fs.mkdirSync(pdfDir, { recursive: true });
 fs.mkdirSync(paymentDir, { recursive: true });
+fs.mkdirSync(paymentProofDir, { recursive: true });
+fs.mkdirSync(paymentQrDir, { recursive: true });
 fs.mkdirSync(quoteDir, { recursive: true });
 
 const storage = multer.diskStorage({
-  destination: (_req, file, cb) => cb(null, file.fieldname === "pdf" ? pdfDir : file.fieldname === "proof" || file.fieldname === "qr" ? paymentDir : file.fieldname === "authorImage" ? quoteDir : coverDir),
+  destination: (_req, file, cb) => cb(null, file.fieldname === "pdf" ? pdfDir : file.fieldname === "proof" ? paymentProofDir : file.fieldname === "qr" ? paymentQrDir : file.fieldname === "authorImage" ? quoteDir : coverDir),
   filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     cb(null, `${Date.now()}-${crypto.randomBytes(12).toString("hex")}${ext}`);

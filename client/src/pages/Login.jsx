@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
-import { formatSeconds, otpToastMessage } from "../utils/otpUi.js";
+import { formatSeconds, otpInlineMessage, otpToastMessage } from "../utils/otpUi.js";
 
 export default function Login() {
   const [params] = useSearchParams();
@@ -14,6 +14,7 @@ export default function Login() {
   const [otpSent, setOtpSent] = useState(params.get("otpSent") === "true");
   const [resendIn, setResendIn] = useState(params.get("otpSent") === "true" ? 60 : 0);
   const [expiresIn, setExpiresIn] = useState(params.get("otpSent") === "true" ? 600 : 0);
+  const [otpError, setOtpError] = useState("");
   const [loading, setLoading] = useState(false);
   const { saveSession } = useAuth();
   const navigate = useNavigate();
@@ -43,6 +44,7 @@ export default function Login() {
       const { data } = await api.post("/auth/login/request-otp", { identifier });
       setEmail(data.email);
       setOtpSent(true);
+      setOtpError("");
       startOtpTimers(data);
       toast.success("OTP sent");
     } catch (error) {
@@ -57,12 +59,13 @@ export default function Login() {
   async function verifyOtp(e) {
     e.preventDefault();
     setLoading(true);
+    setOtpError("");
     try {
       const { data } = await api.post("/auth/login/verify-otp", { email, code });
       saveSession(data);
       navigate(redirectTo);
     } catch (error) {
-      toast.error(error.response?.data?.message || "OTP failed");
+      setOtpError(otpInlineMessage(error, "Invalid OTP"));
     } finally {
       setLoading(false);
     }
@@ -79,7 +82,8 @@ export default function Login() {
       ) : (
         <form onSubmit={verifyOtp} className="space-y-3">
           <input className="input" value={email} readOnly />
-          <input className="input" maxLength={6} placeholder="6 digit OTP" value={code} onChange={(e) => setCode(e.target.value)} required />
+          <input className="input" maxLength={6} placeholder="6 digit OTP" value={code} onChange={(e) => { setCode(e.target.value); setOtpError(""); }} required />
+          {otpError && <p className="text-sm font-bold text-red-600">{otpError}</p>}
           <p className="text-sm font-semibold text-gray-600">OTP expires in {formatSeconds(expiresIn)}</p>
           <button className="btn-primary w-full" disabled={loading}>{loading ? "Verifying..." : "Verify and login"}</button>
           <button className="btn-secondary w-full" type="button" disabled={loading || resendIn > 0} onClick={requestOtp}>
@@ -93,5 +97,5 @@ export default function Login() {
 }
 
 export function AuthCard({ title, children }) {
-  return <main className="mx-auto flex min-h-[70vh] max-w-md items-center px-4 py-10"><section className="panel w-full p-6"><h1 className="mb-5 text-2xl font-black">{title}</h1>{children}</section></main>;
+  return <main className="mx-auto flex min-h-[70vh] max-w-md items-center px-4 py-6 sm:py-10"><section className="panel w-full p-5 sm:p-6"><h1 className="mb-5 text-2xl font-black">{title}</h1>{children}</section></main>;
 }

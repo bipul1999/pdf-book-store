@@ -1,14 +1,41 @@
 import { BookPlus, Search, ShieldCheck, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../api/client.js";
 import BookCard from "../components/BookCard.jsx";
+import { FallingLetters } from "../components/Layout.jsx";
+
+const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
 
 const defaultQuote = {
   quote: "किताबें केवल शब्द नहीं होतीं, वे जीवन को समझने की एक शांत रोशनी होती हैं।",
   authorName: "महेश भारती",
   authorImage: ""
 };
+
+const rotatingQuotes = [
+  defaultQuote,
+  {
+    quote: "Books open quiet doors inside the mind.",
+    authorName: "Mahesh Bharti",
+    authorImage: ""
+  },
+  {
+    quote: "A good page stays with you long after the screen turns off.",
+    authorName: "Mahesh Bharti",
+    authorImage: ""
+  },
+  {
+    quote: "Reading is a simple habit that slowly makes life wider.",
+    authorName: "Mahesh Bharti",
+    authorImage: ""
+  },
+  {
+    quote: "Every thoughtful book gives courage to one more thought.",
+    authorName: "Mahesh Bharti",
+    authorImage: ""
+  }
+];
 
 export default function Home() {
   const [books, setBooks] = useState([]);
@@ -17,6 +44,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [bookOffset, setBookOffset] = useState(0);
   const [isBookTransitioning, setIsBookTransitioning] = useState(false);
+  const [quoteSlot, setQuoteSlot] = useState(() => Math.floor(Date.now() / FOUR_HOURS_MS));
 
   useEffect(() => {
     async function loadHome() {
@@ -38,6 +66,13 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    const timer = setInterval(() => {
+      setQuoteSlot(Math.floor(Date.now() / FOUR_HOURS_MS));
+    }, 60 * 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
     if (heroBookPool.length <= 4) return undefined;
     let transitionTimer;
     const timer = setInterval(() => {
@@ -56,6 +91,11 @@ export default function Home() {
   const heroBooks = heroBookPool.length <= 4
     ? heroBookPool
     : Array.from({ length: Math.min(4, heroBookPool.length) }, (_, index) => heroBookPool[(bookOffset + index) % heroBookPool.length]);
+  const quoteOptions = useMemo(() => {
+    const customQuote = quote?.quote ? quote : defaultQuote;
+    return [customQuote, ...rotatingQuotes.filter((item) => item.quote !== customQuote.quote)];
+  }, [quote]);
+  const activeQuote = quoteOptions[quoteSlot % quoteOptions.length] || defaultQuote;
 
   return (
     <main>
@@ -65,19 +105,23 @@ export default function Home() {
             <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,247,237,.97),rgba(255,255,255,.92))]" />
             <div className="relative grid items-center gap-3 sm:gap-6 md:grid-cols-[120px_1fr]">
               <div className="flex justify-center">
-                {quote.authorImage ? (
-                  <img className="h-24 w-24 shrink-0 rounded-full object-cover shadow-soft ring-4 ring-orange-100" src={quote.authorImage} alt={quote.authorName} />
+                {activeQuote.authorImage ? (
+                  <img className="h-24 w-24 shrink-0 rounded-full object-cover shadow-soft ring-4 ring-orange-100" src={activeQuote.authorImage} alt={activeQuote.authorName} />
                 ) : (
                   <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-orange-500 text-3xl font-black text-white shadow-soft ring-4 ring-orange-100">
-                    {quote.authorName?.[0] || "म"}
+                    {activeQuote.authorName?.[0] || "म"}
                   </div>
                 )}
               </div>
               <div className="min-w-0 text-center md:text-left">
                 <p className="text-[15px] font-bold leading-7 text-ink sm:text-lg sm:leading-8 md:text-xl md:leading-9">
-                  &ldquo;{quote.quote || defaultQuote.quote}&rdquo;
+                  <span aria-hidden="true">&ldquo;</span>
+                  <FallingLetters key={`quote-${quoteSlot}`} text={activeQuote.quote || defaultQuote.quote} wrap />
+                  <span aria-hidden="true">&rdquo;</span>
                 </p>
-                <p className="mt-3 text-sm font-semibold text-gray-600">~ {quote.authorName || defaultQuote.authorName}</p>
+                <p className="mt-3 text-sm font-semibold text-gray-600">
+                  ~ {activeQuote.authorName || defaultQuote.authorName}
+                </p>
               </div>
             </div>
           </article>
