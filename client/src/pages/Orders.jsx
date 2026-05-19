@@ -7,7 +7,7 @@ const statusMap = {
   success: {
     label: "Payment verified",
     text: "Your PDF is unlocked in My Library.",
-    className: "border-orange-200 bg-orange-50 text-orange-800",
+    className: "border-green-200 bg-green-50 text-green-700",
     Icon: CheckCircle2
   },
   failed: {
@@ -39,9 +39,12 @@ export default function Orders() {
       setOrders(data.orders);
       const latest = data.orders[0];
       if (latest) {
-        setNotice(latest.status === "success"
-          ? "Payment successful. Your PDF is unlocked in My Library."
-          : "Payment failed. Please try again or contact support.");
+        setNotice({
+          type: latest.status,
+          message: latest.status === "success"
+            ? "Payment successful. Your PDF is unlocked in My Library."
+            : "Payment failed. Please try again or contact support."
+        });
       }
     });
   }, []);
@@ -53,40 +56,40 @@ export default function Orders() {
   }, [notice]);
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
+    <main className="mx-auto max-w-6xl px-4 py-4 sm:py-8">
       {notice && (
-        <div className="fixed left-4 right-4 top-20 z-50 rounded-lg border border-orange-500 bg-white p-4 shadow-soft sm:left-auto sm:max-w-sm">
-          <p className="font-black text-ink">{notice}</p>
+        <div className={`fixed left-4 right-4 top-20 z-50 rounded-lg border bg-white p-4 shadow-soft sm:left-auto sm:max-w-sm ${notice.type === "success" ? "border-green-300" : "border-red-300"}`}>
+          <p className={notice.type === "success" ? "font-black text-green-700" : "font-black text-red-700"}>{notice.message}</p>
           <p className="mt-1 text-sm text-gray-600">This notification will close automatically.</p>
         </div>
       )}
-      <h1 className="mb-5 text-2xl font-black sm:text-3xl">My Orders</h1>
+      <h1 className="mb-4 text-2xl font-black sm:text-3xl">My Orders</h1>
       <div className="space-y-4">
         {orders.map((order) => {
           const status = statusMap[order.status] || statusMap.pending;
           const Icon = status.Icon;
           return (
-            <article className="panel p-4" key={order._id}>
+            <article className="panel p-3 sm:p-4" key={order._id}>
               <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
-                <div>
+                <div className="min-w-0">
                   <div className="mb-3 flex items-center gap-2">
-                    <FileText size={18} className="text-orange-600" />
-                    <strong>Order #{order._id.slice(-6).toUpperCase()}</strong>
+                    <FileText size={18} className="shrink-0 text-orange-600" />
+                    <strong className="break-words">Order #{order._id.slice(-6).toUpperCase()}</strong>
                   </div>
                   <div className="space-y-2">
                     {order.items.map((item) => (
                       <div className="rounded-md bg-gray-50 px-3 py-2" key={`${order._id}-${item.book?._id || item.title}`}>
-                        <p className="font-bold">{item.title}</p>
+                        <p className="break-words font-bold">{item.title}</p>
                         <p className="text-sm text-gray-600">Rs. {item.price}</p>
                       </div>
                     ))}
                   </div>
                 </div>
                 <div className="space-y-3 md:min-w-64">
-                  <strong className="block text-xl sm:text-2xl">Rs. {order.amount}</strong>
+                  <strong className="price-text block text-xl sm:text-2xl">Rs. {order.amount}</strong>
                   <div className={`flex items-start gap-2 rounded-md border p-3 ${status.className}`}>
-                    <Icon size={22} />
-                    <div>
+                    <Icon size={22} className="shrink-0" />
+                    <div className="min-w-0">
                       <p className="font-black">{status.label}</p>
                       <p className="text-sm">{status.text}</p>
                     </div>
