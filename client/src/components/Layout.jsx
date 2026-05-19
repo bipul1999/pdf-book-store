@@ -1,4 +1,4 @@
-import { BookOpen, Facebook, Home, Instagram, LayoutDashboard, Library, Linkedin, LogOut, Mail, Menu, MessageCircle, Phone, ShoppingCart, User, X } from "lucide-react";
+import { BookOpen, Facebook, Home, Instagram, LayoutDashboard, Library, Linkedin, LogOut, Mail, Menu, MessageCircle, Phone, ShoppingCart, Sparkles, User, X } from "lucide-react";
 import { useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -134,13 +134,13 @@ export default function Layout() {
         <NavLink className={bottomNavClass} to={isAuthenticated ? "/dashboard/library" : "/login"}>{isAuthenticated ? <Library size={20} /> : <User size={20} />}{isAuthenticated ? "Library" : "Login"}</NavLink>
       </nav>
       <ChatWidget />
-      <footer className="bg-[#fff8f1] px-4 py-8 text-sm text-ink">
-        <div className="mx-auto max-w-7xl overflow-hidden rounded-lg border border-orange-100 bg-white shadow-soft">
-          <div className="h-1 bg-gradient-to-r from-orange-500 via-amber-300 to-orange-700" />
-          <div className="grid gap-6 p-5 sm:p-6 md:grid-cols-[1.1fr_.9fr_auto] md:items-center">
+      <footer className="bg-[linear-gradient(180deg,#fffaf5_0%,#fff3e4_100%)] px-4 pb-24 pt-8 text-sm text-ink md:pb-8">
+        <div className="mx-auto max-w-7xl overflow-hidden rounded-xl border border-orange-100/80 bg-white/95 shadow-soft ring-1 ring-white/80 backdrop-blur">
+          <div className="h-1 bg-gradient-to-r from-teal-700 via-orange-400 to-amber-300" />
+          <div className="grid gap-6 p-5 sm:p-6 md:grid-cols-[1.1fr_.9fr_auto] md:items-start">
             <div>
-              <p className="text-lg font-black">{storeName}</p>
-              <p className="mt-2 max-w-md text-sm leading-6 text-gray-600">
+              <p className="text-lg font-black text-[#073b3a]">{storeName}</p>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-gray-600">
                 {footerDescription}
               </p>
             </div>
@@ -160,7 +160,7 @@ export default function Layout() {
                   <a
                     key={name}
                     aria-label={name}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-orange-100 bg-orange-50 text-orange-700 transition hover:-translate-y-0.5 hover:border-orange-300 hover:bg-orange-500 hover:text-white"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-orange-100 bg-orange-50 text-orange-700 shadow-sm transition hover:-translate-y-0.5 hover:border-orange-300 hover:bg-orange-500 hover:text-white hover:shadow-md"
                     href={href}
                     rel="noreferrer"
                     target="_blank"
@@ -172,9 +172,12 @@ export default function Layout() {
               </div>
             </div>
           </div>
-          <div className="border-t border-orange-100 bg-orange-50/70 py-2">
-            <div className="footer-built-marquee text-xs font-black uppercase tracking-wide text-orange-700">
-              <span>Built by Bipul Singh</span>
+          <div className="border-t border-orange-100 bg-[#073b3a] px-4 py-4">
+            <div className="flex justify-center">
+              <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/40 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-wide text-amber-100 shadow-sm">
+                <Sparkles size={14} className="text-amber-300" />
+                Crafted by Bipul Singh
+              </span>
             </div>
           </div>
         </div>
