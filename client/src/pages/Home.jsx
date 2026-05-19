@@ -116,7 +116,7 @@ export default function Home() {
               <div className="min-w-0 text-center md:text-left">
                 <p className="text-[15px] font-bold leading-7 text-ink sm:text-lg sm:leading-8 md:text-xl md:leading-9">
                   <span aria-hidden="true">&ldquo;</span>
-                  <FallingLetters key={`quote-${quoteSlot}`} text={activeQuote.quote || defaultQuote.quote} wrap repeat />
+                  <FallingLetters key={`quote-${quoteSlot}`} text={activeQuote.quote || defaultQuote.quote} wrap />
                   <span aria-hidden="true">&rdquo;</span>
                 </p>
                 <p className="mt-3 text-sm font-semibold text-gray-600">
