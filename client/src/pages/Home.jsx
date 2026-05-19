@@ -45,7 +45,6 @@ export default function Home() {
   const [bookOffset, setBookOffset] = useState(0);
   const [isBookTransitioning, setIsBookTransitioning] = useState(false);
   const [quoteSlot, setQuoteSlot] = useState(() => Math.floor(Date.now() / FOUR_HOURS_MS));
-  const [quoteAnimationTick, setQuoteAnimationTick] = useState(0);
 
   useEffect(() => {
     async function loadHome() {
@@ -70,13 +69,6 @@ export default function Home() {
     const timer = setInterval(() => {
       setQuoteSlot(Math.floor(Date.now() / FOUR_HOURS_MS));
     }, 60 * 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setQuoteAnimationTick((value) => value + 1);
-    }, 8000);
     return () => clearInterval(timer);
   }, []);
 
@@ -124,7 +116,7 @@ export default function Home() {
               <div className="min-w-0 text-center md:text-left">
                 <p className="text-[15px] font-bold leading-7 text-ink sm:text-lg sm:leading-8 md:text-xl md:leading-9">
                   <span aria-hidden="true">&ldquo;</span>
-                  <FallingLetters key={`quote-${quoteSlot}-${quoteAnimationTick}`} text={activeQuote.quote || defaultQuote.quote} wrap />
+                  <FallingLetters key={`quote-${quoteSlot}`} text={activeQuote.quote || defaultQuote.quote} wrap repeat />
                   <span aria-hidden="true">&rdquo;</span>
                 </p>
                 <p className="mt-3 text-sm font-semibold text-gray-600">

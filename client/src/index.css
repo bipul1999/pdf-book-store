@@ -73,6 +73,21 @@ a { color: inherit; text-decoration: none; }
   }
 }
 
+@keyframes falling-letter-repeat {
+  0%, 68%, 100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+  76% {
+    opacity: 0;
+    transform: translate3d(var(--letter-x), var(--letter-y), 0) rotate(var(--letter-rotate)) scale(.88);
+  }
+  92% {
+    opacity: 1;
+    transform: translate3d(0, 5px, 0) rotate(0deg) scale(1.04);
+  }
+}
+
 .falling-word {
   display: inline-block;
   max-width: 100%;
@@ -86,6 +101,11 @@ a { color: inherit; text-decoration: none; }
   animation: falling-letter .95s cubic-bezier(.18, .9, .22, 1.16) both;
   animation-delay: var(--letter-delay);
   transform-origin: 50% 80%;
+}
+
+.falling-letter-repeat {
+  animation: falling-letter-repeat 5s cubic-bezier(.18, .9, .22, 1.16) infinite both;
+  animation-delay: var(--letter-delay);
 }
 
 .falling-word-wrap {

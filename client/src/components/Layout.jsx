@@ -18,7 +18,7 @@ const socialLinks = [
   { name: "Instagram", href: "#", icon: Instagram }
 ];
 
-export function FallingLetters({ text, className = "", startDelay = 0, wrap = false }) {
+export function FallingLetters({ text, className = "", startDelay = 0, wrap = false, repeat = false }) {
   const letters =
     typeof Intl !== "undefined" && Intl.Segmenter
       ? Array.from(new Intl.Segmenter("hi", { granularity: "grapheme" }).segment(text), ({ segment }) => segment)
@@ -33,7 +33,7 @@ export function FallingLetters({ text, className = "", startDelay = 0, wrap = fa
         return (
           <span
             aria-hidden="true"
-            className="falling-letter"
+            className={`falling-letter ${repeat ? "falling-letter-repeat" : ""}`}
             key={`${letter}-${index}`}
             style={{
               "--letter-delay": `${startDelay + index * 0.035}s`,
