@@ -141,7 +141,11 @@ export default function Home() {
     const customQuote = quote?.quote ? quote : defaultQuote;
     return [customQuote, ...rotatingQuotes.filter((item) => item.quote !== customQuote.quote)];
   }, [quote]);
-  const activeQuote = quoteOptions[quoteSlot % quoteOptions.length] || defaultQuote;
+  const selectedQuote = quoteOptions[quoteSlot % quoteOptions.length] || defaultQuote;
+  const activeQuote = {
+    ...selectedQuote,
+    authorImage: selectedQuote.authorImage || quote?.authorImage || defaultQuote.authorImage
+  };
 
   return (
     <main>
