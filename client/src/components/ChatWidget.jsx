@@ -1,16 +1,30 @@
-import { CheckCircle2, Send, X } from "lucide-react";
+import { CheckCircle2, Mic, Send, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 import api from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import assistantAvatar from "../assets/ai-assistant-sari.png";
 
 const welcomeText = "Namaste, main Mahesh Bharti Store AI Assistant hoon.";
 const quickProblems = [
+  "Author Mahesh Bharti ji ke baare me batao",
+  "Books section par le chalo",
+  "Meri library khol do",
   "Payment ho gaya lekin book unlock nahi hui",
-  "OTP ya login me problem aa rahi hai",
-  "PDF download/open nahi ho raha",
-  "Book ke price ya availability ke baare me puchna hai"
+  "PDF download/open nahi ho raha"
+];
+
+const authorAnswer = "Mahesh Bharti ji ek lekhak hain jinki pustakein is digital store par PDF aur e-book format me available hain. Yahan user unki books browse, purchase, download aur library me read kar sakte hain.";
+
+const guideActions = [
+  { label: "Home", words: ["home", "homepage", "main page", "ghar"], path: "/" },
+  { label: "Books", words: ["books", "book section", "book list"], path: "/books" },
+  { label: "Login", words: ["login", "sign in", "account"], path: "/login" },
+  { label: "Signup", words: ["signup", "sign up", "register", "create account"], path: "/signup" },
+  { label: "Cart", words: ["cart", "bag", "tokri"], path: "/cart" },
+  { label: "Library", words: ["library", "meri book", "my books", "purchased", "read"], path: "/dashboard/library" },
+  { label: "Orders", words: ["orders", "order history", "payment history"], path: "/dashboard/orders" }
 ];
 
 function GirlAssistantAvatar({ size = "md" }) {
@@ -31,6 +45,7 @@ function GirlAssistantAvatar({ size = "md" }) {
 
 export default function ChatWidget() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
@@ -40,8 +55,10 @@ export default function ChatWidget() {
   const [step, setStep] = useState("welcome");
   const [input, setInput] = useState("");
   const [started, setStarted] = useState(false);
+  const [listening, setListening] = useState(false);
   const timers = useRef([]);
   const chatEndRef = useRef(null);
+  const recognitionRef = useRef(null);
 
   const placeholders = {
     name: "Apna naam likhiye",
@@ -53,6 +70,18 @@ export default function ChatWidget() {
   function clearTimers() {
     timers.current.forEach((timer) => clearTimeout(timer));
     timers.current = [];
+  }
+
+  function normalizeText(value) {
+    return String(value || "").toLowerCase().trim();
+  }
+
+  function searchBookQuery(text) {
+    return text
+      .replace(/^(mujhe|mere ko|please|plz|open|search|find|dikhao|dikhaiye|le chalo|khol do|book|kitab|pustak)\s+/i, "")
+      .replace(/\b(book|kitab|pustak|ebook|e-book|section|par|pe|tak|khol do|dikhao|dikhaiye|le chalo|search karo|find karo)\b/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
   }
 
   function shouldUseMobileVoice() {
@@ -92,11 +121,14 @@ export default function ChatWidget() {
     timers.current.push(setTimeout(() => {
       setMessages([]);
       setStep("name");
-      addBotMessage("Main aapki query samajh kar instant guidance dunga aur zarurat hui to admin ko ticket bhej dunga. Sabse pehle apna naam bataiye.", 150);
+      addBotMessage("Main author, books, login, cart, library aur orders me aapki help kar sakti hoon. Zarurat hui to support ticket bhi bana dungi. Sabse pehle apna naam bataiye.", 150);
     }, 2300));
   }
 
-  useEffect(() => () => clearTimers(), []);
+  useEffect(() => () => {
+    clearTimers();
+    recognitionRef.current?.abort?.();
+  }, []);
 
   useEffect(() => {
     if (open && !started) startConversation();
@@ -109,7 +141,7 @@ export default function ChatWidget() {
 
   async function sendIssue(problemText) {
     setLoading(true);
-    addBotMessage("Thanks, main aapki problem admin ko send kar raha hoon.", 250);
+    addBotMessage("Thanks, main aapki problem support team ko send kar rahi hoon.", 250);
     try {
       const { data } = await api.post("/support/tickets", {
         name,
@@ -118,10 +150,10 @@ export default function ChatWidget() {
         message: problemText,
         pageUrl: window.location.href
       });
-      addBotMessage(data.reply || "Aapki problem admin ko send ho gayi hai. Jaldi help milegi.", 700);
+      addBotMessage(data.reply || "Aapki problem support team ko send ho gayi hai. Jaldi help milegi.", 700);
       addBotMessage(`Ticket ID: ${data.ticketId}. Category: ${data.category}. Priority: ${data.priority}.`, 1000);
       setStep("done");
-      toast.success("Admin ko problem send ho gaya");
+      toast.success("Support ticket send ho gaya");
     } catch (error) {
       addBotMessage("Sorry, message send nahi ho paya. Thodi der baad fir try kijiye.", 700);
       setStep("problem");
@@ -131,9 +163,37 @@ export default function ChatWidget() {
     }
   }
 
-  async function handleChatSubmit(event) {
-    event.preventDefault();
-    const value = input.trim();
+  function handleGuideRequest(value) {
+    const text = normalizeText(value);
+
+    if (/\badmin\b|admin panel|dashboard admin|manage books|add book/i.test(text)) {
+      addBotMessage("Ye secure owner area hai. Main public store, books, login, cart, library aur orders me help kar sakti hoon.", 350);
+      return true;
+    }
+
+    if (/author|writer|mahesh|bharti|lekhak|about/i.test(text)) {
+      addBotMessage(authorAnswer, 350);
+      return true;
+    }
+
+    const action = guideActions.find((item) => item.words.some((word) => text.includes(word)));
+    if (action) {
+      navigate(action.path);
+      addBotMessage(`${action.label} section khol diya.`, 350);
+      return true;
+    }
+
+    if (/search|find|dikhao|dikhaiye|book|kitab|pustak|ebook|e-book/i.test(text)) {
+      const query = searchBookQuery(value);
+      navigate(query ? `/books?q=${encodeURIComponent(query)}` : "/books");
+      addBotMessage(query ? `"${query}" ke liye books search kar di.` : "Books section khol diya.", 350);
+      return true;
+    }
+
+    return false;
+  }
+
+  async function processUserText(value) {
     if (loading || step === "welcome" || step === "done" || !value) return;
 
     if (step === "name" && value.length < 2) {
@@ -165,16 +225,50 @@ export default function ChatWidget() {
     if (step === "email") {
       setEmail(value);
       setStep("phone");
-      addBotMessage("Ab mobile number likhiye, taaki admin zarurat pade to contact kar sake.", 450);
+      addBotMessage("Ab mobile number likhiye, taaki support team zarurat pade to contact kar sake.", 450);
       return;
     }
     if (step === "phone") {
       setPhone(value);
       setStep("problem");
-      addBotMessage("Ab bataiye aapko kya problem aa rahi hai?", 450);
+      addBotMessage("Ab bataiye aapko kya chahiye? Aap author ke baare me puch sakte hain, book ka naam bol sakte hain, ya section khulwa sakte hain.", 450);
       return;
     }
+    if (handleGuideRequest(value)) return;
     await sendIssue(value);
+  }
+
+  async function handleChatSubmit(event) {
+    event.preventDefault();
+    const value = input.trim();
+    setInput("");
+    await processUserText(value);
+  }
+
+  function startVoiceInput() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error("Is browser me voice input support nahi hai");
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+    recognition.lang = "hi-IN";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onstart = () => setListening(true);
+    recognition.onerror = () => {
+      setListening(false);
+      toast.error("Voice samajh nahi aayi, dobara try kijiye");
+    };
+    recognition.onend = () => setListening(false);
+    recognition.onresult = async (event) => {
+      const transcript = event.results?.[0]?.[0]?.transcript?.trim();
+      if (!transcript) return;
+      setInput("");
+      await processUserText(transcript);
+    };
+    recognition.start();
   }
 
   return (
@@ -188,7 +282,7 @@ export default function ChatWidget() {
               </span>
               <div>
                 <p className="font-black">AI Support Assistant</p>
-                <p className="flex items-center gap-1 text-xs text-orange-100"><CheckCircle2 size={12} /> Smart reply + admin ticket</p>
+                <p className="flex items-center gap-1 text-xs text-orange-100"><CheckCircle2 size={12} /> Voice guide + support ticket</p>
               </div>
             </div>
             <button className="rounded-full p-2 hover:bg-white/10" onClick={() => setOpen(false)} aria-label="Close chat">
@@ -237,11 +331,22 @@ export default function ChatWidget() {
               <input
                 className="input !min-h-11 flex-1"
                 disabled={loading || step === "welcome" || step === "done"}
-                placeholder={step === "done" ? "Ticket admin ko send ho gaya" : placeholders[step] || "Type here..."}
+                placeholder={step === "done" ? "Ticket support team ko send ho gaya" : placeholders[step] || "Type here..."}
                 type={step === "email" ? "email" : "text"}
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
               />
+              {step !== "done" && (
+                <button
+                  aria-label="Speak"
+                  className={`btn-secondary !min-h-11 !px-3 ${listening ? "!border-orange-400 !bg-orange-100 !text-orange-700" : ""}`}
+                  disabled={loading || step === "welcome"}
+                  onClick={startVoiceInput}
+                  type="button"
+                >
+                  <Mic size={16} />
+                </button>
+              )}
               {step === "done" ? (
                 <button className="btn-secondary !min-h-11 !px-3" type="button" onClick={startConversation}>
                   New
