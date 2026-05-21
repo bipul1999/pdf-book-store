@@ -17,6 +17,33 @@ const quickProblems = [
 
 const authorAnswer = "Mahesh Bharti ji ek lekhak hain jinki pustakein is digital store par PDF aur e-book format me available hain. Yahan user unki books browse, purchase, download aur library me read kar sakte hain.";
 
+const answerRules = [
+  {
+    words: ["buy", "purchase", "kharid", "kaise kharide", "order"],
+    reply: "Book kharidne ke liye Books section me jaiye, book open kijiye, Buy PDF par tap kijiye, payment complete kijiye. Payment verify hone ke baad book Library me unlock ho jayegi."
+  },
+  {
+    words: ["payment", "upi", "razorpay", "pay", "paid"],
+    reply: "Payment ke liye Razorpay ya UPI option milega. UPI manual payment me exact amount pay karke screenshot upload karna hota hai. Verify hone ke baad PDF Library me unlock hoti hai."
+  },
+  {
+    words: ["download", "pdf", "open nahi", "read", "library"],
+    reply: "PDF padhne ya download karne ke liye login karke Library section open kijiye. Sirf successful payment wali books Library me read/open hoti hain."
+  },
+  {
+    words: ["login", "otp", "password", "account"],
+    reply: "Login ke liye apna email/mobile aur password use kijiye. Agar password bhool gaye hain to Forgot Password se OTP ke through reset kar sakte hain."
+  },
+  {
+    words: ["cart"],
+    reply: "Cart me selected books dikhti hain. Cart open karke checkout par jaiye aur payment complete kijiye."
+  },
+  {
+    words: ["contact", "help", "support"],
+    reply: "Aap apni problem yahin likh sakte hain. Agar issue resolve na ho to main support ticket bana dungi."
+  }
+];
+
 const guideActions = [
   { label: "Home", words: ["home", "homepage", "main page", "ghar"], path: "/" },
   { label: "Books", words: ["books", "book section", "book list"], path: "/books" },
@@ -61,10 +88,7 @@ export default function ChatWidget() {
   const recognitionRef = useRef(null);
 
   const placeholders = {
-    name: "Apna naam likhiye",
-    email: "Apna email likhiye",
-    phone: "Mobile number likhiye",
-    problem: "Ab apni problem detail me likhiye..."
+    problem: "Apna question likhiye ya mic se boliye..."
   };
 
   function clearTimers() {
@@ -120,8 +144,8 @@ export default function ChatWidget() {
     speakAssistantText(welcomeText, true);
     timers.current.push(setTimeout(() => {
       setMessages([]);
-      setStep("name");
-      addBotMessage("Main author, books, login, cart, library aur orders me aapki help kar sakti hoon. Zarurat hui to support ticket bhi bana dungi. Sabse pehle apna naam bataiye.", 150);
+      setStep("problem");
+      addBotMessage("Aap seedha question puch sakte hain: author, book search, payment, login, library, download, ya kisi section par jaana.", 150);
     }, 2300));
   }
 
@@ -183,7 +207,7 @@ export default function ChatWidget() {
       return true;
     }
 
-    if (/search|find|dikhao|dikhaiye|book|kitab|pustak|ebook|e-book/i.test(text)) {
+    if (!shouldCreateSupportTicket(value) && /search|find|dikhao|dikhaiye|book|kitab|pustak|ebook|e-book/i.test(text)) {
       const query = searchBookQuery(value);
       navigate(query ? `/books?q=${encodeURIComponent(query)}` : "/books");
       addBotMessage(query ? `"${query}" ke liye books search kar di.` : "Books section khol diya.", 350);
@@ -193,21 +217,21 @@ export default function ChatWidget() {
     return false;
   }
 
+  function handleKnownQuestion(value) {
+    const text = normalizeText(value);
+    const match = answerRules.find((rule) => rule.words.some((word) => text.includes(word)));
+    if (!match) return false;
+    addBotMessage(match.reply, 350);
+    return true;
+  }
+
+  function shouldCreateSupportTicket(value) {
+    return /(problem|issue|error|not working|nahi ho raha|nahi aa raha|nahi hui|unlock|fail|failed|refund|money|deduct|kat gaya|ho gaya lekin|complaint|shikayat|support ticket)/i.test(value);
+  }
+
   async function processUserText(value) {
     if (loading || step === "welcome" || step === "done" || !value) return;
 
-    if (step === "name" && value.length < 2) {
-      toast.error("Naam thoda clearly likhiye");
-      return;
-    }
-    if (step === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-      toast.error("Valid email likhiye");
-      return;
-    }
-    if (step === "phone" && value.replace(/\D/g, "").length < 8) {
-      toast.error("Valid mobile number likhiye");
-      return;
-    }
     if (step === "problem" && value.length < 8) {
       toast.error("Problem thoda detail me likhiye");
       return;
@@ -216,26 +240,13 @@ export default function ChatWidget() {
     setMessages((items) => [...items, { role: "user", text: value }]);
     setInput("");
 
-    if (step === "name") {
-      setName(value);
-      setStep("email");
-      addBotMessage(`Thanks ${value}. Ab apna email bataiye.`, 450);
-      return;
-    }
-    if (step === "email") {
-      setEmail(value);
-      setStep("phone");
-      addBotMessage("Ab mobile number likhiye, taaki support team zarurat pade to contact kar sake.", 450);
-      return;
-    }
-    if (step === "phone") {
-      setPhone(value);
-      setStep("problem");
-      addBotMessage("Ab bataiye aapko kya chahiye? Aap author ke baare me puch sakte hain, book ka naam bol sakte hain, ya section khulwa sakte hain.", 450);
-      return;
-    }
     if (handleGuideRequest(value)) return;
-    await sendIssue(value);
+    if (shouldCreateSupportTicket(value)) {
+      await sendIssue(value);
+      return;
+    }
+    if (handleKnownQuestion(value)) return;
+    addBotMessage("Main is store me books search, author info, payment, login, library, cart aur orders me help kar sakti hoon. Book ka naam likhiye ya boliye, main search kar dungi.", 350);
   }
 
   async function handleChatSubmit(event) {
