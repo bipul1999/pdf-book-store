@@ -68,6 +68,12 @@ app.get("/api/health", (_req, res) => res.json({
   app: "PDF Book Store",
   database: mongoose.connection.readyState === 1 ? "connected" : "not_connected"
 }));
+
+function requireDatabase(_req, res, next) {
+  if (mongoose.connection.readyState === 1) return next();
+  return res.status(503).json({ message: "Database not connected. Please check Render MONGO_URI and MongoDB Atlas network access." });
+}
+
 const staticOptions = {
   setHeaders(res) {
     res.setHeader("X-Content-Type-Options", "nosniff");
@@ -78,15 +84,15 @@ app.use("/uploads/covers", express.static(path.join(__dirname, "..", "uploads", 
 app.use("/uploads/payment-qrs", express.static(path.join(__dirname, "..", "uploads", "payment-qrs"), { ...staticOptions, index: false }));
 app.use("/uploads/quotes", express.static(path.join(__dirname, "..", "uploads", "quotes"), { ...staticOptions, index: false }));
 app.use("/api/site", siteRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/books", bookRoutes);
-app.use("/api/categories", categoryRoutes);
-app.use("/api/payments", paymentRoutes);
-app.post("/api/create-order", paymentLimiter, protect, createRazorpayOrder);
-app.post("/api/verify-payment", paymentLimiter, protect, verifyRazorpaySignature);
-app.use("/api/users", userRoutes);
-app.use("/api/support", supportRoutes);
-app.use("/api/admin", adminRoutes);
+app.use("/api/auth", requireDatabase, authRoutes);
+app.use("/api/books", requireDatabase, bookRoutes);
+app.use("/api/categories", requireDatabase, categoryRoutes);
+app.use("/api/payments", requireDatabase, paymentRoutes);
+app.post("/api/create-order", requireDatabase, paymentLimiter, protect, createRazorpayOrder);
+app.post("/api/verify-payment", requireDatabase, paymentLimiter, protect, verifyRazorpaySignature);
+app.use("/api/users", requireDatabase, userRoutes);
+app.use("/api/support", requireDatabase, supportRoutes);
+app.use("/api/admin", requireDatabase, adminRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
