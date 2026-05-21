@@ -285,7 +285,7 @@ export default function ChatWidget() {
   return (
     <>
       {open && (
-        <section className="fixed bottom-24 right-3 z-50 w-[calc(100vw-1.5rem)] max-w-sm overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-[0_20px_60px_rgba(15,23,42,.25)] sm:bottom-6 sm:right-6">
+        <section className="fixed bottom-24 right-3 z-50 flex max-h-[calc(100vh-7rem)] w-[calc(100vw-1.5rem)] max-w-sm flex-col overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-[0_20px_60px_rgba(15,23,42,.25)] sm:bottom-6 sm:right-6 sm:max-h-[calc(100vh-3rem)]">
           <button
             className="absolute right-2 top-2 z-10 grid h-9 w-9 place-items-center rounded-full bg-white/95 text-slate-700 shadow-md ring-1 ring-orange-100 transition hover:bg-orange-50 hover:text-orange-700"
             onClick={() => setOpen(false)}
@@ -305,8 +305,8 @@ export default function ChatWidget() {
               </div>
             </div>
           </div>
-          <div className="space-y-3 p-4">
-            <div className="max-h-72 space-y-3 overflow-y-auto rounded-2xl bg-slate-50 p-3">
+          <div className="flex min-h-0 flex-1 flex-col space-y-3 p-4">
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto rounded-2xl bg-slate-50 p-3">
               {messages.map((item, index) => (
                 <div className={`flex ${item.role === "user" ? "justify-end" : "justify-start"}`} key={`${item.role}-${index}`}>
                   {item.role === "assistant" && (
@@ -377,9 +377,7 @@ export default function ChatWidget() {
         </section>
       )}
       <button
-        className={`fixed right-4 grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-[#073b3a] to-orange-500 text-white shadow-[0_12px_30px_rgba(249,115,22,.35)] ring-4 ring-white transition hover:scale-105 sm:right-6 ${
-          open ? "bottom-3 z-[60] sm:bottom-6" : "bottom-24 z-40 sm:bottom-6"
-        }`}
+        className="fixed bottom-24 right-4 z-40 grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-[#073b3a] to-orange-500 text-white shadow-[0_12px_30px_rgba(249,115,22,.35)] ring-4 ring-white transition hover:scale-105 sm:bottom-6 sm:right-6"
         onClick={() => setOpen((value) => !value)}
         aria-label="Open AI help chat"
       >
