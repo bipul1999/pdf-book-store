@@ -7,6 +7,14 @@ import { FallingLetters } from "../components/Layout.jsx";
 
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
 
+function currentQuoteSlot() {
+  return Math.floor(Date.now() / FOUR_HOURS_MS);
+}
+
+function msUntilNextQuoteSlot() {
+  return FOUR_HOURS_MS - (Date.now() % FOUR_HOURS_MS);
+}
+
 const defaultQuote = {
   quote: "किताबें केवल शब्द नहीं होतीं, वे जीवन को समझने की एक शांत रोशनी होती हैं।",
   authorName: "महेश भारती",
@@ -44,7 +52,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [bookOffset, setBookOffset] = useState(0);
   const [isBookTransitioning, setIsBookTransitioning] = useState(false);
-  const [quoteSlot, setQuoteSlot] = useState(() => Math.floor(Date.now() / FOUR_HOURS_MS));
+  const [quoteSlot, setQuoteSlot] = useState(() => currentQuoteSlot());
 
   useEffect(() => {
     async function loadHome() {
@@ -66,10 +74,18 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setQuoteSlot(Math.floor(Date.now() / FOUR_HOURS_MS));
-    }, 60 * 1000);
-    return () => clearInterval(timer);
+    let intervalTimer;
+    const timeoutTimer = setTimeout(() => {
+      setQuoteSlot(currentQuoteSlot());
+      intervalTimer = setInterval(() => {
+        setQuoteSlot(currentQuoteSlot());
+      }, FOUR_HOURS_MS);
+    }, msUntilNextQuoteSlot());
+
+    return () => {
+      clearTimeout(timeoutTimer);
+      clearInterval(intervalTimer);
+    };
   }, []);
 
   useEffect(() => {
@@ -116,7 +132,7 @@ export default function Home() {
               <div className="min-w-0 text-center md:text-left">
                 <p className="text-[15px] font-bold leading-7 text-ink sm:text-lg sm:leading-8 md:text-xl md:leading-9">
                   <span aria-hidden="true">&ldquo;</span>
-                  <FallingLetters key={`quote-${quoteSlot}`} text={activeQuote.quote || defaultQuote.quote} className="quote-fall-word" startDelay={0.65} wrap />
+                  <FallingLetters key={`quote-${quoteSlot}-${activeQuote.quote}`} text={activeQuote.quote || defaultQuote.quote} className="quote-fall-word" startDelay={0.2} wrap />
                   <span aria-hidden="true">&rdquo;</span>
                 </p>
                 <p className="mt-3 text-sm font-semibold text-gray-600">
