@@ -27,8 +27,8 @@ export default function AdminSignup() {
     setLoading(true);
     try {
       const { data } = await api.post("/auth/admin/signup", form);
-      toast.success("OTP sent to Gmail");
-      navigate(`/admin/verify-otp?email=${encodeURIComponent(form.email)}`);
+      toast.success(data.devOtp ? `OTP: ${data.devOtp}` : "OTP sent to Gmail");
+      navigate(`/admin/verify-otp?email=${encodeURIComponent(form.email)}${data.devOtp ? `&setupOtp=${encodeURIComponent(data.devOtp)}` : ""}`);
     } catch (error) {
       const apiError = error.response?.data;
       const validationMessage = apiError?.errors?.[0]?.msg;

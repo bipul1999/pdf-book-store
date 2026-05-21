@@ -16,6 +16,7 @@ export default function AdminVerifyOtp() {
   const { saveSession } = useAuth();
   const navigate = useNavigate();
   const email = params.get("email") || "";
+  const setupOtp = params.get("setupOtp") || "";
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -47,7 +48,7 @@ export default function AdminVerifyOtp() {
       const { data } = await api.post("/auth/admin/resend-otp", { email });
       setResendIn(data.resendAfterSeconds || 60);
       setExpiresIn(data.otpExpiresInSeconds || 600);
-      toast.success("OTP resent");
+      toast.success(data.devOtp ? `OTP: ${data.devOtp}` : "OTP resent");
     } catch (error) {
       toast.error(otpToastMessage(error, "Could not resend OTP"));
     } finally {
@@ -64,6 +65,11 @@ export default function AdminVerifyOtp() {
           <p className="text-sm text-gray-600">Enter the 6 digit OTP sent to your Gmail address.</p>
         </div>
         <input className="input" value={email} readOnly />
+        {setupOtp && (
+          <div className="rounded-md bg-orange-50 p-3 text-sm font-black text-orange-800">
+            Setup OTP: {setupOtp}
+          </div>
+        )}
         <input className="input" maxLength={6} placeholder="6 digit OTP" value={code} onChange={(e) => { setCode(e.target.value); setOtpError(""); }} required />
         {otpError && <p className="text-sm font-bold text-red-600">{otpError}</p>}
         <p className="text-sm font-semibold text-gray-600">OTP expires in {formatSeconds(expiresIn)}</p>
