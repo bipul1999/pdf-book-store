@@ -85,13 +85,15 @@ export async function verifySignupOtp(req, res) {
 
 export async function adminStatus(_req, res) {
   const admin = await User.findOne({ role: "admin", isVerified: true });
-  res.json({ adminExists: Boolean(admin) });
+  res.json({ adminExists: Boolean(admin), adminEmail: admin?.email || "" });
 }
 
 export async function adminSignup(req, res) {
   const { name, email, phone, password } = req.body;
-  const verifiedAdmin = await User.findOne({ role: "admin", isVerified: true });
-  if (verifiedAdmin) return res.status(409).json({ message: "Admin account already exists" });
+  let verifiedAdmin = await User.findOne({ role: "admin", isVerified: true }).select("+password");
+  if (verifiedAdmin && verifiedAdmin.email !== email) {
+    return res.status(409).json({ message: "Admin account already exists with another Gmail" });
+  }
 
   const existingDifferentUser = await User.findOne({
     role: { $ne: "admin" },
@@ -99,7 +101,7 @@ export async function adminSignup(req, res) {
   });
   if (existingDifferentUser) return res.status(409).json({ message: "Email or phone already exists as a user account" });
 
-  let admin = await User.findOne({ role: "admin", isVerified: false }).select("+password");
+  let admin = verifiedAdmin || await User.findOne({ role: "admin", isVerified: false }).select("+password");
   if (admin && admin.email !== email) return res.status(409).json({ message: "An admin signup is already pending verification" });
 
   if (admin) {
@@ -107,6 +109,7 @@ export async function adminSignup(req, res) {
     admin.email = email;
     admin.phone = phone;
     admin.password = password;
+    admin.isVerified = false;
     await admin.save();
   } else {
     admin = await User.create({ name, email, phone, password, role: "admin", isVerified: false });
@@ -127,7 +130,7 @@ export async function resendAdminSignupOtp(req, res) {
 export async function verifyAdminSignupOtp(req, res) {
   const { email, code } = req.body;
   const verifiedAdmin = await User.findOne({ role: "admin", isVerified: true });
-  if (verifiedAdmin) return res.status(409).json({ message: "Admin account already exists" });
+  if (verifiedAdmin && verifiedAdmin.email !== email) return res.status(409).json({ message: "Admin account already exists" });
 
   await verifyOtp({ email, purpose: "admin-signup", code });
   const admin = await User.findOneAndUpdate(
