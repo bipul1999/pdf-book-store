@@ -5,6 +5,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import path from "path";
 import { fileURLToPath } from "url";
+import mongoose from "mongoose";
 import authRoutes from "./routes/authRoutes.js";
 import bookRoutes from "./routes/bookRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
@@ -62,7 +63,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use("/api", apiLimiter);
 
-app.get("/api/health", (_req, res) => res.json({ status: "ok", app: "PDF Book Store" }));
+app.get("/api/health", (_req, res) => res.json({
+  status: "ok",
+  app: "PDF Book Store",
+  database: mongoose.connection.readyState === 1 ? "connected" : "not_connected"
+}));
 const staticOptions = {
   setHeaders(res) {
     res.setHeader("X-Content-Type-Options", "nosniff");

@@ -32,7 +32,10 @@ export default function AdminSignup() {
     } catch (error) {
       const apiError = error.response?.data;
       const validationMessage = apiError?.errors?.[0]?.msg;
-      toast.error(validationMessage || apiError?.message || "Admin signup failed");
+      const timeoutMessage = error.code === "ECONNABORTED"
+        ? "Backend abhi start nahi hua. 1 minute baad dobara try karein."
+        : "Admin signup failed";
+      toast.error(validationMessage || apiError?.message || timeoutMessage);
     } finally {
       setLoading(false);
     }
