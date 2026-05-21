@@ -1,4 +1,4 @@
-import { BookPlus, CheckCircle2, Download, Library, RefreshCw, Search, ShieldCheck, Sparkles } from "lucide-react";
+import { BookPlus, CheckCircle2, CreditCard, Download, Library, RefreshCw, Search, ShieldCheck, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import api from "../api/client.js";
@@ -156,6 +156,12 @@ export default function Home() {
     { icon: Library, title: "लाइब्रेरी में उपलब्ध", text: "Purchased books आपकी library में रहती हैं, जहां से आप पढ़ सकते हैं।" },
     { icon: Download, title: "मोबाइल-फ्रेंडली", text: "फोन, टैबलेट या लैपटॉप पर आराम से पढ़ने का अनुभव।" }
   ];
+  const processSteps = [
+    { icon: Search, title: "पुस्तक खोजें", text: "Catalog में विषय, नाम या लेखक के अनुसार सही पुस्तक चुनें।" },
+    { icon: CheckCircle2, title: "विवरण समझें", text: "Cover, description और price देखकर निर्णय लें।" },
+    { icon: CreditCard, title: "भुगतान करें", text: "Razorpay या UPI/manual payment से सुरक्षित checkout करें।" },
+    { icon: Library, title: "लाइब्रेरी में पढ़ें", text: "Payment verify होने के बाद PDF आपकी library में उपलब्ध होगी।" }
+  ];
 
   return (
     <main>
@@ -261,6 +267,33 @@ export default function Home() {
 
       <section className="bg-paper px-3 py-8 sm:px-4 sm:py-12">
         <div className="mx-auto max-w-7xl">
+          <div className="mb-6 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
+            <div>
+              <span className="badge mb-3">खरीदने की प्रक्रिया</span>
+              <h2 className="text-2xl font-black leading-tight text-ink sm:text-3xl">पुस्तक खरीदना आसान और स्पष्ट</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-7 text-gray-600">हर step साफ रखा गया है ताकि पाठक बिना भ्रम के सही पुस्तक चुनकर उसे सुरक्षित रूप से पढ़ सकें।</p>
+            </div>
+            <Link className="btn-secondary w-full md:w-auto" to="/books">Catalog खोलें</Link>
+          </div>
+          <div className="grid gap-3 md:grid-cols-4">
+            {processSteps.map(({ icon: Icon, title, text }, index) => (
+              <div className="relative rounded-lg border border-orange-100 bg-white p-4 shadow-soft" key={title}>
+                <div className="mb-4 flex items-center justify-between">
+                  <span className="grid h-10 w-10 place-items-center rounded-md bg-orange-50 text-orange-600 ring-1 ring-orange-100">
+                    <Icon size={20} />
+                  </span>
+                  <span className="text-xs font-black text-orange-300">0{index + 1}</span>
+                </div>
+                <h3 className="font-black text-ink">{title}</h3>
+                <p className="mt-2 text-sm leading-6 text-gray-600">{text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white px-3 py-8 sm:px-4 sm:py-12">
+        <div className="mx-auto max-w-7xl">
           <div className="mb-5 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
             <div>
               <span className="badge mb-3">आज की प्रमुख पुस्तक</span>
@@ -299,7 +332,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-white px-3 py-8 sm:px-4 sm:py-12">
+      <section className="bg-paper px-3 py-8 sm:px-4 sm:py-12">
         <div className="mx-auto max-w-7xl">
           <div className="rounded-lg border border-slate-200 bg-white shadow-soft">
             <div className="grid gap-0 lg:grid-cols-[.9fr_1.1fr]">
