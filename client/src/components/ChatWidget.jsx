@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import api from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import assistantAvatar from "../assets/ai-assistant-sari.png";
 
 const welcomeText = "Namaste, main Mahesh Bharti Store AI Assistant hoon.";
 const quickProblems = [
@@ -14,17 +15,16 @@ const quickProblems = [
 
 function GirlAssistantAvatar({ size = "md" }) {
   const boxSize = size === "lg" ? "h-12 w-12" : size === "sm" ? "h-8 w-8" : "h-9 w-9";
-  const faceSize = size === "lg" ? "h-7 w-7" : size === "sm" ? "h-5 w-5" : "h-6 w-6";
 
   return (
-    <span className={`relative grid ${boxSize} shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-rose-100 via-orange-100 to-amber-100 ring-1 ring-white/70`} aria-hidden="true">
-      <span className={`absolute top-1 rounded-t-full bg-[#2f241f] ${faceSize}`} />
-      <span className={`relative mt-1 grid ${faceSize} place-items-center rounded-full bg-[#f4c7a1] shadow-sm`}>
-        <span className="absolute top-[38%] left-[28%] h-1 w-1 rounded-full bg-[#3a2a24]" />
-        <span className="absolute top-[38%] right-[28%] h-1 w-1 rounded-full bg-[#3a2a24]" />
-        <span className="absolute bottom-[24%] h-1 w-2 rounded-b-full border-b border-[#a84f43]" />
-      </span>
-      <span className="absolute bottom-0 h-2 w-7 rounded-t-full bg-[#0f5b55]" />
+    <span className={`grid ${boxSize} shrink-0 place-items-center overflow-hidden rounded-full bg-orange-50 ring-2 ring-white/80`} aria-hidden="true">
+      <img
+        alt=""
+        className="h-full w-full object-cover object-top"
+        decoding="async"
+        loading="lazy"
+        src={assistantAvatar}
+      />
     </span>
   );
 }
