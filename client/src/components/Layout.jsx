@@ -51,7 +51,7 @@ export function FallingLetters({ text, className = "", startDelay = 0, wrap = fa
 }
 
 export default function Layout() {
-  const { logout, isAuthenticated } = useAuth();
+  const { logout, isAuthenticated, isAdmin } = useAuth();
   const { items } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
   const navClass = ({ isActive }) =>
@@ -91,13 +91,15 @@ export default function Layout() {
             <NavLink className={navClass} to="/dashboard/library"><Library size={16} /> <FallingLetters text="Library" startDelay={0.44} /></NavLink>
           </nav>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-            {isAuthenticated && (
+            {isAuthenticated && !isAdmin && (
               <Link className="btn-secondary relative !min-h-10 !px-2.5 sm:!min-h-11 sm:!px-3" to="/cart" aria-label="Cart">
                 <ShoppingCart size={18} />
                 {items.length > 0 && <span className="absolute -right-1.5 -top-1.5 grid min-h-5 min-w-5 place-items-center rounded-full bg-orange-500 px-1.5 text-[11px] font-black leading-none text-white ring-2 ring-white">{items.length}</span>}
               </Link>
             )}
-            {isAuthenticated ? (
+            {isAdmin ? (
+              <Link className="btn-primary !min-h-10 !px-2.5 sm:!min-h-11 sm:!px-4" to="/admin"><LayoutDashboard size={18} /><span className="hidden sm:inline">Go to Admin</span></Link>
+            ) : isAuthenticated ? (
               <>
                 <Link className="btn-secondary !hidden md:!inline-flex" to="/dashboard"><LayoutDashboard size={18} /><FallingLetters text="Dashboard" className="hidden lg:inline" startDelay={0.52} /></Link>
                 <button className="btn-secondary !hidden !min-h-10 !px-2.5 sm:!min-h-11 sm:!px-3 md:!inline-flex" onClick={handleLogout} aria-label="Logout"><LogOut size={18} /></button>
@@ -115,9 +117,11 @@ export default function Layout() {
             <div className="mx-auto grid max-w-7xl grid-cols-2 gap-2">
               <NavLink onClick={closeMenu} className={navClass} to="/"><Home size={16} /> <FallingLetters text="Home" /></NavLink>
               <NavLink onClick={closeMenu} className={navClass} to="/books"><BookOpen size={16} /> <FallingLetters text="Books" /></NavLink>
-              <NavLink onClick={closeMenu} className={navClass} to="/dashboard/library"><Library size={16} /> <FallingLetters text="Library" /></NavLink>
-              {isAuthenticated && <NavLink onClick={closeMenu} className={navClass} to="/dashboard"><LayoutDashboard size={16} /> <FallingLetters text="Dashboard" /></NavLink>}
-              {isAuthenticated && (
+              {!isAdmin && <NavLink onClick={closeMenu} className={navClass} to="/dashboard/library"><Library size={16} /> <FallingLetters text="Library" /></NavLink>}
+              {isAdmin ? (
+                <NavLink onClick={closeMenu} className={navClass} to="/admin"><LayoutDashboard size={16} /> Go to Admin</NavLink>
+              ) : isAuthenticated && <NavLink onClick={closeMenu} className={navClass} to="/dashboard"><LayoutDashboard size={16} /> <FallingLetters text="Dashboard" /></NavLink>}
+              {isAuthenticated && !isAdmin && (
                 <button onClick={handleLogout} className={`${navClass({ isActive: false })} text-left`}>
                   <LogOut size={16} /> <FallingLetters text="Logout" />
                 </button>
@@ -127,11 +131,17 @@ export default function Layout() {
         )}
       </header>
       <Outlet />
-      <nav className="fixed inset-x-3 bottom-3 z-40 grid grid-cols-4 gap-1 rounded-2xl border border-slate-200 bg-white/95 p-1 shadow-[0_16px_40px_rgba(15,23,42,.18)] backdrop-blur md:hidden">
+      <nav className={`fixed inset-x-3 bottom-3 z-40 grid gap-1 rounded-2xl border border-slate-200 bg-white/95 p-1 shadow-[0_16px_40px_rgba(15,23,42,.18)] backdrop-blur md:hidden ${isAdmin ? "grid-cols-3" : "grid-cols-4"}`}>
         <NavLink className={bottomNavClass} to="/"><Home size={20} /> Home</NavLink>
         <NavLink className={bottomNavClass} to="/books"><BookOpen size={20} /> Books</NavLink>
-        <NavLink className={bottomNavClass} to="/cart"><ShoppingCart size={20} /> Cart</NavLink>
-        <NavLink className={bottomNavClass} to={isAuthenticated ? "/dashboard/library" : "/login"}>{isAuthenticated ? <Library size={20} /> : <User size={20} />}{isAuthenticated ? "Library" : "Login"}</NavLink>
+        {isAdmin ? (
+          <NavLink className={bottomNavClass} to="/admin"><LayoutDashboard size={20} /> Admin</NavLink>
+        ) : (
+          <>
+            <NavLink className={bottomNavClass} to="/cart"><ShoppingCart size={20} /> Cart</NavLink>
+            <NavLink className={bottomNavClass} to={isAuthenticated ? "/dashboard/library" : "/login"}>{isAuthenticated ? <Library size={20} /> : <User size={20} />}{isAuthenticated ? "Library" : "Login"}</NavLink>
+          </>
+        )}
       </nav>
       <ChatWidget />
       <footer className="bg-[linear-gradient(180deg,#fffaf5_0%,#fff3e4_100%)] px-4 pb-24 pt-8 text-sm text-ink md:pb-8">
