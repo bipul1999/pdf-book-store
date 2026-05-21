@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import api from "../api/client.js";
 import BookCard from "../components/BookCard.jsx";
 import { FallingLetters } from "../components/Layout.jsx";
+import { fallbackAuthorImage, fallbackBooks } from "../data/fallbackCatalog.js";
 
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
 const HOME_RETRY_DELAYS_MS = [1500, 3500, 7000];
@@ -19,7 +20,7 @@ function msUntilNextQuoteSlot() {
 const defaultQuote = {
   quote: "किताबें केवल शब्द नहीं होतीं, वे जीवन को समझने की एक शांत रोशनी होती हैं।",
   authorName: "महेश भारती",
-  authorImage: ""
+  authorImage: fallbackAuthorImage
 };
 
 const rotatingQuotes = [
@@ -57,8 +58,8 @@ function BookGridSkeleton({ compact = false }) {
 }
 
 export default function Home() {
-  const [books, setBooks] = useState([]);
-  const [heroBookPool, setHeroBookPool] = useState([]);
+  const [books, setBooks] = useState(fallbackBooks);
+  const [heroBookPool, setHeroBookPool] = useState(fallbackBooks);
   const [quote, setQuote] = useState(defaultQuote);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -84,6 +85,11 @@ export default function Home() {
         setLoading(false);
       } catch {
         if (cancelled) return;
+        if (!books.length) {
+          setHeroBookPool(fallbackBooks);
+          setBooks(fallbackBooks);
+        }
+        setLoading(false);
         const nextDelay = HOME_RETRY_DELAYS_MS[attempt];
         if (nextDelay) {
           retryTimer = setTimeout(() => loadHome(attempt + 1), nextDelay);
@@ -232,7 +238,7 @@ export default function Home() {
           <Link className="shrink-0 text-sm font-bold text-orange-600" to="/books">View all</Link>
         </div>
         <p className="mb-4 text-sm leading-6 text-gray-600">Cover par tap karke details, price aur payment option dekhein.</p>
-        {loading ? (
+        {loading && !books.length ? (
           <BookGridSkeleton />
         ) : books.length ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{books.map((book) => <BookCard book={book} key={book._id} />)}</div>

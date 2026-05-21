@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import api from "../api/client.js";
 import BookCard from "../components/BookCard.jsx";
+import { fallbackBooks } from "../data/fallbackCatalog.js";
 
 const BOOK_RETRY_DELAYS_MS = [1500, 3500, 7000];
 
@@ -17,7 +18,7 @@ function BookListSkeleton() {
 
 export default function Books() {
   const [params, setParams] = useSearchParams();
-  const [books, setBooks] = useState([]);
+  const [books, setBooks] = useState(fallbackBooks);
   const [q, setQ] = useState(params.get("q") || "");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -36,6 +37,12 @@ export default function Books() {
         setLoading(false);
       } catch {
         if (cancelled) return;
+        const query = params.get("q")?.trim().toLowerCase();
+        const visibleFallbackBooks = query
+          ? fallbackBooks.filter((book) => `${book.title} ${book.author} ${book.description}`.toLowerCase().includes(query))
+          : fallbackBooks;
+        setBooks(visibleFallbackBooks);
+        setLoading(false);
         const nextDelay = BOOK_RETRY_DELAYS_MS[attempt];
         if (nextDelay) {
           retryTimer = setTimeout(() => loadBooks(attempt + 1), nextDelay);
@@ -71,7 +78,7 @@ export default function Books() {
           <button className="btn-primary w-full sm:w-auto">Search</button>
         </form>
       </div>
-      {loading ? (
+      {loading && !books.length ? (
         <BookListSkeleton />
       ) : books.length ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{books.map((book) => <BookCard book={book} key={book._id} />)}</div>
