@@ -4,12 +4,19 @@ import { ensureAdmin } from "./utils/ensureAdmin.js";
 import { seedCatalogIfEmpty } from "./utils/seedCatalog.js";
 
 const port = process.env.PORT || 5000;
+const databaseRetryMs = Number(process.env.DB_RETRY_MS || 30000);
 
 app.listen(port, () => console.log(`API running on port ${port}`));
 
-connectDB()
-  .then(seedCatalogIfEmpty)
-  .then(ensureAdmin)
-  .catch((error) => {
-    console.error("Database startup failed", error);
-  });
+async function startDatabase() {
+  try {
+    await connectDB();
+    await seedCatalogIfEmpty();
+    await ensureAdmin();
+  } catch (error) {
+    console.error("Database startup failed", error.message);
+    setTimeout(startDatabase, databaseRetryMs);
+  }
+}
+
+startDatabase();
