@@ -164,8 +164,8 @@ export default function Home() {
   ];
 
   return (
-    <main>
-      <section className="bg-white px-3 py-4 sm:px-4 sm:py-8">
+    <main className="bg-[#fbfaf7]">
+      <section className="px-3 py-4 sm:px-4 sm:py-8">
         <div className="mx-auto max-w-4xl">
           <article className="panel relative overflow-hidden p-4 sm:p-6 md:p-7">
             <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,247,237,.97),rgba(255,255,255,.92))]" />
@@ -194,7 +194,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-paper">
+      <section className="border-y border-orange-100/70 bg-[#fff7ed]">
         <div className="mx-auto grid max-w-7xl items-center gap-6 px-3 py-6 sm:px-4 sm:py-12 md:grid-cols-[1.05fr_.95fr] md:py-14">
           <div className="space-y-4 text-center md:text-left">
             <span className="badge mx-auto items-center gap-1.5 md:mx-0"><ShieldCheck size={14} /> Secure PDF downloads</span>
@@ -242,9 +242,9 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-white px-3 py-7 sm:px-4 sm:py-10">
+      <section className="px-3 py-7 sm:px-4 sm:py-10">
         <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-[.9fr_1.1fr] md:items-center">
-          <div className="space-y-3 text-center md:text-left">
+          <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-5 text-center shadow-soft md:p-6 md:text-left">
             <span className="badge mx-auto md:mx-0">लेखक परिचय</span>
             <h2 className="text-2xl font-black text-ink sm:text-3xl">महेश भारती जी का संदेश</h2>
             <p className="mx-auto max-w-xl text-sm leading-7 text-gray-600 md:mx-0">
@@ -265,8 +265,9 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-paper px-3 py-8 sm:px-4 sm:py-12">
+      <section className="px-3 py-8 sm:px-4 sm:py-12">
         <div className="mx-auto max-w-7xl">
+          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft sm:p-6">
           <div className="mb-6 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
             <div>
               <span className="badge mb-3">खरीदने की प्रक्रिया</span>
@@ -277,9 +278,9 @@ export default function Home() {
           </div>
           <div className="grid gap-3 md:grid-cols-4">
             {processSteps.map(({ icon: Icon, title, text }, index) => (
-              <div className="relative rounded-lg border border-orange-100 bg-white p-4 shadow-soft" key={title}>
+              <div className="relative rounded-lg border border-slate-200 bg-[#fbfaf7] p-4" key={title}>
                 <div className="mb-4 flex items-center justify-between">
-                  <span className="grid h-10 w-10 place-items-center rounded-md bg-orange-50 text-orange-600 ring-1 ring-orange-100">
+                  <span className="grid h-10 w-10 place-items-center rounded-md bg-white text-orange-600 ring-1 ring-orange-100">
                     <Icon size={20} />
                   </span>
                   <span className="text-xs font-black text-orange-300">0{index + 1}</span>
@@ -289,10 +290,11 @@ export default function Home() {
               </div>
             ))}
           </div>
+          </div>
         </div>
       </section>
 
-      <section className="bg-white px-3 py-8 sm:px-4 sm:py-12">
+      <section className="px-3 py-8 sm:px-4 sm:py-12">
         <div className="mx-auto max-w-7xl">
           <div className="mb-5 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
             <div>
@@ -332,7 +334,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-paper px-3 py-8 sm:px-4 sm:py-12">
+      <section className="px-3 py-8 sm:px-4 sm:py-12">
         <div className="mx-auto max-w-7xl">
           <div className="rounded-lg border border-slate-200 bg-white shadow-soft">
             <div className="grid gap-0 lg:grid-cols-[.9fr_1.1fr]">
