@@ -149,12 +149,12 @@ export default function Home() {
     ...selectedQuote,
     authorImage: selectedQuote.authorImage || quote?.authorImage || defaultQuote.authorImage
   };
-  const promotedBooks = books.slice(0, 8);
+  const bestBook = books[0];
   const trustItems = [
-    { icon: CheckCircle2, title: "सरल भाषा", text: "विचार और विषय ऐसे ढंग से रखे गए हैं कि पाठक सहजता से जुड़ सके।" },
-    { icon: ShieldCheck, title: "सुरक्षित खरीदारी", text: "PDF ई-बुक खरीदने और पढ़ने की प्रक्रिया सुरक्षित और साफ रखी गई है।" },
-    { icon: Library, title: "अपनी लाइब्रेरी", text: "खरीदारी के बाद पुस्तक आपके अकाउंट की लाइब्रेरी में उपलब्ध रहती है।" },
-    { icon: Download, title: "मोबाइल पर पढ़ें", text: "कहीं भी, कभी भी अपनी खरीदी हुई पुस्तकों को आराम से पढ़ सकते हैं।" }
+    { icon: CheckCircle2, title: "विचारपूर्ण लेखन", text: "विषय को सरल, शांत और पढ़ने योग्य भाषा में रखा गया है।" },
+    { icon: ShieldCheck, title: "सुरक्षित भुगतान", text: "खरीदारी के बाद PDF access आपके account से जुड़ जाता है।" },
+    { icon: Library, title: "लाइब्रेरी में उपलब्ध", text: "Purchased books आपकी library में रहती हैं, जहां से आप पढ़ सकते हैं।" },
+    { icon: Download, title: "मोबाइल-फ्रेंडली", text: "फोन, टैबलेट या लैपटॉप पर आराम से पढ़ने का अनुभव।" }
   ];
 
   return (
@@ -263,16 +263,29 @@ export default function Home() {
         <div className="mx-auto max-w-7xl">
           <div className="mb-5 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
             <div>
-              <span className="badge mb-3">पाठकों की पसंद</span>
-              <h2 className="text-2xl font-black sm:text-3xl">प्रमुख पुस्तकें</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">चुनिंदा पुस्तकों को देखें, विवरण पढ़ें और अपनी पसंद की PDF ई-बुक सुरक्षित रूप से खरीदें।</p>
+              <span className="badge mb-3">आज की प्रमुख पुस्तक</span>
+              <h2 className="text-2xl font-black sm:text-3xl">पढ़ने के लिए खास चयन</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">यहां एक प्रमुख पुस्तक को highlight किया गया है। बाकी सभी पुस्तकों के लिए पूरा catalog देखें।</p>
             </div>
             <Link className="btn-secondary w-full md:w-auto" to="/books">सभी पुस्तकें देखें</Link>
           </div>
-          {loading && !promotedBooks.length ? (
+          {loading && !bestBook ? (
             <BookGridSkeleton />
-          ) : promotedBooks.length ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{promotedBooks.map((book) => <BookCard book={book} key={book._id} />)}</div>
+          ) : bestBook ? (
+            <div className="grid gap-5 lg:grid-cols-[340px_1fr] lg:items-stretch">
+              <div className="mx-auto w-full max-w-sm lg:mx-0">
+                <BookCard book={bestBook} />
+              </div>
+              <div className="rounded-lg border border-orange-100 bg-white p-5 shadow-soft sm:p-7">
+                <span className="badge mb-4">Featured read</span>
+                <h3 className="text-2xl font-black text-ink">{bestBook.title}</h3>
+                <p className="mt-3 line-clamp-4 text-sm leading-7 text-gray-600">{bestBook.description}</p>
+                <div className="mt-5 grid gap-3 sm:flex">
+                  <Link className="btn-primary w-full sm:w-auto" to={`/books/${bestBook._id}`}>विवरण देखें</Link>
+                  <Link className="btn-secondary w-full sm:w-auto" to="/books">और पुस्तकें देखें</Link>
+                </div>
+              </div>
+            </div>
           ) : loadError ? (
             <div className="panel p-8 text-center text-gray-600">Books load ho rahi hain. Server wake up ke baad page refresh karein.</div>
           ) : (
@@ -288,21 +301,24 @@ export default function Home() {
 
       <section className="bg-white px-3 py-8 sm:px-4 sm:py-12">
         <div className="mx-auto max-w-7xl">
-          <div className="mx-auto max-w-3xl text-center">
-            <span className="badge mb-3">विश्वास और सुविधा</span>
-            <h2 className="text-2xl font-black sm:text-3xl">क्यों पढ़ें महेश भारती जी की पुस्तकें?</h2>
-            <p className="mt-3 text-sm leading-7 text-gray-600">यह डिजिटल स्टोर पाठकों के लिए पुस्तकों तक पहुंच को सरल, सुरक्षित और सुविधाजनक बनाता है।</p>
-          </div>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 lg:grid-cols-[.85fr_1.15fr] lg:items-center">
+            <div className="text-center lg:text-left">
+              <span className="badge mb-3">विश्वास और सुविधा</span>
+              <h2 className="text-2xl font-black sm:text-3xl">पढ़ना अब सरल और सुरक्षित</h2>
+              <p className="mt-3 text-sm leading-7 text-gray-600">यह store पाठकों को लेखक की पुस्तकों से सीधे जोड़ता है। Browse करें, सुरक्षित payment करें और अपनी library में PDF पढ़ें।</p>
+              <Link className="btn-primary mt-5 w-full sm:w-auto" to="/books">पुस्तकें देखें</Link>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
             {trustItems.map(({ icon: Icon, title, text }) => (
-              <div className="rounded-lg border border-orange-100 bg-orange-50/40 p-5 shadow-soft" key={title}>
-                <span className="mb-4 grid h-11 w-11 place-items-center rounded-md bg-white text-orange-600 shadow-sm">
+              <div className="rounded-lg border border-orange-100 bg-[linear-gradient(135deg,#fff7ed,#ffffff)] p-4 shadow-soft" key={title}>
+                <span className="mb-3 grid h-10 w-10 place-items-center rounded-md bg-white text-orange-600 shadow-sm">
                   <Icon size={22} />
                 </span>
                 <h3 className="font-black text-ink">{title}</h3>
                 <p className="mt-2 text-sm leading-6 text-gray-600">{text}</p>
               </div>
             ))}
+            </div>
           </div>
         </div>
       </section>
