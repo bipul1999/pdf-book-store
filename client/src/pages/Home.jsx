@@ -1,4 +1,4 @@
-import { BookPlus, RefreshCw, Search, ShieldCheck, Sparkles } from "lucide-react";
+import { BookPlus, CheckCircle2, Download, Library, RefreshCw, Search, ShieldCheck, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import api from "../api/client.js";
@@ -149,6 +149,13 @@ export default function Home() {
     ...selectedQuote,
     authorImage: selectedQuote.authorImage || quote?.authorImage || defaultQuote.authorImage
   };
+  const promotedBooks = books.slice(0, 8);
+  const trustItems = [
+    { icon: CheckCircle2, title: "सरल भाषा", text: "विचार और विषय ऐसे ढंग से रखे गए हैं कि पाठक सहजता से जुड़ सके।" },
+    { icon: ShieldCheck, title: "सुरक्षित खरीदारी", text: "PDF ई-बुक खरीदने और पढ़ने की प्रक्रिया सुरक्षित और साफ रखी गई है।" },
+    { icon: Library, title: "अपनी लाइब्रेरी", text: "खरीदारी के बाद पुस्तक आपके अकाउंट की लाइब्रेरी में उपलब्ध रहती है।" },
+    { icon: Download, title: "मोबाइल पर पढ़ें", text: "कहीं भी, कभी भी अपनी खरीदी हुई पुस्तकों को आराम से पढ़ सकते हैं।" }
+  ];
 
   return (
     <main>
@@ -252,26 +259,52 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-3 py-7 sm:px-4 sm:py-10">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="text-xl font-black sm:text-2xl">All books</h2>
-          <Link className="shrink-0 text-sm font-bold text-orange-600" to="/books">View all</Link>
-        </div>
-        <p className="mb-4 text-sm leading-6 text-gray-600">Cover par tap karke details, price aur payment option dekhein.</p>
-        {loading && !books.length ? (
-          <BookGridSkeleton />
-        ) : books.length ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{books.map((book) => <BookCard book={book} key={book._id} />)}</div>
-        ) : loadError ? (
-          <div className="panel p-8 text-center text-gray-600">Books load ho rahi hain. Server wake up ke baad page refresh karein.</div>
-        ) : (
-          <div className="panel p-8 text-center">
-            <BookPlus className="mx-auto mb-3 text-orange-500" size={42} />
-            <h3 className="text-xl font-black">No books in the store yet</h3>
-            <p className="mx-auto mt-2 max-w-lg text-sm text-gray-600">New PDF books will appear here soon.</p>
-            <Link className="btn-primary mt-4" to="/books">Browse Books</Link>
+      <section className="bg-paper px-3 py-8 sm:px-4 sm:py-12">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-5 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
+            <div>
+              <span className="badge mb-3">पाठकों की पसंद</span>
+              <h2 className="text-2xl font-black sm:text-3xl">प्रमुख पुस्तकें</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">चुनिंदा पुस्तकों को देखें, विवरण पढ़ें और अपनी पसंद की PDF ई-बुक सुरक्षित रूप से खरीदें।</p>
+            </div>
+            <Link className="btn-secondary w-full md:w-auto" to="/books">सभी पुस्तकें देखें</Link>
           </div>
-        )}
+          {loading && !promotedBooks.length ? (
+            <BookGridSkeleton />
+          ) : promotedBooks.length ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{promotedBooks.map((book) => <BookCard book={book} key={book._id} />)}</div>
+          ) : loadError ? (
+            <div className="panel p-8 text-center text-gray-600">Books load ho rahi hain. Server wake up ke baad page refresh karein.</div>
+          ) : (
+            <div className="panel p-8 text-center">
+              <BookPlus className="mx-auto mb-3 text-orange-500" size={42} />
+              <h3 className="text-xl font-black">No books in the store yet</h3>
+              <p className="mx-auto mt-2 max-w-lg text-sm text-gray-600">New PDF books will appear here soon.</p>
+              <Link className="btn-primary mt-4" to="/books">Browse Books</Link>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="bg-white px-3 py-8 sm:px-4 sm:py-12">
+        <div className="mx-auto max-w-7xl">
+          <div className="mx-auto max-w-3xl text-center">
+            <span className="badge mb-3">विश्वास और सुविधा</span>
+            <h2 className="text-2xl font-black sm:text-3xl">क्यों पढ़ें महेश भारती जी की पुस्तकें?</h2>
+            <p className="mt-3 text-sm leading-7 text-gray-600">यह डिजिटल स्टोर पाठकों के लिए पुस्तकों तक पहुंच को सरल, सुरक्षित और सुविधाजनक बनाता है।</p>
+          </div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {trustItems.map(({ icon: Icon, title, text }) => (
+              <div className="rounded-lg border border-orange-100 bg-orange-50/40 p-5 shadow-soft" key={title}>
+                <span className="mb-4 grid h-11 w-11 place-items-center rounded-md bg-white text-orange-600 shadow-sm">
+                  <Icon size={22} />
+                </span>
+                <h3 className="font-black text-ink">{title}</h3>
+                <p className="mt-2 text-sm leading-6 text-gray-600">{text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
     </main>
   );
