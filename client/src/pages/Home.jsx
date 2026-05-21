@@ -232,10 +232,10 @@ export default function Home() {
       <section className="bg-white px-3 py-7 sm:px-4 sm:py-10">
         <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-[.9fr_1.1fr] md:items-center">
           <div className="space-y-3 text-center md:text-left">
-            <span className="badge mx-auto md:mx-0">Author intro</span>
-            <h2 className="text-2xl font-black text-ink sm:text-3xl">à¤²à¥‡à¤–à¤• à¤•à¥€ à¤“à¤° à¤¸à¥‡</h2>
+            <span className="badge mx-auto md:mx-0">लेखक परिचय</span>
+            <h2 className="text-2xl font-black text-ink sm:text-3xl">महेश भारती जी का संदेश</h2>
             <p className="mx-auto max-w-xl text-sm leading-7 text-gray-600 md:mx-0">
-              à¤®à¤¹à¥‡à¤¶ à¤­à¤¾à¤°à¤¤à¥€ à¤œà¥€ à¤•à¤¾ à¤›à¥‹à¤Ÿà¤¾ à¤¸à¤‚à¤¦à¥‡à¤¶ à¤¦à¥‡à¤–à¥‡à¤‚ à¤”à¤° à¤‡à¤¸ à¤ˆ-à¤¬à¥à¤• à¤¸à¥à¤Ÿà¥‹à¤° à¤•à¥‡ à¤¬à¤¾à¤°à¥‡ à¤®à¥‡à¤‚ à¤œà¤¾à¤¨à¥‡à¤‚à¥¤
+              लेखक की वाणी में इस ई-बुक स्टोर का उद्देश्य जानिए और उनकी पुस्तकों से जुड़ने का सरल डिजिटल अनुभव देखिए।
             </p>
           </div>
           <div className="overflow-hidden rounded-lg border border-orange-100 bg-black shadow-soft">
