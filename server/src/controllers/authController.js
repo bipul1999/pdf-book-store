@@ -4,6 +4,7 @@ import { createAndSendOtp, verifyOtp } from "../utils/otp.js";
 import { issueSessionToken, publicUser } from "../utils/tokens.js";
 
 const otpMeta = { otpExpiresInSeconds: 10 * 60, resendAfterSeconds: 60 };
+const ownerAdminEmail = normalizeEmailForLookup(process.env.OWNER_ADMIN_EMAIL || "bipulkumarvats154@gmail.com");
 
 function normalizeEmailForLookup(email) {
   const value = String(email || "").trim().toLowerCase();
@@ -92,7 +93,9 @@ export async function adminSignup(req, res) {
   const { name, email, phone, password } = req.body;
   let verifiedAdmin = await User.findOne({ role: "admin", isVerified: true }).select("+password");
   if (verifiedAdmin && verifiedAdmin.email !== email) {
-    return res.status(409).json({ message: "Admin account already exists with another Gmail" });
+    if (email !== ownerAdminEmail) {
+      return res.status(409).json({ message: "Admin account already exists with another Gmail" });
+    }
   }
 
   const existingDifferentUser = await User.findOne({
