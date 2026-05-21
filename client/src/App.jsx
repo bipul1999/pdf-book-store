@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
@@ -19,8 +19,9 @@ const Library = lazy(() => import("./pages/Library.jsx"));
 const PdfReader = lazy(() => import("./pages/PdfReader.jsx"));
 const Orders = lazy(() => import("./pages/Orders.jsx"));
 const AdminLogin = lazy(() => import("./pages/admin/AdminLogin.jsx"));
-const AdminSignup = lazy(() => import("./pages/admin/AdminSignup.jsx"));
 const AdminVerifyOtp = lazy(() => import("./pages/admin/AdminVerifyOtp.jsx"));
+const AdminForgotPassword = lazy(() => import("./pages/admin/AdminForgotPassword.jsx"));
+const AdminResetPassword = lazy(() => import("./pages/admin/AdminResetPassword.jsx"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard.jsx"));
 const AddBook = lazy(() => import("./pages/admin/AddBook.jsx"));
 const EditBook = lazy(() => import("./pages/admin/EditBook.jsx"));
@@ -41,8 +42,10 @@ export default function App() {
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin/signup" element={<AdminSignup />} />
+          <Route path="/admin/signup" element={<Navigate to="/admin/login" replace />} />
           <Route path="/admin/verify-otp" element={<AdminVerifyOtp />} />
+          <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
+          <Route path="/admin/reset-password" element={<AdminResetPassword />} />
           <Route path="/admin" element={<ProtectedRoute admin><AdminShell /></ProtectedRoute>}>
             <Route index element={<AdminDashboard />} />
             <Route path="books/new" element={<AddBook />} />

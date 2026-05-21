@@ -45,7 +45,7 @@ export default function AdminLogin() {
         <input className="input" type="password" placeholder="Password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
         <button className="btn-primary w-full" disabled={loading}>{loading ? "Signing in..." : "Login"}</button>
         <p className="text-center text-sm text-gray-600">
-          First time setup? <Link className="font-bold text-orange-600" to="/admin/signup">Create admin profile</Link>
+          <Link className="font-bold text-orange-600" to="/admin/forgot-password">Forgot password?</Link>
         </p>
       </form>
     </main>

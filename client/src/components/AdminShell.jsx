@@ -1,7 +1,16 @@
-import { ExternalLink } from "lucide-react";
-import { Link, Outlet } from "react-router-dom";
+import { ExternalLink, LogOut } from "lucide-react";
+import { Link, Outlet, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
 
 export default function AdminShell() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    logout();
+    navigate("/admin/login", { replace: true });
+  }
+
   return (
     <main className="mx-auto grid max-w-7xl gap-4 px-4 py-4 sm:py-8 md:grid-cols-[240px_1fr] md:gap-6">
       <aside className="panel h-fit overflow-x-auto p-3 md:overflow-visible">
@@ -18,6 +27,7 @@ export default function AdminShell() {
             ["/admin/users", "Manage Users"]
           ].map(([to, label]) => <Link key={to} className="block shrink-0 rounded-xl px-3 py-2 text-sm font-bold hover:bg-orange-50 hover:text-orange-700 md:shrink" to={to}>{label}</Link>)}
         </div>
+        <button className="btn-secondary mt-3 w-full" onClick={handleLogout}><LogOut size={16} /> Logout</button>
       </aside>
       <Outlet />
     </main>
