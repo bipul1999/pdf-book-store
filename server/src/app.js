@@ -64,12 +64,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use("/api", apiLimiter);
 
-app.get("/api/health", (_req, res) => res.json({
-  status: "ok",
-  app: "PDF Book Store",
-  database: mongoose.connection.readyState === 1 ? "connected" : "not_connected",
-  databaseError: mongoose.connection.readyState === 1 ? "" : getLastDatabaseError()
-}));
+app.get("/api/health", (_req, res) => {
+  const databaseConnected = mongoose.connection.readyState === 1;
+  res.json({
+    status: "ok",
+    app: "PDF Book Store",
+    database: databaseConnected ? "connected" : "not_connected",
+    databaseError: !databaseConnected && process.env.NODE_ENV !== "production" ? getLastDatabaseError() : ""
+  });
+});
 
 function requireDatabase(_req, res, next) {
   if (mongoose.connection.readyState === 1) return next();

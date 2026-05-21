@@ -1,10 +1,16 @@
-import { Bot, Send, X } from "lucide-react";
+import { Bot, CheckCircle2, Send, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import api from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
-const welcomeText = "Welcome to Mahesh Bharti Library";
+const welcomeText = "Namaste, main Mahesh Bharti Store AI Assistant hoon.";
+const quickProblems = [
+  "Payment ho gaya lekin book unlock nahi hui",
+  "OTP ya login me problem aa rahi hai",
+  "PDF download/open nahi ho raha",
+  "Book ke price ya availability ke baare me puchna hai"
+];
 
 export default function ChatWidget() {
   const { user } = useAuth();
@@ -59,7 +65,7 @@ export default function ChatWidget() {
     timers.current.push(setTimeout(() => {
       setMessages([]);
       setStep("name");
-      addBotMessage("Sabse pehle apna naam bataiye.", 150);
+      addBotMessage("Main aapki query samajh kar instant guidance dunga aur zarurat hui to admin ko ticket bhej dunga. Sabse pehle apna naam bataiye.", 150);
     }, 2300));
   }
 
@@ -86,6 +92,7 @@ export default function ChatWidget() {
         pageUrl: window.location.href
       });
       addBotMessage(data.reply || "Aapki problem admin ko send ho gayi hai. Jaldi help milegi.", 700);
+      addBotMessage(`Ticket ID: ${data.ticketId}. Category: ${data.category}. Priority: ${data.priority}.`, 1000);
       setStep("done");
       toast.success("Admin ko problem send ho gaya");
     } catch (error) {
@@ -153,8 +160,8 @@ export default function ChatWidget() {
                 <Bot size={20} />
               </span>
               <div>
-                <p className="font-black">AI Help</p>
-                <p className="text-xs text-orange-100">Admin ko direct notify karega</p>
+                <p className="font-black">AI Support Assistant</p>
+                <p className="flex items-center gap-1 text-xs text-orange-100"><CheckCircle2 size={12} /> Smart reply + admin ticket</p>
               </div>
             </div>
             <button className="rounded-full p-2 hover:bg-white/10" onClick={() => setOpen(false)} aria-label="Close chat">
@@ -189,6 +196,20 @@ export default function ChatWidget() {
               )}
               <div ref={chatEndRef} />
             </div>
+            {step === "problem" && !loading && (
+              <div className="grid gap-2">
+                {quickProblems.map((problem) => (
+                  <button
+                    className="rounded-lg border border-orange-100 bg-orange-50 px-3 py-2 text-left text-xs font-bold text-orange-800 transition hover:border-orange-300 hover:bg-orange-100"
+                    key={problem}
+                    onClick={() => setInput(problem)}
+                    type="button"
+                  >
+                    {problem}
+                  </button>
+                ))}
+              </div>
+            )}
             <form className="flex gap-2" onSubmit={handleChatSubmit}>
               <input
                 className="input !min-h-11 flex-1"

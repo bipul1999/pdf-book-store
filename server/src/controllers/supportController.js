@@ -13,6 +13,30 @@ function cleanText(value, max = 2000) {
   return String(value || "").trim().slice(0, max);
 }
 
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function buildAssistantReply({ category, priority }) {
+  const replies = {
+    payment: "Payment issue note ho gaya. Agar amount deduct hua hai to order/payment screenshot sambhal kar rakhiye. Admin payment verify karke order unlock karega; urgent case high priority me mark ho gaya hai.",
+    login: "Login/OTP issue note ho gaya. Email aur mobile sahi hain to spam folder bhi check kijiye. Admin ko details mil gayi hain, woh account/OTP flow verify karke help karega.",
+    download: "PDF/download issue note ho gaya. Payment successful hone ke baad book Library me unlock hoti hai. Admin aapka order aur access check karke resolve karega.",
+    book: "Book related query note ho gayi. Admin price, availability ya content detail check karke aapko update karega.",
+    technical: "Website technical issue note ho gaya. Device, browser aur page URL admin ko mil gaya hai, isliye issue reproduce karke fix karna easy rahega.",
+    general: "Thanks, aapki query admin ko send ho gayi hai. Admin details check karke aapko reply karega."
+  };
+  const followUp = priority === "high"
+    ? " Yeh high priority par bheja gaya hai."
+    : " Aapko jaldi help milegi.";
+  return `${replies[category] || replies.general}${followUp}`;
+}
+
 function analyzeProblem(message) {
   const text = message.toLowerCase();
   const category = categoryRules.find(([, words]) => words.some((word) => text.includes(word)))?.[0] || "general";
@@ -27,7 +51,7 @@ function analyzeProblem(message) {
     priority,
     subject,
     summary,
-    reply: "Thanks, I noted your issue and sent it to the admin. You will get help soon."
+    reply: buildAssistantReply({ category, priority })
   };
 }
 
@@ -42,12 +66,12 @@ async function notifyAdmin(ticket) {
       <p>A customer submitted a support request.</p>
       <p><strong>Category:</strong> ${ticket.category}</p>
       <p><strong>Priority:</strong> ${ticket.priority}</p>
-      <p><strong>Name:</strong> ${ticket.name || "Not provided"}</p>
-      <p><strong>Email:</strong> ${ticket.email || "Not provided"}</p>
-      <p><strong>Phone:</strong> ${ticket.phone || "Not provided"}</p>
-      <p><strong>Page:</strong> ${ticket.pageUrl || "Not provided"}</p>
+      <p><strong>Name:</strong> ${escapeHtml(ticket.name) || "Not provided"}</p>
+      <p><strong>Email:</strong> ${escapeHtml(ticket.email) || "Not provided"}</p>
+      <p><strong>Phone:</strong> ${escapeHtml(ticket.phone) || "Not provided"}</p>
+      <p><strong>Page:</strong> ${escapeHtml(ticket.pageUrl) || "Not provided"}</p>
       <p><strong>Message:</strong></p>
-      <p>${ticket.messages.at(-1)?.text || ticket.summary}</p>
+      <p>${escapeHtml(ticket.messages.at(-1)?.text || ticket.summary)}</p>
     `
   });
 }
