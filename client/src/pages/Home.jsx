@@ -272,14 +272,14 @@ export default function Home() {
           {loading && !bestBook ? (
             <BookGridSkeleton />
           ) : bestBook ? (
-            <div className="grid gap-5 lg:grid-cols-[340px_1fr] lg:items-stretch">
-              <div className="mx-auto w-full max-w-sm lg:mx-0">
+            <div className="mx-auto grid max-w-5xl gap-5 lg:grid-cols-[260px_1fr] lg:items-stretch">
+              <div className="mx-auto w-full max-w-[260px] lg:mx-0">
                 <BookCard book={bestBook} />
               </div>
-              <div className="rounded-lg border border-orange-100 bg-white p-5 shadow-soft sm:p-7">
-                <span className="badge mb-4">Featured read</span>
-                <h3 className="text-2xl font-black text-ink">{bestBook.title}</h3>
-                <p className="mt-3 line-clamp-4 text-sm leading-7 text-gray-600">{bestBook.description}</p>
+              <div className="flex flex-col justify-center rounded-lg border border-orange-100 bg-white p-5 shadow-soft sm:p-6">
+                <span className="badge mb-3 w-fit">Featured read</span>
+                <h3 className="text-xl font-black leading-snug text-ink sm:text-2xl">{bestBook.title}</h3>
+                <p className="mt-3 line-clamp-3 text-sm leading-7 text-gray-600">{bestBook.description}</p>
                 <div className="mt-5 grid gap-3 sm:flex">
                   <Link className="btn-primary w-full sm:w-auto" to={`/books/${bestBook._id}`}>विवरण देखें</Link>
                   <Link className="btn-secondary w-full sm:w-auto" to="/books">और पुस्तकें देखें</Link>
@@ -301,23 +301,27 @@ export default function Home() {
 
       <section className="bg-white px-3 py-8 sm:px-4 sm:py-12">
         <div className="mx-auto max-w-7xl">
-          <div className="grid gap-6 lg:grid-cols-[.85fr_1.15fr] lg:items-center">
-            <div className="text-center lg:text-left">
+          <div className="rounded-lg border border-slate-200 bg-white shadow-soft">
+            <div className="grid gap-0 lg:grid-cols-[.9fr_1.1fr]">
+              <div className="border-b border-slate-200 p-5 text-center sm:p-7 lg:border-b-0 lg:border-r lg:text-left">
               <span className="badge mb-3">विश्वास और सुविधा</span>
-              <h2 className="text-2xl font-black sm:text-3xl">पढ़ना अब सरल और सुरक्षित</h2>
-              <p className="mt-3 text-sm leading-7 text-gray-600">यह store पाठकों को लेखक की पुस्तकों से सीधे जोड़ता है। Browse करें, सुरक्षित payment करें और अपनी library में PDF पढ़ें।</p>
+              <h2 className="text-2xl font-black leading-tight text-ink sm:text-3xl">पुस्तकों तक पहुंचने का भरोसेमंद डिजिटल तरीका</h2>
+              <p className="mt-3 text-sm leading-7 text-gray-600">यह मंच पाठकों को महेश भारती जी की पुस्तकों से सीधे जोड़ता है। उद्देश्य साफ है: पुस्तक खोजें, सुरक्षित रूप से खरीदें और अपनी लाइब्रेरी में पढ़ें।</p>
               <Link className="btn-primary mt-5 w-full sm:w-auto" to="/books">पुस्तकें देखें</Link>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-            {trustItems.map(({ icon: Icon, title, text }) => (
-              <div className="rounded-lg border border-orange-100 bg-[linear-gradient(135deg,#fff7ed,#ffffff)] p-4 shadow-soft" key={title}>
-                <span className="mb-3 grid h-10 w-10 place-items-center rounded-md bg-white text-orange-600 shadow-sm">
-                  <Icon size={22} />
-                </span>
-                <h3 className="font-black text-ink">{title}</h3>
-                <p className="mt-2 text-sm leading-6 text-gray-600">{text}</p>
+              <div className="divide-y divide-slate-200">
+                {trustItems.map(({ icon: Icon, title, text }) => (
+                  <div className="grid gap-3 p-4 sm:grid-cols-[44px_1fr] sm:p-5" key={title}>
+                    <span className="grid h-11 w-11 place-items-center rounded-md bg-orange-50 text-orange-600 ring-1 ring-orange-100">
+                      <Icon size={21} />
+                    </span>
+                    <div>
+                      <h3 className="font-black text-ink">{title}</h3>
+                      <p className="mt-1 text-sm leading-6 text-gray-600">{text}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
             </div>
           </div>
         </div>
