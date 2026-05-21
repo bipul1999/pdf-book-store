@@ -1,4 +1,4 @@
-import { BookPlus, Search, ShieldCheck, Sparkles } from "lucide-react";
+import { BookPlus, RefreshCw, Search, ShieldCheck, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import api from "../api/client.js";
@@ -6,6 +6,7 @@ import BookCard from "../components/BookCard.jsx";
 import { FallingLetters } from "../components/Layout.jsx";
 
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
+const HOME_RETRY_DELAYS_MS = [1500, 3500, 7000];
 
 function currentQuoteSlot() {
   return Math.floor(Date.now() / FOUR_HOURS_MS);
@@ -24,53 +25,82 @@ const defaultQuote = {
 const rotatingQuotes = [
   defaultQuote,
   {
-    quote: "Books open quiet doors inside the mind.",
-    authorName: "Mahesh Bharti",
+    quote: "अच्छी किताब मन के भीतर नए रास्ते खोलती है।",
+    authorName: "महेश भारती",
     authorImage: ""
   },
   {
-    quote: "A good page stays with you long after the screen turns off.",
-    authorName: "Mahesh Bharti",
+    quote: "पढ़ना एक छोटी आदत है, जो जीवन को धीरे-धीरे बड़ा बना देती है।",
+    authorName: "महेश भारती",
     authorImage: ""
   },
   {
-    quote: "Reading is a simple habit that slowly makes life wider.",
-    authorName: "Mahesh Bharti",
+    quote: "हर विचारशील पुस्तक मन में एक नई हिम्मत जगाती है।",
+    authorName: "महेश भारती",
     authorImage: ""
   },
   {
-    quote: "Every thoughtful book gives courage to one more thought.",
-    authorName: "Mahesh Bharti",
+    quote: "किताबों के साथ बिताया समय हमेशा कुछ न कुछ लौटा देता है।",
+    authorName: "महेश भारती",
     authorImage: ""
   }
 ];
+
+function BookGridSkeleton({ compact = false }) {
+  return (
+    <div className={`grid gap-4 ${compact ? "grid-cols-2 sm:gap-3" : "sm:grid-cols-2 lg:grid-cols-4"}`}>
+      {Array.from({ length: 4 }, (_, index) => (
+        <div key={index} className={`${compact ? "h-44 sm:h-52" : "h-80"} animate-pulse rounded-lg bg-orange-50 shadow-soft`} />
+      ))}
+    </div>
+  );
+}
 
 export default function Home() {
   const [books, setBooks] = useState([]);
   const [heroBookPool, setHeroBookPool] = useState([]);
   const [quote, setQuote] = useState(defaultQuote);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [bookOffset, setBookOffset] = useState(0);
   const [isBookTransitioning, setIsBookTransitioning] = useState(false);
   const [quoteSlot, setQuoteSlot] = useState(() => currentQuoteSlot());
 
   useEffect(() => {
-    async function loadHome() {
+    let cancelled = false;
+    let retryTimer;
+
+    async function loadHome(attempt = 0) {
       try {
+        setLoadError(false);
         const [featuredRes, allBooksRes] = await Promise.all([
           api.get("/books?featured=true"),
           api.get("/books")
         ]);
+        if (cancelled) return;
         const allBooks = allBooksRes.data.books || [];
         setHeroBookPool(allBooks);
         setBooks(featuredRes.data.books?.length ? featuredRes.data.books : allBooks);
-      } finally {
+        setLoading(false);
+      } catch {
+        if (cancelled) return;
+        const nextDelay = HOME_RETRY_DELAYS_MS[attempt];
+        if (nextDelay) {
+          retryTimer = setTimeout(() => loadHome(attempt + 1), nextDelay);
+          return;
+        }
+        setLoadError(true);
         setLoading(false);
       }
     }
 
     loadHome();
     api.get("/site/quote").then(({ data }) => setQuote(data.quote)).catch(() => {});
+
+    return () => {
+      cancelled = true;
+      clearTimeout(retryTimer);
+    };
   }, []);
 
   useEffect(() => {
@@ -122,7 +152,7 @@ export default function Home() {
             <div className="relative grid items-center gap-3 sm:gap-6 md:grid-cols-[120px_1fr]">
               <div className="flex justify-center">
                 {activeQuote.authorImage ? (
-                  <img className="h-24 w-24 shrink-0 rounded-full object-cover shadow-soft ring-4 ring-orange-100" src={activeQuote.authorImage} alt={activeQuote.authorName} decoding="async" loading="lazy" />
+                  <img className="h-24 w-24 shrink-0 rounded-full object-cover shadow-soft ring-4 ring-orange-100" src={activeQuote.authorImage} alt={activeQuote.authorName} decoding="async" fetchPriority="high" loading="eager" />
                 ) : (
                   <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-orange-500 text-3xl font-black text-white shadow-soft ring-4 ring-orange-100">
                     {activeQuote.authorName?.[0] || "म"}
@@ -165,13 +195,22 @@ export default function Home() {
           }`}>
             {heroBooks.map((book) => (
               <Link key={book._id} to={`/books/${book._id}`} className="group relative overflow-hidden rounded-lg shadow-soft transition duration-300 hover:-translate-y-1">
-                <img src={book.coverImage} className="h-44 w-full bg-orange-50 object-contain p-2 transition duration-300 group-hover:scale-105 sm:h-52" alt={book.title} decoding="async" loading="lazy" sizes="(min-width: 768px) 25vw, 50vw" />
+                <img src={book.coverImage} className="h-44 w-full bg-orange-50 object-contain p-2 transition duration-300 group-hover:scale-105 sm:h-52" alt={book.title} decoding="async" fetchPriority="high" loading="eager" sizes="(min-width: 768px) 25vw, 50vw" />
                 <span className="absolute bottom-2 left-2 right-2 line-clamp-2 rounded-md bg-white/95 px-2 py-1 text-[11px] font-bold leading-4 text-ink sm:text-xs">
                   {book.title}
                 </span>
               </Link>
             ))}
-            {!loading && !heroBooks.length && (
+            {loading && !heroBooks.length && <div className="col-span-2"><BookGridSkeleton compact /></div>}
+            {!loading && loadError && !heroBooks.length && (
+              <div className="col-span-2 panel flex min-h-60 flex-col items-center justify-center gap-3 p-6 text-center">
+                <RefreshCw className="text-orange-500" size={42} />
+                <h2 className="text-xl font-black">Books load ho rahi hain</h2>
+                <p className="max-w-sm text-sm text-gray-600">Server wake up ho raha hai. Thodi der mein refresh karte hi books aur images aa jayengi.</p>
+                <button className="btn-primary" onClick={() => window.location.reload()}>Refresh</button>
+              </div>
+            )}
+            {!loading && !loadError && !heroBooks.length && (
               <div className="col-span-2 panel flex min-h-60 flex-col items-center justify-center gap-3 p-6 text-center">
                 <BookPlus className="text-orange-500" size={42} />
                 <h2 className="text-xl font-black">Books coming soon</h2>
@@ -190,9 +229,11 @@ export default function Home() {
         </div>
         <p className="mb-4 text-sm leading-6 text-gray-600">Cover par tap karke details, price aur payment option dekhein.</p>
         {loading ? (
-          <div className="panel p-8 text-center text-gray-600">Loading books...</div>
+          <BookGridSkeleton />
         ) : books.length ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{books.map((book) => <BookCard book={book} key={book._id} />)}</div>
+        ) : loadError ? (
+          <div className="panel p-8 text-center text-gray-600">Books load ho rahi hain. Server wake up ke baad page refresh karein.</div>
         ) : (
           <div className="panel p-8 text-center">
             <BookPlus className="mx-auto mb-3 text-orange-500" size={42} />
