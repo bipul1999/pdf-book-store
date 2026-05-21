@@ -12,7 +12,7 @@ const storeName = "महेश भारती ई-बुक स्टोर";
 const storeDescription = "प्रसिद्ध लेखक महेश भारती जी की लिखी सभी किताबों का एकमात्र डिजिटल स्टोर। यहाँ आपको इतिहास, पर्यावरण और साहित्य से जुड़ी उनकी सभी पुस्तकें सीधे PDF और ई-बुक के रूप में मिलेंगी, जिन्हें आप आसानी से डाउनलोड करके कहीं भी पढ़ सकते हैं।";
 const footerDescription = "© 2026 महेश भारती ई-बुक स्टोर। सभी अधिकार सुरक्षित हैं। यहाँ उपलब्ध सभी पुस्तकें और सामग्री लेखक महेश भारती जी की बौद्धिक संपदा (Intellectual Property) हैं। बिना अनुमति के इनका व्यावसायिक उपयोग या कॉपी करना वर्जित है।";
 const socialLinks = [
-  { name: "Facebook", href: "https://www.facebook.com/mahesh.bharti.142", icon: Facebook },
+  { name: "Facebook", href: "https://www.facebook.com/mahesh.bharti.142/", icon: Facebook },
   { name: "WhatsApp", href: `https://wa.me/91${contactPhone}`, icon: MessageCircle },
   { name: "LinkedIn", href: "#", icon: Linkedin },
   { name: "Instagram", href: "#", icon: Instagram }
@@ -173,7 +173,6 @@ export default function Layout() {
                     className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-orange-100 bg-orange-50 text-orange-700 shadow-sm transition hover:-translate-y-0.5 hover:border-orange-300 hover:bg-orange-500 hover:text-white hover:shadow-md"
                     href={href}
                     rel="noreferrer"
-                    target="_blank"
                     title={name}
                   >
                     <Icon size={18} />
