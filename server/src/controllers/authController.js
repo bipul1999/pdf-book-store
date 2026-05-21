@@ -5,6 +5,29 @@ import { issueSessionToken, publicUser } from "../utils/tokens.js";
 
 const otpMeta = { otpExpiresInSeconds: 10 * 60, resendAfterSeconds: 60 };
 
+function normalizeEmailForLookup(email) {
+  const value = String(email || "").trim().toLowerCase();
+  const [localPart, domainPart] = value.split("@");
+  if (!localPart || !domainPart) return value;
+
+  if (domainPart === "gmail.com" || domainPart === "googlemail.com") {
+    return `${localPart.split("+")[0].replaceAll(".", "")}@gmail.com`;
+  }
+
+  return value;
+}
+
+function loginIdentifierCandidates(identifier) {
+  const value = String(identifier || "").trim();
+  const lowerValue = value.toLowerCase();
+  if (!value.includes("@")) return { phone: value, emails: [] };
+
+  return {
+    phone: value,
+    emails: Array.from(new Set([lowerValue, normalizeEmailForLookup(value)]))
+  };
+}
+
 export const signupRules = [
   body("name").trim().notEmpty(),
   body("email").isEmail().normalizeEmail(),
@@ -118,8 +141,9 @@ export async function verifyAdminSignupOtp(req, res) {
 
 export async function login(req, res) {
   const { identifier, password } = req.body;
+  const { emails, phone } = loginIdentifierCandidates(identifier);
   const user = await User.findOne({
-    $or: [{ email: String(identifier).toLowerCase() }, { phone: identifier }]
+    $or: [...emails.map((email) => ({ email })), { phone }]
   }).select("+password");
   if (!user || !(await user.comparePassword(password))) return res.status(401).json({ message: "Invalid credentials" });
   if (!user.isVerified) return res.status(403).json({ message: "Please verify your email before login" });
@@ -128,9 +152,10 @@ export async function login(req, res) {
 
 export async function requestLoginOtp(req, res) {
   const { identifier } = req.body;
+  const { emails, phone } = loginIdentifierCandidates(identifier);
   const user = await User.findOne({
     role: "user",
-    $or: [{ email: String(identifier).toLowerCase() }, { phone: identifier }]
+    $or: [...emails.map((email) => ({ email })), { phone }]
   });
 
   if (!user) return res.status(404).json({ message: "No account found. Please create an account first." });

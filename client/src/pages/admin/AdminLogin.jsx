@@ -15,7 +15,10 @@ export default function AdminLogin() {
     e.preventDefault();
     setLoading(true);
     try {
-      const { data } = await api.post("/auth/login", form);
+      const { data } = await api.post("/auth/login", {
+        identifier: form.identifier.trim(),
+        password: form.password
+      });
       if (data.user.role !== "admin") {
         toast.error("Admin access required");
         return;
