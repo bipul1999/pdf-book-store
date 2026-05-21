@@ -1,6 +1,11 @@
 import mongoose from "mongoose";
 
 let connectionPromise;
+let lastDatabaseError = "";
+
+export function getLastDatabaseError() {
+  return lastDatabaseError;
+}
 
 export async function connectDB() {
   if (mongoose.connection.readyState === 1) return mongoose.connection;
@@ -18,7 +23,14 @@ export async function connectDB() {
     connectionPromise = undefined;
   });
 
-  await connectionPromise;
+  try {
+    await connectionPromise;
+  } catch (error) {
+    lastDatabaseError = error.message;
+    throw error;
+  }
+
+  lastDatabaseError = "";
   console.log("MongoDB connected");
   return mongoose.connection;
 }

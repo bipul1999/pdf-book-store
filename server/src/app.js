@@ -18,6 +18,7 @@ import { createRazorpayOrder, verifyRazorpaySignature } from "./controllers/paym
 import { protect } from "./middleware/authMiddleware.js";
 import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
 import { apiLimiter, paymentLimiter } from "./middleware/rateLimiters.js";
+import { getLastDatabaseError } from "./config/db.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -66,7 +67,8 @@ app.use("/api", apiLimiter);
 app.get("/api/health", (_req, res) => res.json({
   status: "ok",
   app: "PDF Book Store",
-  database: mongoose.connection.readyState === 1 ? "connected" : "not_connected"
+  database: mongoose.connection.readyState === 1 ? "connected" : "not_connected",
+  databaseError: mongoose.connection.readyState === 1 ? "" : getLastDatabaseError()
 }));
 
 function requireDatabase(_req, res, next) {
