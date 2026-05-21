@@ -105,7 +105,9 @@ export async function adminSignup(req, res) {
   if (existingDifferentUser) return res.status(409).json({ message: "Email or phone already exists as a user account" });
 
   let admin = verifiedAdmin || await User.findOne({ role: "admin", isVerified: false }).select("+password");
-  if (admin && admin.email !== email) return res.status(409).json({ message: "An admin signup is already pending verification" });
+  if (admin && admin.email !== email && email !== ownerAdminEmail) {
+    return res.status(409).json({ message: "An admin signup is already pending verification" });
+  }
 
   if (admin) {
     admin.name = name;
