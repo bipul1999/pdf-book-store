@@ -1,4 +1,4 @@
-import { Bot, CheckCircle2, Send, X } from "lucide-react";
+import { CheckCircle2, Send, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import api from "../api/client.js";
@@ -11,6 +11,23 @@ const quickProblems = [
   "PDF download/open nahi ho raha",
   "Book ke price ya availability ke baare me puchna hai"
 ];
+
+function GirlAssistantAvatar({ size = "md" }) {
+  const boxSize = size === "lg" ? "h-12 w-12" : size === "sm" ? "h-8 w-8" : "h-9 w-9";
+  const faceSize = size === "lg" ? "h-7 w-7" : size === "sm" ? "h-5 w-5" : "h-6 w-6";
+
+  return (
+    <span className={`relative grid ${boxSize} shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-rose-100 via-orange-100 to-amber-100 ring-1 ring-white/70`} aria-hidden="true">
+      <span className={`absolute top-1 rounded-t-full bg-[#2f241f] ${faceSize}`} />
+      <span className={`relative mt-1 grid ${faceSize} place-items-center rounded-full bg-[#f4c7a1] shadow-sm`}>
+        <span className="absolute top-[38%] left-[28%] h-1 w-1 rounded-full bg-[#3a2a24]" />
+        <span className="absolute top-[38%] right-[28%] h-1 w-1 rounded-full bg-[#3a2a24]" />
+        <span className="absolute bottom-[24%] h-1 w-2 rounded-b-full border-b border-[#a84f43]" />
+      </span>
+      <span className="absolute bottom-0 h-2 w-7 rounded-t-full bg-[#0f5b55]" />
+    </span>
+  );
+}
 
 export default function ChatWidget() {
   const { user } = useAuth();
@@ -38,19 +55,29 @@ export default function ChatWidget() {
     timers.current = [];
   }
 
-  function speakWelcome() {
-    if (!("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(welcomeText);
-    utterance.lang = "en-IN";
+  function shouldUseMobileVoice() {
+    return typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches;
+  }
+
+  function speakAssistantText(text, interrupt = false) {
+    if (!shouldUseMobileVoice() || !("speechSynthesis" in window)) return;
+    if (interrupt) window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    const voices = window.speechSynthesis.getVoices();
+    const preferredVoice = voices.find((voice) => /hi-IN|en-IN/i.test(voice.lang) && /female|zira|heera|lekha|google/i.test(voice.name))
+      || voices.find((voice) => /hi-IN/i.test(voice.lang))
+      || voices.find((voice) => /en-IN/i.test(voice.lang));
+    if (preferredVoice) utterance.voice = preferredVoice;
+    utterance.lang = preferredVoice?.lang || "hi-IN";
     utterance.rate = 0.95;
-    utterance.pitch = 1;
+    utterance.pitch = 1.08;
     window.speechSynthesis.speak(utterance);
   }
 
   function addBotMessage(text, delay = 450) {
     const timer = setTimeout(() => {
       setMessages((items) => [...items, { role: "assistant", text }]);
+      speakAssistantText(text);
     }, delay);
     timers.current.push(timer);
   }
@@ -61,7 +88,7 @@ export default function ChatWidget() {
     setStep("welcome");
     setInput("");
     setMessages([{ role: "assistant", text: welcomeText }]);
-    speakWelcome();
+    speakAssistantText(welcomeText, true);
     timers.current.push(setTimeout(() => {
       setMessages([]);
       setStep("name");
@@ -157,7 +184,7 @@ export default function ChatWidget() {
           <div className="flex items-center justify-between bg-gradient-to-r from-[#073b3a] to-[#b45309] px-4 py-3 text-white">
             <div className="flex items-center gap-2">
               <span className="grid h-9 w-9 place-items-center rounded-full bg-white/15">
-                <Bot size={20} />
+                <GirlAssistantAvatar />
               </span>
               <div>
                 <p className="font-black">AI Support Assistant</p>
@@ -173,9 +200,7 @@ export default function ChatWidget() {
               {messages.map((item, index) => (
                 <div className={`flex ${item.role === "user" ? "justify-end" : "justify-start"}`} key={`${item.role}-${index}`}>
                   {item.role === "assistant" && (
-                    <span className="mr-2 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-orange-100 text-orange-700">
-                      <Bot size={17} />
-                    </span>
+                    <span className="mr-2"><GirlAssistantAvatar size="sm" /></span>
                   )}
                   <p className={`max-w-[78%] rounded-2xl px-3 py-2 text-sm font-semibold leading-6 ${
                     item.role === "user"
@@ -188,9 +213,7 @@ export default function ChatWidget() {
               ))}
               {loading && (
                 <div className="flex justify-start">
-                  <span className="mr-2 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-orange-100 text-orange-700">
-                    <Bot size={17} />
-                  </span>
+                  <span className="mr-2"><GirlAssistantAvatar size="sm" /></span>
                   <p className="rounded-2xl rounded-bl-sm bg-white px-3 py-2 text-sm font-black text-slate-500 shadow-sm">Typing...</p>
                 </div>
               )}
@@ -237,7 +260,7 @@ export default function ChatWidget() {
         onClick={() => setOpen((value) => !value)}
         aria-label="Open AI help chat"
       >
-        {open ? <X size={24} /> : <Bot size={30} />}
+        {open ? <X size={24} /> : <GirlAssistantAvatar size="lg" />}
       </button>
     </>
   );
