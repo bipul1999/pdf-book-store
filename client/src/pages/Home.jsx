@@ -74,14 +74,11 @@ export default function Home() {
     async function loadHome(attempt = 0) {
       try {
         setLoadError(false);
-        const [featuredRes, allBooksRes] = await Promise.all([
-          api.get("/books?featured=true"),
-          api.get("/books")
-        ]);
+        const { data } = await api.get("/books");
         if (cancelled) return;
-        const allBooks = allBooksRes.data.books || [];
+        const allBooks = data.books || [];
         setHeroBookPool(allBooks);
-        setBooks(featuredRes.data.books?.length ? featuredRes.data.books : allBooks);
+        setBooks(allBooks);
         setLoading(false);
       } catch {
         if (cancelled) return;
@@ -234,7 +231,7 @@ export default function Home() {
 
       <section className="mx-auto max-w-7xl px-3 py-7 sm:px-4 sm:py-10">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="text-xl font-black sm:text-2xl">Featured books</h2>
+          <h2 className="text-xl font-black sm:text-2xl">All books</h2>
           <Link className="shrink-0 text-sm font-bold text-orange-600" to="/books">View all</Link>
         </div>
         <p className="mb-4 text-sm leading-6 text-gray-600">Cover par tap karke details, price aur payment option dekhein.</p>
