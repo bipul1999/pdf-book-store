@@ -9,19 +9,37 @@ const orderItemSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const customerDetailsSchema = new mongoose.Schema(
+  {
+    fullName: { type: String, trim: true, maxlength: 120 },
+    mobileNumber: { type: String, trim: true, maxlength: 16 },
+    email: { type: String, trim: true, lowercase: true, maxlength: 180 },
+    address: { type: String, trim: true, maxlength: 500 },
+    city: { type: String, trim: true, maxlength: 100 },
+    state: { type: String, trim: true, maxlength: 100 },
+    pincode: { type: String, trim: true, maxlength: 10 }
+  },
+  { _id: false }
+);
+
 const orderSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     items: [orderItemSchema],
     amount: { type: Number, required: true },
+    bookTotal: Number,
+    extraCharge: { type: Number, default: 0 },
     currency: { type: String, default: "INR" },
+    orderType: { type: String, enum: ["digital", "manual_book"], default: "digital" },
+    customerDetails: customerDetailsSchema,
     provider: { type: String, enum: ["razorpay", "upi_manual"], default: "razorpay" },
     paymentProof: String,
     paymentNote: String,
+    transactionId: { type: String, trim: true, maxlength: 120 },
     razorpayOrderId: String,
     razorpayPaymentId: String,
     razorpaySignature: String,
-    status: { type: String, enum: ["pending", "submitted", "success", "failed"], default: "pending" }
+    status: { type: String, enum: ["pending", "submitted", "success", "failed", "confirmed", "completed", "rejected"], default: "pending" }
   },
   { timestamps: true }
 );

@@ -9,6 +9,7 @@ const Books = lazy(() => import("./pages/Books.jsx"));
 const BookDetails = lazy(() => import("./pages/BookDetails.jsx"));
 const Cart = lazy(() => import("./pages/Cart.jsx"));
 const Checkout = lazy(() => import("./pages/Checkout.jsx"));
+const OrderBook = lazy(() => import("./pages/OrderBook.jsx"));
 const Login = lazy(() => import("./pages/Login.jsx"));
 const Signup = lazy(() => import("./pages/Signup.jsx"));
 const VerifyOtp = lazy(() => import("./pages/VerifyOtp.jsx"));
@@ -63,6 +64,7 @@ export default function App() {
             <Route path="/books/:id" element={<BookDetails />} />
             <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
             <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+            <Route path="/order-book" element={<OrderBook />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/verify-otp" element={<VerifyOtp />} />

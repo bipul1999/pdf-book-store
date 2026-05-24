@@ -61,6 +61,15 @@ export const uploadPaymentProof = multer({
   }
 }).single("proof");
 
+export const uploadOrderBookProof = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 12, parts: 14 },
+  fileFilter: (_req, file, cb) => {
+    if (!hasAllowedImageType(file)) return cb(new Error("Payment proof image required"));
+    cb(null, true);
+  }
+}).single("proof");
+
 export const uploadPaymentQr = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 5, parts: maxFiles + 5 },

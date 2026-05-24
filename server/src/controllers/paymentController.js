@@ -8,7 +8,8 @@ import { getRazorpay } from "../config/razorpay.js";
 import { sendEmail } from "../utils/email.js";
 
 const MIN_RAZORPAY_AMOUNT = 100;
-const ORDER_STATUSES = new Set(["pending", "submitted", "success", "failed"]);
+const DIGITAL_ORDER_STATUSES = new Set(["pending", "submitted", "success", "failed"]);
+const MANUAL_BOOK_ORDER_STATUSES = new Set(["pending", "confirmed", "completed", "rejected"]);
 
 function escapeHtml(value = "") {
   return String(value)
@@ -95,7 +96,7 @@ async function sendAdminPaymentProofEmail(req, order) {
         <p><strong>User:</strong> ${escapeHtml(populated.user?.name || "Unknown")}</p>
         <p><strong>Email:</strong> ${escapeHtml(populated.user?.email || "N/A")}</p>
         <p><strong>Phone:</strong> ${escapeHtml(populated.user?.phone || "N/A")}</p>
-        <p><strong>Payment note / transaction ID:</strong> ${escapeHtml(order.paymentNote || "Not provided")}</p>
+        <p><strong>Payment note / transaction ID:</strong> ${escapeHtml(order.transactionId || order.paymentNote || "Not provided")}</p>
         <p><strong>Books:</strong></p>
         <ul>${books}</ul>
         <p>Open the admin panel to view and verify the uploaded proof.</p>
@@ -124,12 +125,18 @@ function fileUrl(req, filePath) {
   return "";
 }
 
+function normalizedExtraCharge(value) {
+  const charge = Number(value);
+  return Number.isFinite(charge) && charge >= 0 ? charge : 0;
+}
+
 async function paymentSettings() {
   const settings = await PaymentSettings.findOne().sort("-updatedAt");
   return {
     upiId: settings?.upiId || process.env.UPI_ID || "",
     payeeName: settings?.payeeName || process.env.UPI_PAYEE_NAME || "PDF Book Store",
     qrImage: settings?.qrImage || "",
+    orderBookExtraCharge: normalizedExtraCharge(settings?.orderBookExtraCharge),
     instructions: settings?.instructions || "Pay the exact amount and upload the payment screenshot for admin verification."
   };
 }
@@ -143,6 +150,83 @@ function upiPaymentUri({ upiId, payeeName, amount, note }) {
     tn: note
   });
   return `upi://pay?${params.toString()}`;
+}
+
+function parseBookIds(value) {
+  try {
+    const ids = Array.isArray(value) ? value : JSON.parse(value || "[]");
+    return [...new Set(ids.filter((id) => typeof id === "string" && id.trim()))];
+  } catch {
+    return [];
+  }
+}
+
+function manualCustomerDetails(body) {
+  return {
+    fullName: String(body.fullName || "").trim(),
+    mobileNumber: String(body.mobileNumber || "").trim(),
+    email: String(body.email || "").trim().toLowerCase(),
+    address: String(body.address || "").trim(),
+    city: String(body.city || "").trim(),
+    state: String(body.state || "").trim(),
+    pincode: String(body.pincode || "").trim()
+  };
+}
+
+export async function getOrderBookSettings(req, res) {
+  const settings = await paymentSettings();
+  res.json({
+    settings: {
+      upiId: settings.upiId,
+      payeeName: settings.payeeName,
+      qrImage: fileUrl(req, settings.qrImage),
+      orderBookExtraCharge: settings.orderBookExtraCharge,
+      instructions: settings.instructions
+    }
+  });
+}
+
+export async function createManualBookOrder(req, res) {
+  const ids = parseBookIds(req.body.bookIds);
+  const customerDetails = manualCustomerDetails(req.body);
+  const missingDetail = Object.values(customerDetails).some((value) => !value);
+  if (missingDetail) return res.status(422).json({ message: "Please enter all delivery details." });
+  if (!/^\d{10}$/.test(customerDetails.mobileNumber)) return res.status(422).json({ message: "Enter a valid 10 digit mobile number." });
+  if (!/^\d{6}$/.test(customerDetails.pincode)) return res.status(422).json({ message: "Enter a valid 6 digit pincode." });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerDetails.email)) return res.status(422).json({ message: "Enter a valid email address." });
+  if (!ids.length) return res.status(422).json({ message: "Select at least one book." });
+  if (!req.file) return res.status(422).json({ message: "Upload payment screenshot for verification." });
+  const transactionId = String(req.body.transactionId || "").trim();
+  if (!transactionId) return res.status(422).json({ message: "Enter transaction ID." });
+  if (transactionId.length > 120) return res.status(422).json({ message: "Transaction ID is too long." });
+
+  const books = await Book.find({ _id: { $in: ids }, isActive: true });
+  if (books.length !== ids.length) return res.status(422).json({ message: "One or more selected books are unavailable." });
+
+  const settings = await paymentSettings();
+  const bookTotal = books.reduce((sum, book) => sum + book.price, 0);
+  const extraCharge = normalizedExtraCharge(settings.orderBookExtraCharge);
+  const amount = bookTotal + extraCharge;
+  const order = await Order.create({
+    user: req.user._id,
+    items: books.map((book) => ({ book: book._id, title: book.title, price: book.price })),
+    amount,
+    bookTotal,
+    extraCharge,
+    currency: "INR",
+    orderType: "manual_book",
+    customerDetails,
+    provider: "upi_manual",
+    paymentProof: req.file.path,
+    paymentNote: transactionId,
+    transactionId,
+    status: "pending"
+  });
+  await sendAdminPaymentProofEmail(req, order);
+  res.status(201).json({
+    message: "Your order has been submitted successfully and is pending verification.",
+    order
+  });
 }
 
 export async function createOrder(req, res) {
@@ -336,7 +420,13 @@ export async function razorpayWebhook(req, res) {
 }
 
 export async function myOrders(req, res) {
-  const orders = await Order.find({ user: req.user._id, status: { $in: ["success", "failed"] } }).populate("items.book").sort("-updatedAt");
+  const orders = await Order.find({
+    user: req.user._id,
+    $or: [
+      { orderType: "manual_book" },
+      { orderType: { $ne: "manual_book" }, status: { $in: ["success", "failed"] } }
+    ]
+  }).populate("items.book").sort("-updatedAt");
   res.json({ orders: orders.map((order) => ({ ...order.toObject(), paymentProof: fileUrl(req, order.paymentProof) })) });
 }
 
@@ -360,10 +450,13 @@ export async function myLibrary(req, res) {
 export async function updateOrderStatus(req, res) {
   const order = await Order.findById(req.params.id);
   if (!order) return res.status(404).json({ message: "Order not found" });
-  if (!ORDER_STATUSES.has(req.body.status)) return res.status(422).json({ message: "Invalid order status" });
+  const manualBookOrder = order.orderType === "manual_book";
+  const allowedStatuses = manualBookOrder ? MANUAL_BOOK_ORDER_STATUSES : DIGITAL_ORDER_STATUSES;
+  if (!allowedStatuses.has(req.body.status)) return res.status(422).json({ message: "Invalid order status" });
   const previousStatus = order.status;
   order.status = req.body.status;
   await order.save();
+  if (manualBookOrder) return res.json({ order });
   if (order.status === "success") await unlockBooks(order);
   else await lockBooks(order);
   if (["success", "failed"].includes(order.status) && previousStatus !== order.status) {
@@ -383,6 +476,7 @@ export async function updatePaymentSettings(req, res) {
     {
       upiId: req.body.upiId || "",
       payeeName: req.body.payeeName || "PDF Book Store",
+      orderBookExtraCharge: normalizedExtraCharge(req.body.orderBookExtraCharge),
       instructions: req.body.instructions || "",
       ...(req.file ? { qrImage: req.file.path } : {})
     },

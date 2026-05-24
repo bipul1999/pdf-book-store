@@ -1,4 +1,4 @@
-import { BookPlus, CheckCircle2, CreditCard, Download, Library, RefreshCw, Search, ShieldCheck, Sparkles } from "lucide-react";
+import { BookPlus, CheckCircle2, CreditCard, Download, Library, RefreshCw, Search, ShieldCheck, ShoppingBag, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import api from "../api/client.js";
@@ -207,6 +207,7 @@ export default function Home() {
             </p>
             <div className="grid gap-3 sm:flex sm:justify-center md:justify-start">
               <Link to="/books" className="btn-primary w-full sm:w-auto"><Search size={18} /> Browse books</Link>
+              <Link to="/order-book" className="btn-secondary w-full sm:w-auto"><ShoppingBag size={18} /> Order Book</Link>
               <Link to="/signup" className="btn-secondary w-full sm:w-auto"><Sparkles size={18} /> Create account</Link>
             </div>
           </div>
@@ -275,7 +276,10 @@ export default function Home() {
               <h2 className="text-2xl font-black leading-tight text-ink sm:text-3xl">पुस्तक खरीदना आसान और स्पष्ट</h2>
               <p className="mt-2 max-w-2xl text-sm leading-7 text-gray-600">हर step साफ रखा गया है ताकि पाठक बिना भ्रम के सही पुस्तक चुनकर उसे सुरक्षित रूप से पढ़ सकें।</p>
             </div>
-            <Link className="btn-secondary w-full md:w-auto" to="/books">Catalog खोलें</Link>
+            <div className="grid gap-2 sm:flex">
+              <Link className="btn-secondary w-full md:w-auto" to="/order-book"><ShoppingBag size={16} /> Order Book</Link>
+              <Link className="btn-secondary w-full md:w-auto" to="/books">Catalog खोलें</Link>
+            </div>
           </div>
           <div className="grid gap-3 md:grid-cols-4">
             {processSteps.map(({ icon: Icon, title, text }, index) => (
