@@ -1,9 +1,15 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
+const MIN_JWT_SECRET_LENGTH = 24;
+
+function hasSecureJwtSecret() {
+  return Boolean(process.env.JWT_SECRET && process.env.JWT_SECRET.length >= MIN_JWT_SECRET_LENGTH);
+}
+
 export async function protect(req, res, next) {
   try {
-    if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+    if (!hasSecureJwtSecret()) {
       return res.status(500).json({ message: "Server authentication is not configured securely" });
     }
     const header = req.headers.authorization;
@@ -26,7 +32,7 @@ export async function optionalProtect(req, _res, next) {
   try {
     const header = req.headers.authorization;
     const token = header?.startsWith("Bearer ") ? header.split(" ")[1] : null;
-    if (!token || !process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) return next();
+    if (!token || !hasSecureJwtSecret()) return next();
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
     if (user && decoded.sid && decoded.sid === user.activeSessionId) req.user = user;

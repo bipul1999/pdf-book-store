@@ -8,11 +8,12 @@ import assistantAvatar from "../assets/ai-assistant-sari.png";
 
 const welcomeText = "Namaste, main Mahesh Bharti Store AI Assistant hoon.";
 const quickProblems = [
-  "Author Mahesh Bharti ji ke baare me batao",
-  "Books section par le chalo",
-  "Meri library khol do",
-  "Payment ho gaya lekin book unlock nahi hui",
-  "PDF download/open nahi ho raha"
+  { label: "Author Mahesh Bharti ji ke baare me batao" },
+  { label: "Books section par le chalo", path: "/books" },
+  { label: "Order Book page khol do", path: "/order-book" },
+  { label: "Meri library khol do", path: "/dashboard/library" },
+  { label: "Payment ho gaya lekin book unlock nahi hui" },
+  { label: "PDF download/open nahi ho raha" }
 ];
 
 const authorAnswer = "Mahesh Bharti ji ek lekhak hain jinki pustakein is digital store par PDF aur e-book format me available hain. Yahan user unki books browse, purchase, download aur library me read kar sakte hain.";
@@ -47,6 +48,7 @@ const answerRules = [
 const guideActions = [
   { label: "Home", words: ["home", "homepage", "main page", "ghar"], path: "/" },
   { label: "Books", words: ["books", "book section", "book list"], path: "/books" },
+  { label: "Order Book", words: ["order book", "book order"], path: "/order-book" },
   { label: "Login", words: ["login", "sign in", "account"], path: "/login" },
   { label: "Signup", words: ["signup", "sign up", "register", "create account"], path: "/signup" },
   { label: "Cart", words: ["cart", "bag", "tokri"], path: "/cart" },
@@ -94,6 +96,17 @@ export default function ChatWidget() {
   function clearTimers() {
     timers.current.forEach((timer) => clearTimeout(timer));
     timers.current = [];
+  }
+
+  function closeAssistant() {
+    recognitionRef.current?.abort?.();
+    setListening(false);
+    setOpen(false);
+  }
+
+  function navigateAndClose(path) {
+    closeAssistant();
+    navigate(path);
   }
 
   function normalizeText(value) {
@@ -202,15 +215,13 @@ export default function ChatWidget() {
 
     const action = guideActions.find((item) => item.words.some((word) => text.includes(word)));
     if (action) {
-      navigate(action.path);
-      addBotMessage(`${action.label} section khol diya.`, 350);
+      navigateAndClose(action.path);
       return true;
     }
 
     if (!shouldCreateSupportTicket(value) && /search|find|dikhao|dikhaiye|book|kitab|pustak|ebook|e-book/i.test(text)) {
       const query = searchBookQuery(value);
-      navigate(query ? `/books?q=${encodeURIComponent(query)}` : "/books");
-      addBotMessage(query ? `"${query}" ke liye books search kar di.` : "Books section khol diya.", 350);
+      navigateAndClose(query ? `/books?q=${encodeURIComponent(query)}` : "/books");
       return true;
     }
 
@@ -257,6 +268,10 @@ export default function ChatWidget() {
   }
 
   function startVoiceInput() {
+    if (listening) {
+      recognitionRef.current?.stop?.();
+      return;
+    }
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       toast.error("Is browser me voice input support nahi hai");
@@ -267,7 +282,10 @@ export default function ChatWidget() {
     recognition.lang = "hi-IN";
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
-    recognition.onstart = () => setListening(true);
+    recognition.onstart = () => {
+      setListening(true);
+      toast.success("Bolna shuru kijiye...");
+    };
     recognition.onerror = () => {
       setListening(false);
       toast.error("Voice samajh nahi aayi, dobara try kijiye");
@@ -288,7 +306,7 @@ export default function ChatWidget() {
         <section className="fixed bottom-24 right-3 z-50 flex max-h-[calc(100vh-7rem)] w-[calc(100vw-1.5rem)] max-w-sm flex-col overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-[0_20px_60px_rgba(15,23,42,.25)] sm:bottom-6 sm:right-6 sm:max-h-[calc(100vh-3rem)]">
           <button
             className="absolute right-2 top-2 z-10 grid h-9 w-9 place-items-center rounded-full bg-white/95 text-slate-700 shadow-md ring-1 ring-orange-100 transition hover:bg-orange-50 hover:text-orange-700"
-            onClick={() => setOpen(false)}
+            onClick={closeAssistant}
             aria-label="Close AI chat"
             type="button"
           >
@@ -334,14 +352,19 @@ export default function ChatWidget() {
                 {quickProblems.map((problem) => (
                   <button
                     className="rounded-lg border border-orange-100 bg-orange-50 px-3 py-2 text-left text-xs font-bold text-orange-800 transition hover:border-orange-300 hover:bg-orange-100"
-                    key={problem}
-                    onClick={() => setInput(problem)}
+                    key={problem.label}
+                    onClick={() => problem.path ? navigateAndClose(problem.path) : setInput(problem.label)}
                     type="button"
                   >
-                    {problem}
+                    {problem.label}
                   </button>
                 ))}
               </div>
+            )}
+            {listening && (
+              <p className="flex items-center justify-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-black text-red-600">
+                <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" /> Listening... apna sawal boliye
+              </p>
             )}
             <form className="flex gap-2" onSubmit={handleChatSubmit}>
               <input
@@ -354,13 +377,13 @@ export default function ChatWidget() {
               />
               {step !== "done" && (
                 <button
-                  aria-label="Speak"
-                  className={`btn-secondary !min-h-11 !px-3 ${listening ? "!border-orange-400 !bg-orange-100 !text-orange-700" : ""}`}
+                  aria-label={listening ? "Stop voice recording" : "Start voice recording"}
+                  className={`btn-secondary !min-h-11 !px-3 ${listening ? "!border-red-400 !bg-red-50 !text-red-600" : ""}`}
                   disabled={loading || step === "welcome"}
                   onClick={startVoiceInput}
                   type="button"
                 >
-                  <Mic size={16} />
+                  <Mic size={16} /> <span className="sr-only">{listening ? "Stop" : "Record"}</span>
                 </button>
               )}
               {step === "done" ? (
@@ -377,7 +400,7 @@ export default function ChatWidget() {
         </section>
       )}
       <button
-        className="fixed bottom-24 right-4 z-40 grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-[#073b3a] to-orange-500 text-white shadow-[0_12px_30px_rgba(249,115,22,.35)] ring-4 ring-white transition hover:scale-105 sm:bottom-6 sm:right-6"
+        className="fixed bottom-24 right-4 z-40 grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-[#e24b13] via-[#f97316] to-[#fbbf24] text-white shadow-[0_14px_32px_rgba(234,88,12,.45)] ring-4 ring-orange-100 transition hover:scale-105 hover:from-[#ef5b25] hover:to-[#fde047] sm:bottom-6 sm:right-6"
         onClick={() => setOpen((value) => !value)}
         aria-label="Open AI help chat"
       >

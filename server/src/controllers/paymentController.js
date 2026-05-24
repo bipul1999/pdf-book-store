@@ -188,6 +188,7 @@ export async function getOrderBookSettings(req, res) {
 
 export async function createManualBookOrder(req, res) {
   const ids = parseBookIds(req.body.bookIds);
+  const paymentMethod = req.body.paymentMethod === "razorpay" ? "razorpay" : "upi_manual";
   const customerDetails = manualCustomerDetails(req.body);
   const missingDetail = Object.values(customerDetails).some((value) => !value);
   if (missingDetail) return res.status(422).json({ message: "Please enter all delivery details." });
@@ -195,9 +196,9 @@ export async function createManualBookOrder(req, res) {
   if (!/^\d{6}$/.test(customerDetails.pincode)) return res.status(422).json({ message: "Enter a valid 6 digit pincode." });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerDetails.email)) return res.status(422).json({ message: "Enter a valid email address." });
   if (!ids.length) return res.status(422).json({ message: "Select at least one book." });
-  if (!req.file) return res.status(422).json({ message: "Upload payment screenshot for verification." });
   const transactionId = String(req.body.transactionId || "").trim();
-  if (!transactionId) return res.status(422).json({ message: "Enter transaction ID." });
+  if (paymentMethod === "upi_manual" && !req.file) return res.status(422).json({ message: "Upload payment screenshot for verification." });
+  if (paymentMethod === "upi_manual" && !transactionId) return res.status(422).json({ message: "Enter transaction ID." });
   if (transactionId.length > 120) return res.status(422).json({ message: "Transaction ID is too long." });
 
   const books = await Book.find({ _id: { $in: ids }, isActive: true });
@@ -207,6 +208,22 @@ export async function createManualBookOrder(req, res) {
   const bookTotal = books.reduce((sum, book) => sum + book.price, 0);
   const extraCharge = normalizedExtraCharge(settings.orderBookExtraCharge);
   const amount = bookTotal + extraCharge;
+  let razorpayOrder = null;
+  if (paymentMethod === "razorpay") {
+    const razorpay = getRazorpay();
+    if (!razorpay) return res.status(422).json({ message: "Razorpay is not configured yet. Please use Manual UPI." });
+    const amountInPaise = Math.round(amount * 100);
+    if (amountInPaise < MIN_RAZORPAY_AMOUNT) return res.status(422).json({ message: "Minimum online payment amount is Rs. 1." });
+    try {
+      razorpayOrder = await razorpay.orders.create({
+        amount: amountInPaise,
+        currency: process.env.RAZORPAY_CURRENCY || "INR",
+        receipt: `book_${Date.now()}`
+      });
+    } catch (error) {
+      return razorpayErrorResponse(error, res);
+    }
+  }
   const order = await Order.create({
     user: req.user._id,
     items: books.map((book) => ({ book: book._id, title: book.title, price: book.price })),
@@ -216,16 +233,25 @@ export async function createManualBookOrder(req, res) {
     currency: "INR",
     orderType: "manual_book",
     customerDetails,
-    provider: "upi_manual",
-    paymentProof: req.file.path,
-    paymentNote: transactionId,
-    transactionId,
+    provider: paymentMethod,
+    paymentProof: req.file?.path,
+    paymentNote: transactionId || undefined,
+    transactionId: transactionId || undefined,
+    razorpayOrderId: razorpayOrder?.id,
     status: "pending"
   });
-  await sendAdminPaymentProofEmail(req, order);
+  if (paymentMethod === "upi_manual") await sendAdminPaymentProofEmail(req, order);
   res.status(201).json({
-    message: "Your order has been submitted successfully and is pending verification.",
-    order
+    message: paymentMethod === "upi_manual" ? "Your order has been submitted successfully and is pending verification." : "",
+    order,
+    razorpay: razorpayOrder
+      ? {
+          keyId: process.env.RAZORPAY_KEY_ID,
+          orderId: razorpayOrder.id,
+          amount: razorpayOrder.amount,
+          currency: razorpayOrder.currency
+        }
+      : null
   });
 }
 
@@ -336,19 +362,21 @@ export async function verifyPayment(req, res) {
     .digest("hex");
 
   if (!signaturesMatch(expected, razorpay_signature) || order.razorpayOrderId !== razorpay_order_id) {
-    order.status = "failed";
+    order.status = order.orderType === "manual_book" ? "rejected" : "failed";
     await order.save();
-    await sendPaymentStatusEmail(order);
+    if (order.orderType !== "manual_book") await sendPaymentStatusEmail(order);
     return res.status(400).json({ message: "Payment verification failed" });
   }
 
-  order.status = "success";
+  order.status = order.orderType === "manual_book" ? "confirmed" : "success";
   order.razorpayPaymentId = razorpay_payment_id;
   order.razorpaySignature = razorpay_signature;
   await order.save();
-  await unlockBooks(order);
-  await sendPaymentStatusEmail(order);
-  res.json({ message: "Payment verified", order });
+  if (order.orderType !== "manual_book") {
+    await unlockBooks(order);
+    await sendPaymentStatusEmail(order);
+  }
+  res.json({ message: order.orderType === "manual_book" ? "Payment verified. Your book order is confirmed." : "Payment verified", order });
 }
 
 export async function createRazorpayOrder(req, res) {
@@ -409,13 +437,15 @@ export async function razorpayWebhook(req, res) {
   if (!razorpayOrderId) return res.json({ received: true });
 
   const order = await Order.findOne({ razorpayOrderId });
-  if (!order || order.status === "success") return res.json({ received: true });
+  if (!order || ["success", "confirmed"].includes(order.status)) return res.json({ received: true });
 
-  order.status = "success";
+  order.status = order.orderType === "manual_book" ? "confirmed" : "success";
   order.razorpayPaymentId = payment.id;
   await order.save();
-  await unlockBooks(order);
-  await sendPaymentStatusEmail(order);
+  if (order.orderType !== "manual_book") {
+    await unlockBooks(order);
+    await sendPaymentStatusEmail(order);
+  }
   res.json({ received: true });
 }
 

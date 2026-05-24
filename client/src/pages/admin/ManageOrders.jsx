@@ -71,6 +71,7 @@ export default function ManageOrders() {
             <p className="mt-2 line-clamp-2 text-sm">{order.items.map((item) => item.title).join(", ")}</p>
             <p className="price-text mt-2">Rs. {order.amount}</p>
             {order.orderType === "manual_book" && <p className="text-xs text-gray-600">Books Rs. {order.bookTotal || 0} + Extra Rs. {order.extraCharge || 0}</p>}
+            {order.orderType === "manual_book" && <p className="mt-1 text-xs font-bold text-gray-600">Payment: {order.provider === "razorpay" ? "Razorpay" : "Manual UPI"}</p>}
             {order.paymentProof ? <button className="mt-2 inline-block font-bold text-orange-600" onClick={() => viewProof(order)} type="button">View proof</button> : <p className="mt-2 text-sm text-gray-500">No proof</p>}
             {(order.transactionId || order.paymentNote) && <p className="mt-1 break-all text-xs text-gray-600">Transaction: {order.transactionId || order.paymentNote}</p>}
             <select className="input mt-3" value={order.status} onChange={(e) => setStatus(order._id, e.target.value)}>
@@ -90,6 +91,7 @@ export default function ManageOrders() {
                 <td className="p-3">
                   <strong>Rs. {order.amount}</strong>
                   {order.orderType === "manual_book" && <p className="mt-1 whitespace-nowrap text-xs text-gray-600">Rs. {order.bookTotal || 0} + Rs. {order.extraCharge || 0}</p>}
+                  {order.orderType === "manual_book" && <p className="mt-1 text-xs font-bold text-gray-600">{order.provider === "razorpay" ? "Razorpay" : "Manual UPI"}</p>}
                 </td>
                 <td className="p-3">
                   {order.paymentProof ? (
