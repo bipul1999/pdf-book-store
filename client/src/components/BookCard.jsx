@@ -35,8 +35,8 @@ export default function BookCard({ book }) {
   }
 
   return (
-    <article className="panel group flex h-full flex-col overflow-hidden transition duration-300 hover:-translate-y-1 hover:border-orange-200 hover:shadow-[0_22px_48px_rgba(124,45,18,.14)]">
-      <Link to={`/books/${book._id}`} className="block border-b border-orange-100/70 bg-gradient-to-b from-orange-50/80 to-white">
+    <article className="premium-book-card panel group flex h-full flex-col overflow-hidden transition duration-300 hover:-translate-y-1 hover:border-orange-200 hover:shadow-[0_22px_48px_rgba(124,45,18,.14)]">
+      <Link to={`/books/${book._id}`} className="premium-book-image block border-b border-orange-100/70 bg-gradient-to-b from-orange-50/80 to-white">
         <img src={book.coverImage} onError={(event) => useFallbackImage(event, BOOK_COVER_FALLBACK)} alt={book.title} className="h-64 w-full object-contain p-4 transition duration-300 group-hover:scale-[1.025] sm:h-56 lg:h-60" decoding="async" loading="lazy" sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw" />
       </Link>
       <div className="flex flex-1 flex-col p-4">

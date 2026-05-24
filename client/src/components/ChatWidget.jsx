@@ -88,6 +88,8 @@ export default function ChatWidget() {
   const timers = useRef([]);
   const chatEndRef = useRef(null);
   const recognitionRef = useRef(null);
+  const transcriptRef = useRef("");
+  const voiceSentRef = useRef(false);
 
   const placeholders = {
     problem: "Apna question likhiye ya mic se boliye..."
@@ -100,6 +102,8 @@ export default function ChatWidget() {
 
   function closeAssistant() {
     recognitionRef.current?.abort?.();
+    transcriptRef.current = "";
+    voiceSentRef.current = false;
     setListening(false);
     setOpen(false);
   }
@@ -280,6 +284,16 @@ export default function ChatWidget() {
     return "Voice input start nahi ho paya. Dobara try kijiye.";
   }
 
+  async function sendVoiceTranscript(transcript) {
+    const value = String(transcript || "").trim();
+    if (!value || voiceSentRef.current) return;
+    voiceSentRef.current = true;
+    recognitionRef.current?.stop?.();
+    setInput("");
+    toast.success("Voice message send ho gaya");
+    await processUserText(value);
+  }
+
   async function startVoiceInput() {
     if (listening) {
       recognitionRef.current?.stop?.();
@@ -295,26 +309,17 @@ export default function ChatWidget() {
       return;
     }
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-    if (!navigator.mediaDevices?.getUserMedia) {
-      toast.error("Is browser me microphone access available nahi hai.");
-      return;
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach((track) => track.stop());
-    } catch (error) {
-      const message = voiceErrorMessage(error);
-      if (message) toast.error(message);
-      return;
-    }
     const recognition = new SpeechRecognition();
     recognitionRef.current = recognition;
+    transcriptRef.current = "";
+    voiceSentRef.current = false;
     recognition.lang = "hi-IN";
-    recognition.interimResults = false;
+    recognition.interimResults = true;
+    recognition.continuous = false;
     recognition.maxAlternatives = 1;
     recognition.onstart = () => {
       setListening(true);
-      toast.success("Bolna shuru kijiye...");
+      toast.success("Bolna shuru kijiye, message automatic send hoga...");
     };
     recognition.onerror = (event) => {
       setListening(false);
@@ -324,12 +329,24 @@ export default function ChatWidget() {
     recognition.onend = () => {
       setListening(false);
       recognitionRef.current = null;
+      if (!voiceSentRef.current && transcriptRef.current.trim()) {
+        void sendVoiceTranscript(transcriptRef.current);
+      }
     };
-    recognition.onresult = async (event) => {
-      const transcript = event.results?.[0]?.[0]?.transcript?.trim();
-      if (!transcript) return;
-      setInput("");
-      await processUserText(transcript);
+    recognition.onresult = (event) => {
+      let transcript = "";
+      let finalTranscript = "";
+      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+        const spokenText = event.results[index]?.[0]?.transcript || "";
+        transcript += spokenText;
+        if (event.results[index].isFinal) finalTranscript += spokenText;
+      }
+      const spokenValue = transcript.trim();
+      if (spokenValue) {
+        transcriptRef.current = spokenValue;
+        setInput(spokenValue);
+      }
+      if (finalTranscript.trim()) void sendVoiceTranscript(finalTranscript);
     };
     try {
       recognition.start();
@@ -403,7 +420,7 @@ export default function ChatWidget() {
             )}
             {listening && (
               <p className="flex items-center justify-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-black text-red-600">
-                <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" /> Listening... apna sawal boliye
+                <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" /> Recording... boliye, message automatic send hoga
               </p>
             )}
             <form className="flex gap-2" onSubmit={handleChatSubmit}>

@@ -138,6 +138,25 @@ export default function Home() {
     };
   }, [heroBookPool.length]);
 
+  useEffect(() => {
+    const elements = document.querySelectorAll("[data-home-reveal]");
+    if (!("IntersectionObserver" in window)) {
+      elements.forEach((element) => element.classList.add("is-visible"));
+      return undefined;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        }
+      }),
+      { rootMargin: "0px 0px -8% 0px", threshold: 0.12 }
+    );
+    elements.forEach((element) => observer.observe(element));
+    return () => observer.disconnect();
+  }, []);
+
   const heroBooks = heroBookPool.length <= 4
     ? heroBookPool
     : Array.from({ length: Math.min(4, heroBookPool.length) }, (_, index) => heroBookPool[(bookOffset + index) % heroBookPool.length]);
@@ -166,9 +185,9 @@ export default function Home() {
 
   return (
     <main>
-      <section className="px-4 py-5 sm:py-9">
+      <section className="home-section px-4 py-5 sm:py-9">
         <div className="mx-auto max-w-4xl">
-          <article className="panel relative overflow-hidden p-4 sm:p-6 md:p-7">
+          <article data-home-reveal className="home-reveal home-quote-card panel relative overflow-hidden p-4 sm:p-6 md:p-7">
             <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,247,237,.98),rgba(255,255,255,.92))]" />
             <div className="relative grid items-center gap-3 sm:gap-6 md:grid-cols-[120px_1fr]">
               <div className="flex justify-center">
@@ -195,8 +214,15 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-y border-orange-100/70 bg-[linear-gradient(110deg,#fff7ed_0%,#fffdf9_48%,#fff4e6_100%)]">
-        <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-8 sm:py-12 md:grid-cols-[1.05fr_.95fr] md:py-16">
+      <section className="home-hero relative isolate overflow-hidden border-y border-orange-100/70">
+        <div aria-hidden="true" className="home-hero-atmosphere">
+          <span className="home-glow home-glow-one" />
+          <span className="home-glow home-glow-two" />
+          <span className="home-particle home-particle-one" />
+          <span className="home-particle home-particle-two" />
+          <span className="home-particle home-particle-three" />
+        </div>
+        <div data-home-reveal className="home-reveal relative mx-auto grid max-w-7xl items-center gap-8 px-4 py-10 sm:py-14 md:grid-cols-[1.05fr_.95fr] md:py-20">
           <div className="space-y-4 text-center md:text-left">
             <span className="badge mx-auto items-center gap-1.5 md:mx-0"><ShieldCheck size={14} /> Secure PDF downloads</span>
             <h1 className="mx-auto max-w-2xl text-[26px] font-black leading-tight sm:text-3xl md:mx-0 md:text-4xl lg:text-5xl">
@@ -212,11 +238,11 @@ export default function Home() {
             </div>
           </div>
 
-          <div className={`grid grid-cols-2 gap-2 transition-all duration-500 ease-out sm:gap-3 ${
+          <div className={`home-hero-books grid grid-cols-2 gap-2 transition-all duration-500 ease-out sm:gap-3 ${
             isBookTransitioning ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100"
           }`}>
             {heroBooks.map((book) => (
-              <Link key={book._id} to={`/books/${book._id}`} className="group relative overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-soft transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(124,45,18,.14)]">
+              <Link key={book._id} to={`/books/${book._id}`} className="home-hero-book group relative overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-soft transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(124,45,18,.14)]">
                 <img src={book.coverImage} onError={(event) => useFallbackImage(event, BOOK_COVER_FALLBACK)} className="h-44 w-full bg-orange-50/70 object-contain p-3 transition duration-300 group-hover:scale-105 sm:h-52" alt={book.title} decoding="async" fetchPriority="high" loading="eager" sizes="(min-width: 768px) 25vw, 50vw" />
                 <span className="absolute bottom-2 left-2 right-2 line-clamp-2 rounded-xl bg-white/95 px-2.5 py-1.5 text-[11px] font-bold leading-4 text-ink shadow-sm sm:text-xs">
                   {book.title}
@@ -244,16 +270,16 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="px-4 py-9 sm:py-12">
-        <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-[.9fr_1.1fr] md:items-center">
-          <div className="panel space-y-3 p-5 text-center md:p-7 md:text-left">
+      <section className="home-section home-section-tinted px-4 py-10 sm:py-14">
+        <div data-home-reveal className="home-reveal mx-auto grid max-w-7xl gap-5 md:grid-cols-[.9fr_1.1fr] md:items-center">
+          <div className="home-glass panel space-y-3 p-5 text-center md:p-7 md:text-left">
             <span className="badge mx-auto md:mx-0">लेखक परिचय</span>
             <h2 className="text-2xl font-black text-ink sm:text-3xl">महेश भारती जी का संदेश</h2>
             <p className="mx-auto max-w-xl text-sm leading-7 text-gray-600 md:mx-0">
               लेखक की वाणी में इस ई-बुक स्टोर का उद्देश्य जानिए और उनकी पुस्तकों से जुड़ने का सरल डिजिटल अनुभव देखिए।
             </p>
           </div>
-          <div className="overflow-hidden rounded-2xl border border-orange-100 bg-black shadow-[0_18px_42px_rgba(36,25,21,.14)]">
+          <div className="home-video-card overflow-hidden rounded-2xl border border-orange-100 bg-black shadow-[0_18px_42px_rgba(36,25,21,.14)]">
             <video
               className="aspect-video w-full bg-black object-cover"
               controls
@@ -267,9 +293,9 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="px-4 py-9 sm:py-14">
-        <div className="mx-auto max-w-7xl">
-          <div className="panel p-5 sm:p-7">
+      <section className="home-section px-4 py-10 sm:py-16">
+        <div data-home-reveal className="home-reveal mx-auto max-w-7xl">
+          <div className="home-glass panel p-5 sm:p-7">
           <div className="mb-6 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
             <div>
               <span className="badge mb-3">खरीदने की प्रक्रिया</span>
@@ -283,7 +309,7 @@ export default function Home() {
           </div>
           <div className="grid gap-3 md:grid-cols-4">
             {processSteps.map(({ icon: Icon, title, text }, index) => (
-              <div className="relative rounded-2xl border border-orange-100/80 bg-[#fffaf5] p-4 transition hover:border-orange-200 hover:bg-white" key={title}>
+              <div className="home-step-card relative rounded-2xl border border-orange-100/80 bg-[#fffaf5] p-4 transition hover:border-orange-200 hover:bg-white" key={title}>
                 <div className="mb-4 flex items-center justify-between">
                   <span className="grid h-10 w-10 place-items-center rounded-xl bg-white text-orange-700 shadow-sm ring-1 ring-orange-100">
                     <Icon size={20} />
@@ -299,8 +325,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="px-4 py-9 sm:py-14">
-        <div className="mx-auto max-w-7xl">
+      <section className="home-section home-section-tinted px-4 py-10 sm:py-16">
+        <div data-home-reveal className="home-reveal mx-auto max-w-7xl">
           <div className="mb-5 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
             <div>
               <span className="badge mb-3">आज की प्रमुख पुस्तक</span>
@@ -316,7 +342,7 @@ export default function Home() {
               <div className="mx-auto w-full max-w-[260px] lg:mx-0">
                 <BookCard book={bestBook} />
               </div>
-              <div className="panel flex flex-col justify-center p-5 sm:p-7">
+              <div className="home-glass panel flex flex-col justify-center p-5 sm:p-7">
                 <span className="badge mb-3 w-fit">Featured read</span>
                 <h3 className="text-xl font-black leading-snug text-ink sm:text-2xl">{bestBook.title}</h3>
                 <p className="mt-3 line-clamp-3 text-sm leading-7 text-gray-600">{bestBook.description}</p>
@@ -339,9 +365,9 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="px-4 py-9 sm:py-14">
-        <div className="mx-auto max-w-7xl">
-          <div className="panel overflow-hidden">
+      <section className="home-section px-4 py-10 sm:py-16">
+        <div data-home-reveal className="home-reveal mx-auto max-w-7xl">
+          <div className="home-glass panel overflow-hidden">
             <div className="grid gap-0 lg:grid-cols-[.9fr_1.1fr]">
               <div className="border-b border-slate-200 p-5 text-center sm:p-7 lg:border-b-0 lg:border-r lg:text-left">
               <span className="badge mb-3">विश्वास और सुविधा</span>
@@ -351,7 +377,7 @@ export default function Home() {
             </div>
               <div className="divide-y divide-slate-200">
                 {trustItems.map(({ icon: Icon, title, text }) => (
-                  <div className="grid gap-3 p-4 sm:grid-cols-[44px_1fr] sm:p-5" key={title}>
+                  <div className="home-trust-item grid gap-3 p-4 sm:grid-cols-[44px_1fr] sm:p-5" key={title}>
                     <span className="grid h-11 w-11 place-items-center rounded-xl bg-orange-50 text-orange-700 ring-1 ring-orange-100">
                       <Icon size={21} />
                     </span>

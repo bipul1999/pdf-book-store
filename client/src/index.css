@@ -26,6 +26,7 @@ button, input, select, textarea { font: inherit; }
 img, video { max-width: 100%; }
 h1, h2, h3 {
   color: #201613;
+  font-family: "Noto Serif Devanagari", "Noto Sans Devanagari", "Nirmala UI", "Mangal", ui-serif, Georgia, serif;
   letter-spacing: -.025em;
   text-wrap: balance;
 }
@@ -40,6 +41,193 @@ p { text-wrap: pretty; }
 .badge { @apply inline-flex items-center gap-1.5 rounded-full border border-orange-100 bg-orange-50/80 px-3 py-1 text-xs font-bold text-orange-800; }
 .mobile-page { @apply mx-auto w-full max-w-7xl px-4 py-5 sm:py-9; }
 .price-text { @apply font-black tracking-tight text-[#a94707]; }
+
+.home-section {
+  position: relative;
+}
+
+.home-section-tinted {
+  background: linear-gradient(115deg, rgba(255, 247, 237, .55), rgba(255, 255, 255, .68), rgba(254, 243, 199, .24));
+  border-block: 1px solid rgba(253, 230, 205, .5);
+}
+
+.home-glass {
+  background: rgba(255, 255, 255, .76);
+  box-shadow: 0 20px 56px rgba(87, 45, 18, .09);
+  backdrop-filter: blur(11px);
+}
+
+.home-quote-card::after {
+  content: "";
+  position: absolute;
+  inset: auto -35% -70% 18%;
+  height: 120%;
+  background: radial-gradient(circle, rgba(245, 158, 11, .12), transparent 58%);
+  pointer-events: none;
+}
+
+.home-hero {
+  background: linear-gradient(120deg, #fff7ed, #fffdf8, #ffedd5, #fffaf5);
+  background-size: 260% 260%;
+  animation: home-gradient-shift 14s ease infinite;
+}
+
+.home-hero-atmosphere {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.home-glow {
+  position: absolute;
+  display: block;
+  border-radius: 999px;
+  filter: blur(18px);
+  opacity: .7;
+  animation: home-glow-drift 11s ease-in-out infinite alternate;
+}
+
+.home-glow-one {
+  left: -7rem;
+  top: -7rem;
+  width: clamp(17rem, 36vw, 30rem);
+  height: clamp(17rem, 36vw, 30rem);
+  background: radial-gradient(circle, rgba(234, 88, 12, .18), transparent 67%);
+}
+
+.home-glow-two {
+  right: -8rem;
+  bottom: -9rem;
+  width: clamp(19rem, 41vw, 34rem);
+  height: clamp(19rem, 41vw, 34rem);
+  background: radial-gradient(circle, rgba(15, 91, 85, .13), transparent 67%);
+  animation-delay: -4s;
+}
+
+.home-particle {
+  position: absolute;
+  display: block;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, .38);
+  box-shadow: 0 0 22px rgba(245, 158, 11, .34);
+  animation: home-particle-float 8s ease-in-out infinite;
+}
+
+.home-particle-one { left: 8%; top: 28%; width: 7px; height: 7px; }
+.home-particle-two { left: 48%; top: 14%; width: 5px; height: 5px; animation-delay: -2.7s; }
+.home-particle-three { right: 12%; top: 30%; width: 8px; height: 8px; animation-delay: -5.4s; }
+
+.home-hero h1 {
+  color: #1e1512;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .8);
+}
+
+.home-hero .btn-primary,
+.home-hero .btn-order-book {
+  box-shadow: 0 14px 30px rgba(15, 91, 85, .2);
+}
+
+.home-hero .btn-order-book {
+  box-shadow: 0 14px 30px rgba(234, 88, 12, .28);
+}
+
+.home-hero-book {
+  box-shadow: 0 16px 36px rgba(124, 45, 18, .1);
+  animation: home-book-hover 6.5s ease-in-out infinite;
+}
+
+.home-hero-book:nth-child(2),
+.home-hero-book:nth-child(3) {
+  animation-delay: -3.1s;
+}
+
+.home-hero-book:hover {
+  animation-play-state: paused;
+}
+
+.home-video-card {
+  transition: transform .35s ease, box-shadow .35s ease;
+}
+
+.home-video-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 25px 58px rgba(36, 25, 21, .2);
+}
+
+.home-step-card,
+.home-trust-item {
+  transition: transform .25s ease, box-shadow .25s ease, background-color .25s ease;
+}
+
+.home-step-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 28px rgba(124, 45, 18, .09);
+}
+
+.home-trust-item:hover {
+  background: rgba(255, 247, 237, .7);
+}
+
+.premium-book-card {
+  position: relative;
+  border-radius: 1.25rem;
+  box-shadow: 0 16px 38px rgba(87, 45, 18, .08);
+}
+
+.premium-book-card::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0 auto auto 0;
+  height: 3px;
+  width: 100%;
+  opacity: 0;
+  background: linear-gradient(90deg, #0f5b55, #f97316, #fbbf24);
+  transition: opacity .25s ease;
+}
+
+.premium-book-card:hover::before {
+  opacity: 1;
+}
+
+.premium-book-image {
+  overflow: hidden;
+}
+
+.premium-book-image img {
+  filter: drop-shadow(0 10px 14px rgba(87, 45, 18, .09));
+}
+
+.home-reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity .62s ease, transform .62s cubic-bezier(.2, .8, .2, 1);
+}
+
+.home-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes home-gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes home-glow-drift {
+  from { transform: translate3d(-10px, 0, 0) scale(.96); }
+  to { transform: translate3d(18px, 12px, 0) scale(1.07); }
+}
+
+@keyframes home-particle-float {
+  0%, 100% { transform: translate3d(0, 0, 0); opacity: .4; }
+  50% { transform: translate3d(0, -20px, 0); opacity: .9; }
+}
+
+@keyframes home-book-hover {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
 
 table th {
   @apply text-xs font-black uppercase tracking-wide text-slate-500;
@@ -157,6 +345,11 @@ table tbody tr {
   .quote-drift {
     animation: none;
   }
+
+  .home-reveal {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @media (max-width: 640px) {
@@ -176,5 +369,18 @@ table tbody tr {
   .mobile-fixed-header {
     position: fixed;
     inset: 0 0 auto 0;
+  }
+
+  .home-glow {
+    filter: blur(10px);
+    opacity: .45;
+  }
+
+  .home-particle-three {
+    display: none;
+  }
+
+  .home-glass {
+    backdrop-filter: blur(6px);
   }
 }
