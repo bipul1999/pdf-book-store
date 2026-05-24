@@ -243,15 +243,14 @@ export default function ChatWidget() {
   async function processUserText(value) {
     if (loading || step === "welcome" || step === "done" || !value) return;
 
-    if (step === "problem" && value.length < 8) {
-      toast.error("Problem thoda detail me likhiye");
-      return;
-    }
-
     setMessages((items) => [...items, { role: "user", text: value }]);
     setInput("");
 
     if (handleGuideRequest(value)) return;
+    if (step === "problem" && value.length < 8) {
+      toast.error("Question thoda detail me boliye ya likhiye");
+      return;
+    }
     if (shouldCreateSupportTicket(value)) {
       await sendIssue(value);
       return;
@@ -267,14 +266,45 @@ export default function ChatWidget() {
     await processUserText(value);
   }
 
-  function startVoiceInput() {
+  function voiceErrorMessage(error) {
+    const reason = error?.error || error?.name;
+    if (["not-allowed", "service-not-allowed", "NotAllowedError", "SecurityError"].includes(reason)) {
+      return "Microphone permission allow kijiye, phir mic dobara tap kijiye.";
+    }
+    if (["audio-capture", "NotFoundError", "NotReadableError"].includes(reason)) {
+      return "Microphone available nahi mila. Device mic settings check kijiye.";
+    }
+    if (reason === "no-speech") return "Awaaz sunai nahi di. Mic tap karke dobara boliye.";
+    if (reason === "network") return "Voice service connect nahi hui. Network check karke dobara try kijiye.";
+    if (reason === "aborted") return "";
+    return "Voice input start nahi ho paya. Dobara try kijiye.";
+  }
+
+  async function startVoiceInput() {
     if (listening) {
       recognitionRef.current?.stop?.();
       return;
     }
+    if (!window.isSecureContext) {
+      toast.error("Voice input ke liye secure HTTPS page par website kholiye.");
+      return;
+    }
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      toast.error("Is browser me voice input support nahi hai");
+      toast.error("Voice input ke liye Chrome browser me website kholiye.");
+      return;
+    }
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.error("Is browser me microphone access available nahi hai.");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((track) => track.stop());
+    } catch (error) {
+      const message = voiceErrorMessage(error);
+      if (message) toast.error(message);
       return;
     }
     const recognition = new SpeechRecognition();
@@ -286,18 +316,28 @@ export default function ChatWidget() {
       setListening(true);
       toast.success("Bolna shuru kijiye...");
     };
-    recognition.onerror = () => {
+    recognition.onerror = (event) => {
       setListening(false);
-      toast.error("Voice samajh nahi aayi, dobara try kijiye");
+      const message = voiceErrorMessage(event);
+      if (message) toast.error(message);
     };
-    recognition.onend = () => setListening(false);
+    recognition.onend = () => {
+      setListening(false);
+      recognitionRef.current = null;
+    };
     recognition.onresult = async (event) => {
       const transcript = event.results?.[0]?.[0]?.transcript?.trim();
       if (!transcript) return;
       setInput("");
       await processUserText(transcript);
     };
-    recognition.start();
+    try {
+      recognition.start();
+    } catch (error) {
+      setListening(false);
+      const message = voiceErrorMessage(error);
+      if (message) toast.error(message);
+    }
   }
 
   return (
