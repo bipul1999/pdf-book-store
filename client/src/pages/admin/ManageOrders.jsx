@@ -68,7 +68,7 @@ export default function ManageOrders() {
         {orders.map((order) => (
           <article className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm" key={order._id}>
             <div className="text-sm"><CustomerDetails order={order} /></div>
-            <p className="mt-2 line-clamp-2 text-sm">{order.items.map((item) => item.title).join(", ")}</p>
+            <p className="mt-2 line-clamp-2 text-sm">{order.items.map((item) => `${item.title} x ${item.quantity || 1}`).join(", ")}</p>
             <p className="price-text mt-2">Rs. {order.amount}</p>
             {order.orderType === "manual_book" && <p className="text-xs text-gray-600">Books Rs. {order.bookTotal || 0} + Extra Rs. {order.extraCharge || 0}</p>}
             {order.orderType === "manual_book" && <p className="mt-1 text-xs font-bold text-gray-600">Payment: {order.provider === "razorpay" ? "Razorpay" : "Manual UPI"}</p>}
@@ -87,7 +87,7 @@ export default function ManageOrders() {
             {orders.map((order) => (
               <tr className="border-t border-gray-100" key={order._id}>
                 <td className="p-3 align-top"><CustomerDetails order={order} /></td>
-                <td className="p-3">{order.items.map((item) => item.title).join(", ")}</td>
+                <td className="p-3">{order.items.map((item) => `${item.title} x ${item.quantity || 1}`).join(", ")}</td>
                 <td className="p-3">
                   <strong>Rs. {order.amount}</strong>
                   {order.orderType === "manual_book" && <p className="mt-1 whitespace-nowrap text-xs text-gray-600">Rs. {order.bookTotal || 0} + Rs. {order.extraCharge || 0}</p>}

@@ -1,4 +1,5 @@
 import fs from "fs";
+import mongoose from "mongoose";
 import path from "path";
 import Book from "../models/Book.js";
 import Order from "../models/Order.js";
@@ -27,6 +28,7 @@ export async function listBooks(req, res) {
 }
 
 export async function getBook(req, res) {
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: "Book not found" });
   const book = await Book.findOne({ _id: req.params.id, isActive: true }).populate("category").lean();
   if (!book) return res.status(404).json({ message: "Book not found" });
   res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
@@ -71,6 +73,7 @@ export async function deleteBook(req, res) {
 }
 
 export async function downloadBook(req, res) {
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: "Book not found" });
   const book = await Book.findById(req.params.id).select("+pdfPath");
   if (!book) return res.status(404).json({ message: "Book not found" });
   const accessWindowStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);

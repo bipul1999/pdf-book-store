@@ -109,7 +109,7 @@ export default function Orders() {
                     {order.items.map((item) => (
                       <div className="rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2" key={`${order._id}-${item.book?._id || item.title}`}>
                         <p className="break-words font-bold">{item.title}</p>
-                        <p className="text-sm text-gray-600">Rs. {item.price}</p>
+                        <p className="text-sm text-gray-600">Rs. {item.price} x {item.quantity || 1} = Rs. {item.price * (item.quantity || 1)}</p>
                       </div>
                     ))}
                   </div>

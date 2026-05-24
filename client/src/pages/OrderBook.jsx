@@ -1,4 +1,4 @@
-import { CheckCircle2, CreditCard, MapPin, ReceiptIndianRupee, Search, ShieldCheck, ShoppingBag, Smartphone } from "lucide-react";
+import { CheckCircle2, CreditCard, MapPin, Minus, Plus, ReceiptIndianRupee, Search, ShieldCheck, ShoppingBag, Smartphone } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
@@ -15,6 +15,7 @@ const initialDetails = {
   state: "",
   pincode: ""
 };
+const MAX_BOOK_QUANTITY = 20;
 
 function money(value) {
   return Number(value || 0).toLocaleString("en-IN");
@@ -47,6 +48,7 @@ export default function OrderBook() {
   const [details, setDetails] = useState(initialDetails);
   const [bookQuery, setBookQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
+  const [quantities, setQuantities] = useState({});
   const [paymentMethod, setPaymentMethod] = useState("razorpay");
   const [transactionId, setTransactionId] = useState("");
   const [proof, setProof] = useState(null);
@@ -81,7 +83,8 @@ export default function OrderBook() {
       ? books.filter((book) => `${book.title} ${book.author}`.toLowerCase().includes(query))
       : books;
   }, [bookQuery, books]);
-  const bookTotal = selectedBooks.reduce((total, book) => total + Number(book.price || 0), 0);
+  const totalCopies = selectedBooks.reduce((total, book) => total + (quantities[book._id] || 1), 0);
+  const bookTotal = selectedBooks.reduce((total, book) => total + Number(book.price || 0) * (quantities[book._id] || 1), 0);
   const extraCharge = Number(settings.orderBookExtraCharge || 0);
   const finalAmount = bookTotal + extraCharge;
 
@@ -90,7 +93,23 @@ export default function OrderBook() {
   }
 
   function toggleBook(id) {
-    setSelectedIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+    const selected = selectedIds.includes(id);
+    setSelectedIds((current) => selected ? current.filter((item) => item !== id) : [...current, id]);
+    setQuantities((current) => {
+      const next = { ...current };
+      if (selected) delete next[id];
+      else next[id] = 1;
+      return next;
+    });
+  }
+
+  function changeQuantity(id, change) {
+    const nextQuantity = (quantities[id] || 1) + change;
+    if (nextQuantity < 1) {
+      toggleBook(id);
+      return;
+    }
+    setQuantities((current) => ({ ...current, [id]: Math.min(MAX_BOOK_QUANTITY, nextQuantity) }));
   }
 
   async function openRazorpayPayment(data) {
@@ -104,7 +123,7 @@ export default function OrderBook() {
       amount: data.razorpay.amount,
       currency: data.razorpay.currency,
       name: "Mahesh Bharti E-book Store",
-      description: `${selectedBooks.length} book order`,
+      description: `${totalCopies} book order`,
       order_id: data.razorpay.orderId,
       prefill: {
         name: details.fullName,
@@ -147,12 +166,12 @@ export default function OrderBook() {
       if (paymentMethod === "upi_manual") {
         payload = new FormData();
         Object.entries(details).forEach(([key, value]) => payload.append(key, value));
-        payload.append("bookIds", JSON.stringify(selectedIds));
+        payload.append("items", JSON.stringify(selectedBooks.map((book) => ({ bookId: book._id, quantity: quantities[book._id] || 1 }))));
         payload.append("paymentMethod", paymentMethod);
         payload.append("transactionId", transactionId);
         payload.append("proof", proof);
       } else {
-        payload = { ...details, bookIds: JSON.stringify(selectedIds), paymentMethod };
+        payload = { ...details, items: JSON.stringify(selectedBooks.map((book) => ({ bookId: book._id, quantity: quantities[book._id] || 1 }))), paymentMethod };
       }
       const { data } = await api.post("/payments/manual-book-order", payload);
       if (data.razorpay) {
@@ -215,7 +234,7 @@ export default function OrderBook() {
             <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
               <div>
                 <h2 className="flex items-center gap-2 text-xl font-black"><ShoppingBag className="text-orange-700" size={20} /> Select books</h2>
-                <p className="mt-1 text-sm text-gray-600">Cover aur naam dekhkar ek ya multiple books select karein.</p>
+                <p className="mt-1 text-sm text-gray-600">Cover aur naam dekhkar book select karein, phir copies set karein.</p>
               </div>
               <label className="relative block sm:w-60">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
@@ -228,22 +247,29 @@ export default function OrderBook() {
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {visibleBooks.map((book) => {
                   const selected = selectedIds.includes(book._id);
+                  const quantity = quantities[book._id] || 1;
                   return (
-                    <button
-                      aria-pressed={selected}
-                      className={`relative flex min-h-44 gap-3 rounded-2xl border p-3 text-left transition ${selected ? "border-[#0f5b55] bg-teal-50/60 ring-2 ring-[#0f5b55]/18" : "border-orange-100 bg-white hover:border-orange-300 hover:shadow-sm"}`}
-                      key={book._id}
-                      onClick={() => toggleBook(book._id)}
-                      type="button"
-                    >
-                      <img className="h-32 w-24 shrink-0 rounded-xl bg-orange-50 object-contain p-1" src={book.coverImage} onError={(event) => useFallbackImage(event, BOOK_COVER_FALLBACK)} alt={book.title} loading="lazy" />
-                      <span className="flex min-w-0 flex-1 flex-col">
-                        <span className={`mb-2 w-fit rounded-full px-2 py-1 text-[11px] font-black ${selected ? "bg-[#0f5b55] text-white" : "bg-orange-50 text-orange-700"}`}>{selected ? "Selected" : "Select"}</span>
-                        <strong className="line-clamp-3 text-sm leading-5">{book.title}</strong>
-                        <span className="mt-1 line-clamp-1 text-xs font-semibold text-gray-500">{book.author}</span>
-                        <span className="mt-auto block pt-2 font-black text-orange-700">Rs. {money(book.price)}</span>
-                      </span>
-                    </button>
+                    <article className={`flex min-h-44 flex-col rounded-2xl border p-3 transition ${selected ? "border-[#0f5b55] bg-teal-50/60 ring-2 ring-[#0f5b55]/18" : "border-orange-100 bg-white hover:border-orange-300 hover:shadow-sm"}`} key={book._id}>
+                      <button aria-pressed={selected} className="flex flex-1 gap-3 text-left" onClick={() => toggleBook(book._id)} type="button">
+                        <img className="h-32 w-24 shrink-0 rounded-xl bg-orange-50 object-contain p-1" src={book.coverImage} onError={(event) => useFallbackImage(event, BOOK_COVER_FALLBACK)} alt={book.title} loading="lazy" />
+                        <span className="flex min-w-0 flex-1 flex-col">
+                          <span className={`mb-2 w-fit rounded-full px-2 py-1 text-[11px] font-black ${selected ? "bg-[#0f5b55] text-white" : "bg-orange-50 text-orange-700"}`}>{selected ? "Selected" : "Select"}</span>
+                          <strong className="line-clamp-3 text-sm leading-5">{book.title}</strong>
+                          <span className="mt-1 line-clamp-1 text-xs font-semibold text-gray-500">{book.author}</span>
+                          <span className="mt-auto block pt-2 font-black text-orange-700">Rs. {money(book.price)}</span>
+                        </span>
+                      </button>
+                      {selected && (
+                        <div className="mt-3 flex items-center justify-between gap-2 border-t border-teal-100 pt-3">
+                          <span className="text-xs font-bold text-gray-600">Copies</span>
+                          <div className="flex items-center rounded-lg border border-teal-200 bg-white p-1" aria-label={`Quantity for ${book.title}`}>
+                            <button className="grid h-8 w-8 place-items-center rounded-md text-[#0f5b55] transition hover:bg-teal-50" onClick={() => changeQuantity(book._id, -1)} type="button" aria-label="Decrease quantity"><Minus size={15} /></button>
+                            <span className="min-w-9 text-center text-sm font-black">{quantity}</span>
+                            <button className="grid h-8 w-8 place-items-center rounded-md text-[#0f5b55] transition hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-40" disabled={quantity >= MAX_BOOK_QUANTITY} onClick={() => changeQuantity(book._id, 1)} type="button" aria-label="Increase quantity"><Plus size={15} /></button>
+                          </div>
+                        </div>
+                      )}
+                    </article>
                   );
                 })}
               </div>
@@ -260,14 +286,14 @@ export default function OrderBook() {
               <div className="mb-4 space-y-2">
                 {selectedBooks.map((book) => (
                   <div className="flex justify-between gap-3 text-sm" key={book._id}>
-                    <span className="line-clamp-2 text-gray-600">{book.title}</span>
-                    <strong className="shrink-0">Rs. {money(book.price)}</strong>
+                    <span className="line-clamp-2 text-gray-600">{book.title} <strong className="text-gray-800">x {quantities[book._id] || 1}</strong></span>
+                    <strong className="shrink-0">Rs. {money(Number(book.price || 0) * (quantities[book._id] || 1))}</strong>
                   </div>
                 ))}
               </div>
             ) : <p className="mb-4 text-sm text-gray-500">No books selected yet.</p>}
             <div className="space-y-2 border-t border-orange-100 pt-3 text-sm">
-              <div className="flex justify-between"><span>Book Total</span><strong>Rs. {money(bookTotal)}</strong></div>
+              <div className="flex justify-between"><span>Book Total ({totalCopies} copies)</span><strong>Rs. {money(bookTotal)}</strong></div>
               <div className="flex justify-between"><span>Extra Charge</span><strong>Rs. {money(extraCharge)}</strong></div>
               <div className="flex justify-between border-t border-dashed border-orange-200 pt-3 text-lg font-black text-[#a94707]"><span>Final Amount</span><span>Rs. {money(finalAmount)}</span></div>
             </div>

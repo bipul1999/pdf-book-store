@@ -86,16 +86,18 @@ export async function verifySignupOtp(req, res) {
 
 export async function adminStatus(_req, res) {
   const admin = await User.findOne({ role: "admin", isVerified: true });
-  res.json({ adminExists: Boolean(admin), adminEmail: admin?.email || "" });
+  res.json({ adminExists: Boolean(admin) });
 }
 
 export async function adminSignup(req, res) {
   const { name, email, phone, password } = req.body;
   let verifiedAdmin = await User.findOne({ role: "admin", isVerified: true }).select("+password");
-  if (verifiedAdmin && verifiedAdmin.email !== email) {
-    if (email !== ownerAdminEmail) {
-      return res.status(409).json({ message: "Admin account already exists with another Gmail" });
-    }
+  const requestedAdminEmail = normalizeEmailForLookup(email);
+  const existingAdminEmail = normalizeEmailForLookup(verifiedAdmin?.email);
+  const isOwnerEmail = requestedAdminEmail === ownerAdminEmail;
+  const isExistingAdminEmail = Boolean(verifiedAdmin && requestedAdminEmail === existingAdminEmail);
+  if (!isOwnerEmail && !isExistingAdminEmail) {
+    return res.status(403).json({ message: "Admin registration is restricted to the authorized email." });
   }
 
   const existingDifferentUser = await User.findOne({
@@ -105,7 +107,7 @@ export async function adminSignup(req, res) {
   if (existingDifferentUser) return res.status(409).json({ message: "Email or phone already exists as a user account" });
 
   let admin = verifiedAdmin || await User.findOne({ role: "admin", isVerified: false }).select("+password");
-  if (admin && admin.email !== email && email !== ownerAdminEmail) {
+  if (admin && normalizeEmailForLookup(admin.email) !== requestedAdminEmail && !isOwnerEmail) {
     return res.status(409).json({ message: "An admin signup is already pending verification" });
   }
 

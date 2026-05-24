@@ -7,14 +7,12 @@ import api from "../../api/client.js";
 export default function AdminSignup() {
   const navigate = useNavigate();
   const [adminExists, setAdminExists] = useState(false);
-  const [adminEmail, setAdminEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
 
   useEffect(() => {
     api.get("/auth/admin/status").then(({ data }) => {
       setAdminExists(data.adminExists);
-      setAdminEmail(data.adminEmail || "");
     }).catch(() => {});
   }, []);
 
@@ -47,11 +45,11 @@ export default function AdminSignup() {
         <div>
           <ShieldCheck className="mb-3 text-orange-600" />
           <h1 className="text-2xl font-black">Create Admin Profile</h1>
-          <p className="text-sm text-gray-600">First verified Gmail stays permanent. Same Gmail can reset its admin password with OTP.</p>
+          <p className="text-sm text-gray-600">Only the authorized owner Gmail can activate or recover the admin profile.</p>
         </div>
         {adminExists ? (
           <div className="rounded-md bg-orange-50 p-4 text-sm font-semibold text-orange-800">
-            Admin already exists. Enter the same Gmail{adminEmail ? ` (${adminEmail})` : ""} to reset and verify again.
+            Admin already exists. Use the authorized owner Gmail to recover access.
           </div>
         ) : null}
         <input className="input" placeholder="Admin name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />

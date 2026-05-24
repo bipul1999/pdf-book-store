@@ -4,7 +4,8 @@ const orderItemSchema = new mongoose.Schema(
   {
     book: { type: mongoose.Schema.Types.ObjectId, ref: "Book", required: true },
     title: String,
-    price: Number
+    price: Number,
+    quantity: { type: Number, min: 1, max: 20, default: 1 }
   },
   { _id: false }
 );

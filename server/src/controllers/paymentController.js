@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import mongoose from "mongoose";
 import QRCode from "qrcode";
 import Book from "../models/Book.js";
 import Order from "../models/Order.js";
@@ -8,6 +9,7 @@ import { getRazorpay } from "../config/razorpay.js";
 import { sendEmail } from "../utils/email.js";
 
 const MIN_RAZORPAY_AMOUNT = 100;
+const MAX_BOOK_QUANTITY = 20;
 const DIGITAL_ORDER_STATUSES = new Set(["pending", "submitted", "success", "failed"]);
 const MANUAL_BOOK_ORDER_STATUSES = new Set(["pending", "confirmed", "completed", "rejected"]);
 
@@ -84,7 +86,7 @@ async function sendAdminPaymentProofEmail(req, order) {
     const populated = await order.populate("user", "name email phone");
     const adminEmail = process.env.ADMIN_NOTIFY_EMAIL || process.env.ADMIN_EMAIL || process.env.SMTP_USER;
     if (!adminEmail) return;
-    const books = order.items.map((item) => `<li>${escapeHtml(item.title)} - Rs. ${item.price}</li>`).join("");
+    const books = order.items.map((item) => `<li>${escapeHtml(item.title)} x ${item.quantity || 1} - Rs. ${item.price * (item.quantity || 1)}</li>`).join("");
 
     await sendEmail({
       to: adminEmail,
@@ -161,6 +163,31 @@ function parseBookIds(value) {
   }
 }
 
+function parseBookSelections(itemsValue, legacyBookIds) {
+  let values;
+  try {
+    values = itemsValue
+      ? (Array.isArray(itemsValue) ? itemsValue : JSON.parse(itemsValue))
+      : parseBookIds(legacyBookIds).map((bookId) => ({ bookId, quantity: 1 }));
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(values)) return null;
+
+  const seen = new Set();
+  const selections = [];
+  for (const value of values) {
+    const bookId = String(value?.bookId || "").trim();
+    const quantity = Number(value?.quantity);
+    if (!mongoose.isValidObjectId(bookId) || seen.has(bookId) || !Number.isInteger(quantity) || quantity < 1 || quantity > MAX_BOOK_QUANTITY) {
+      return null;
+    }
+    seen.add(bookId);
+    selections.push({ bookId, quantity });
+  }
+  return selections;
+}
+
 function manualCustomerDetails(body) {
   return {
     fullName: String(body.fullName || "").trim(),
@@ -187,11 +214,16 @@ export async function getOrderBookSettings(req, res) {
 }
 
 export async function createManualBookOrder(req, res) {
-  const ids = parseBookIds(req.body.bookIds);
+  const selections = parseBookSelections(req.body.items, req.body.bookIds);
+  if (!selections) return res.status(422).json({ message: `Select valid books and quantities up to ${MAX_BOOK_QUANTITY} copies.` });
+  const ids = selections.map((selection) => selection.bookId);
   const paymentMethod = req.body.paymentMethod === "razorpay" ? "razorpay" : "upi_manual";
   const customerDetails = manualCustomerDetails(req.body);
   const missingDetail = Object.values(customerDetails).some((value) => !value);
   if (missingDetail) return res.status(422).json({ message: "Please enter all delivery details." });
+  if (customerDetails.fullName.length > 120 || customerDetails.email.length > 180 || customerDetails.address.length > 500 || customerDetails.city.length > 100 || customerDetails.state.length > 100) {
+    return res.status(422).json({ message: "One or more delivery details are too long." });
+  }
   if (!/^\d{10}$/.test(customerDetails.mobileNumber)) return res.status(422).json({ message: "Enter a valid 10 digit mobile number." });
   if (!/^\d{6}$/.test(customerDetails.pincode)) return res.status(422).json({ message: "Enter a valid 6 digit pincode." });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerDetails.email)) return res.status(422).json({ message: "Enter a valid email address." });
@@ -204,8 +236,9 @@ export async function createManualBookOrder(req, res) {
   const books = await Book.find({ _id: { $in: ids }, isActive: true });
   if (books.length !== ids.length) return res.status(422).json({ message: "One or more selected books are unavailable." });
 
+  const booksById = new Map(books.map((book) => [String(book._id), book]));
   const settings = await paymentSettings();
-  const bookTotal = books.reduce((sum, book) => sum + book.price, 0);
+  const bookTotal = selections.reduce((sum, selection) => sum + booksById.get(selection.bookId).price * selection.quantity, 0);
   const extraCharge = normalizedExtraCharge(settings.orderBookExtraCharge);
   const amount = bookTotal + extraCharge;
   let razorpayOrder = null;
@@ -226,7 +259,10 @@ export async function createManualBookOrder(req, res) {
   }
   const order = await Order.create({
     user: req.user._id,
-    items: books.map((book) => ({ book: book._id, title: book.title, price: book.price })),
+    items: selections.map(({ bookId, quantity }) => {
+      const book = booksById.get(bookId);
+      return { book: book._id, title: book.title, price: book.price, quantity };
+    }),
     amount,
     bookTotal,
     extraCharge,
@@ -256,7 +292,11 @@ export async function createManualBookOrder(req, res) {
 }
 
 export async function createOrder(req, res) {
-  const ids = [...new Set(req.body.bookIds || [])];
+  const submittedIds = Array.isArray(req.body.bookIds) ? req.body.bookIds : [];
+  if (submittedIds.some((id) => typeof id !== "string" || !mongoose.isValidObjectId(id))) {
+    return res.status(422).json({ message: "One or more books are invalid" });
+  }
+  const ids = [...new Set(submittedIds)];
   const paymentMethod = req.body.paymentMethod || "auto";
   if (!ids.length) return res.status(422).json({ message: "Cart is empty" });
   const books = await Book.find({ _id: { $in: ids }, isActive: true });

@@ -42,11 +42,11 @@ export async function createAndSendOtp({ email, phone, purpose }) {
     console.log(`Development OTP for ${email} (${purpose}): ${code}`);
   }
 
-  if (!delivered && process.env.NODE_ENV === "production" && purpose !== "admin-signup") {
+  if (!delivered && process.env.NODE_ENV === "production") {
     throw new Error("Could not send OTP. Please try again later.");
   }
 
-  return process.env.NODE_ENV === "production" && purpose !== "admin-signup" ? undefined : code;
+  return process.env.NODE_ENV === "production" ? undefined : code;
 }
 
 export async function verifyOtp({ email, purpose, code }) {
