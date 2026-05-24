@@ -53,10 +53,6 @@ table tbody tr {
   color: #073b3a;
 }
 
-.pdf-reader-frame {
-  display: block;
-}
-
 .pdf-reader-shell:fullscreen,
 .pdf-reader-shell:-webkit-full-screen {
   width: 100vw;
@@ -66,10 +62,15 @@ table tbody tr {
   background: #fff;
 }
 
-.pdf-reader-shell:fullscreen .pdf-reader-frame,
-.pdf-reader-shell:-webkit-full-screen .pdf-reader-frame {
-  width: 100%;
-  height: 100dvh;
+.pdf-reader-shell:fullscreen .pdf-reader-stage,
+.pdf-reader-shell:-webkit-full-screen .pdf-reader-stage {
+  min-height: calc(100dvh - 68px);
+  max-height: calc(100dvh - 68px);
+}
+
+.pdf-reader-page {
+  display: block;
+  align-self: flex-start;
 }
 
 @keyframes quote-drift {
