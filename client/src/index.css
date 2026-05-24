@@ -3,27 +3,50 @@
 @tailwind utilities;
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  background: #fffaf5;
+}
 html, body, #root { overflow-x: hidden; }
 body {
   margin: 0;
   color: #241915;
   background:
-    linear-gradient(180deg, #fffaf5 0%, #fff7ed 42%, #f8fafc 100%);
+    radial-gradient(circle at 8% 4%, rgba(217, 119, 6, .09), transparent 28rem),
+    radial-gradient(circle at 96% 12%, rgba(15, 91, 85, .08), transparent 30rem),
+    linear-gradient(180deg, #fffdf9 0%, #fff8ef 44%, #fffaf6 100%);
   font-family: "Noto Sans Devanagari", "Nirmala UI", "Mangal", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-feature-settings: "kern", "liga";
+  line-height: 1.5;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
 a { color: inherit; text-decoration: none; }
-.btn { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-200 disabled:cursor-not-allowed disabled:opacity-60; }
-.btn-primary { @apply btn bg-[#0f5b55] text-white shadow-sm hover:-translate-y-0.5 hover:bg-[#073b3a] hover:shadow-md; }
-.btn-secondary { @apply btn border border-orange-200 bg-white text-ink shadow-sm hover:-translate-y-0.5 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-800 hover:shadow-md; }
-.input { @apply w-full min-h-11 rounded-xl border border-orange-100 bg-white px-3 py-2.5 text-base shadow-sm outline-none transition focus:border-[#0f5b55] focus:ring-2 focus:ring-[#0f5b55]/15 sm:text-sm; }
-.label { @apply text-sm font-semibold text-gray-700; }
-.panel { @apply rounded-2xl border border-slate-100 bg-white/95 shadow-soft ring-1 ring-white/70; }
-.badge { @apply inline-flex rounded-full bg-orange-50 px-2.5 py-1 text-xs font-bold text-orange-800; }
-.mobile-page { @apply mx-auto w-full max-w-7xl px-4 py-4 sm:py-8; }
-.price-text { @apply font-black text-[#b45309]; }
+button, input, select, textarea { font: inherit; }
+img, video { max-width: 100%; }
+h1, h2, h3 {
+  color: #201613;
+  letter-spacing: -.025em;
+  text-wrap: balance;
+}
+p { text-wrap: pretty; }
+.btn { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold outline-none transition duration-200 focus-visible:ring-2 focus-visible:ring-[#0f5b55] focus-visible:ring-offset-2 active:translate-y-px disabled:pointer-events-none disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-55 disabled:shadow-none; }
+.btn-primary { @apply btn bg-[#0f5b55] text-white shadow-[0_8px_18px_rgba(15,91,85,.18)] hover:-translate-y-0.5 hover:bg-[#073b3a] hover:shadow-[0_12px_24px_rgba(7,59,58,.25)]; }
+.btn-secondary { @apply btn border border-orange-200/90 bg-white/95 text-ink shadow-sm hover:-translate-y-0.5 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-800 hover:shadow-md; }
+.input { @apply w-full min-h-11 rounded-xl border border-orange-100/90 bg-white px-3.5 py-2.5 text-base text-ink shadow-sm outline-none transition placeholder:text-slate-400 hover:border-orange-200 focus:border-[#0f5b55] focus:ring-2 focus:ring-[#0f5b55]/15 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500 sm:text-sm; }
+.label { @apply text-sm font-bold text-gray-700; }
+.panel { @apply rounded-2xl border border-orange-100/70 bg-white/95 shadow-[0_12px_34px_rgba(87,45,18,.07)] ring-1 ring-white/80; }
+.badge { @apply inline-flex items-center gap-1.5 rounded-full border border-orange-100 bg-orange-50/80 px-3 py-1 text-xs font-bold text-orange-800; }
+.mobile-page { @apply mx-auto w-full max-w-7xl px-4 py-5 sm:py-9; }
+.price-text { @apply font-black tracking-tight text-[#a94707]; }
+
+table th {
+  @apply text-xs font-black uppercase tracking-wide text-slate-500;
+}
+
+table tbody tr {
+  @apply transition-colors hover:bg-orange-50/30;
+}
 
 ::selection {
   background: rgba(15, 91, 85, .18);
@@ -119,6 +142,15 @@ a { color: inherit; text-decoration: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+
   .falling-letter,
   .quote-drift {
     animation: none;
@@ -136,7 +168,7 @@ a { color: inherit; text-decoration: none; }
 
   body {
     padding-top: 60px;
-    padding-bottom: 72px;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
   }
 
   .mobile-fixed-header {

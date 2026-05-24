@@ -21,12 +21,12 @@ export default function AdminDashboard() {
 
   return (
     <section className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {cards.map(([label, value, Icon]) => (
           <article className="panel p-4" key={label}>
-            <Icon className="mb-3 text-orange-500" />
+            <Icon className="mb-3 text-orange-600" />
             <p className="text-sm font-semibold text-gray-600">{label}</p>
-            <strong className="text-2xl">{value}</strong>
+            <strong className="text-xl sm:text-2xl">{value}</strong>
           </article>
         ))}
       </div>

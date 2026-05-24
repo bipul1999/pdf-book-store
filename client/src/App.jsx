@@ -33,7 +33,7 @@ const QuoteSettings = lazy(() => import("./pages/admin/QuoteSettings.jsx"));
 const SupportTickets = lazy(() => import("./pages/admin/SupportTickets.jsx"));
 
 function PageLoader() {
-  return <main className="mx-auto max-w-7xl px-4 py-8 text-center text-sm font-semibold text-gray-600">Loading...</main>;
+  return <main className="mx-auto flex min-h-[45vh] max-w-7xl items-center justify-center px-4 py-8 text-center text-sm font-semibold text-gray-600"><span className="panel px-5 py-3">Loading...</span></main>;
 }
 
 export default function App() {

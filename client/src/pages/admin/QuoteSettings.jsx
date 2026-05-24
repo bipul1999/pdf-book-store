@@ -38,8 +38,8 @@ export default function QuoteSettings() {
   }
 
   return (
-    <section className="panel p-5">
-      <h1 className="mb-5 flex items-center gap-2 text-2xl font-black"><Quote /> Quote Section</h1>
+    <section className="panel p-4 sm:p-5">
+      <h1 className="mb-5 flex items-center gap-2 text-2xl font-black"><Quote className="text-orange-600" /> Quote Section</h1>
       <form onSubmit={submit} className="grid gap-4">
         <textarea
           className="input min-h-36"
@@ -60,7 +60,7 @@ export default function QuoteSettings() {
           <input className="input mt-1" type="file" accept="image/*" onChange={(e) => setAuthorImage(e.target.files[0])} />
         </label>
         {preview && <img className="h-28 w-28 rounded-full border object-cover" src={preview} alt={form.authorName} />}
-        <button className="btn-primary justify-self-start" disabled={loading}>{loading ? "Saving..." : "Save quote"}</button>
+        <button className="btn-primary w-full justify-self-start sm:w-auto" disabled={loading}>{loading ? "Saving..." : "Save quote"}</button>
       </form>
     </section>
   );

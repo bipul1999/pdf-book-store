@@ -120,12 +120,15 @@ export default function Checkout() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-4 sm:py-8">
-      <h1 className="mb-4 text-2xl font-black sm:text-3xl">Checkout</h1>
-      <div className="panel p-4 sm:p-5">
+    <main className="mx-auto max-w-4xl px-4 py-5 sm:py-9">
+      <div className="mb-5">
+        <span className="badge mb-3">Secure checkout</span>
+        <h1 className="text-2xl font-black sm:text-3xl">Checkout</h1>
+      </div>
+      <div className="panel p-4 sm:p-6">
         <div className="space-y-3">
           {items.map((item) => (
-            <div className="grid grid-cols-[56px_1fr] gap-3 border-b border-gray-100 pb-3 last:border-0 sm:grid-cols-[56px_1fr_auto] sm:items-center" key={item._id}>
+            <div className="grid grid-cols-[56px_1fr] gap-3 border-b border-orange-100/70 pb-3 last:border-0 sm:grid-cols-[56px_1fr_auto] sm:items-center" key={item._id}>
               <img className="h-20 w-14 rounded-xl bg-orange-50 object-contain p-1" src={item.coverImage} alt={item.title} decoding="async" loading="lazy" />
               <div className="min-w-0">
                 <Link className="font-bold hover:text-orange-600" to={`/books/${item._id}`}>{item.title}</Link>
@@ -135,18 +138,18 @@ export default function Checkout() {
             </div>
           ))}
         </div>
-        <p className="mt-4">{items.length} books selected</p>
+        <p className="mt-5 text-sm font-bold text-gray-600">{items.length} books selected</p>
         <strong className="price-text mt-2 block text-3xl">Rs. {total}</strong>
 
         {!payment ? (
           <div className="mt-6 space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
-              <button type="button" className={`rounded-2xl border p-4 text-left ${method === "razorpay" ? "border-orange-500 bg-orange-50" : "border-gray-200 bg-white"}`} onClick={() => setMethod("razorpay")}>
+              <button type="button" className={`rounded-2xl border p-4 text-left outline-none transition hover:border-orange-300 focus-visible:ring-2 focus-visible:ring-[#0f5b55]/30 ${method === "razorpay" ? "border-orange-400 bg-orange-50 shadow-sm" : "border-orange-100 bg-white"}`} onClick={() => setMethod("razorpay")}>
                 <CreditCard className="mb-2 text-orange-600" />
                 <strong>Razorpay online payment</strong>
                 <p className="mt-1 text-sm text-gray-600">Auto verifies successful payments and unlocks PDFs.</p>
               </button>
-              <button type="button" className={`rounded-2xl border p-4 text-left ${method === "upi_manual" ? "border-orange-500 bg-orange-50" : "border-gray-200 bg-white"}`} onClick={() => setMethod("upi_manual")}>
+              <button type="button" className={`rounded-2xl border p-4 text-left outline-none transition hover:border-orange-300 focus-visible:ring-2 focus-visible:ring-[#0f5b55]/30 ${method === "upi_manual" ? "border-orange-400 bg-orange-50 shadow-sm" : "border-orange-100 bg-white"}`} onClick={() => setMethod("upi_manual")}>
                 <Smartphone className="mb-2 text-orange-600" />
                 <strong>Manual UPI</strong>
                 <p className="mt-1 text-sm text-gray-600">Pay by UPI and upload screenshot for admin review.</p>
@@ -157,7 +160,7 @@ export default function Checkout() {
             </button>
           </div>
         ) : (
-          <div className="mt-6 rounded-lg border border-gray-200 p-4">
+          <div className="mt-6 rounded-2xl border border-orange-100 bg-[#fffaf5] p-4 sm:p-5">
             <div className="mb-3 flex items-center gap-2">
               <button
                 className="btn-secondary !px-3"
@@ -179,7 +182,7 @@ export default function Checkout() {
               <p><strong>Name:</strong> {payment.upi.payee}</p>
               <p><strong>Amount:</strong> Rs. {payment.upi.amount}</p>
               <p><strong>Note:</strong> {payment.upi.note}</p>
-              {payment.upi.qrImage && <img className="mx-auto mt-3 h-56 w-56 rounded border bg-white object-contain p-2 sm:mx-0" src={payment.upi.qrImage} alt="UPI QR code" />}
+              {payment.upi.qrImage && <img className="mx-auto mt-3 h-56 w-56 rounded-2xl border border-orange-100 bg-white object-contain p-2 shadow-sm sm:mx-0" src={payment.upi.qrImage} alt="UPI QR code" />}
               <p className="font-semibold text-gray-700">Scan this QR. It already contains this order amount.</p>
               <p className="text-gray-600">{payment.upi.instructions}</p>
             </div>

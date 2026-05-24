@@ -52,8 +52,8 @@ export default function EditBook() {
   if (loading) return <section className="panel p-5">Loading...</section>;
 
   return (
-    <section className="panel p-5">
-      <h1 className="mb-5 flex items-center gap-2 text-2xl font-black"><Save /> Edit Book</h1>
+    <section className="panel p-4 sm:p-5">
+      <h1 className="mb-5 flex items-center gap-2 text-2xl font-black"><Save className="text-orange-600" /> Edit Book</h1>
       <form onSubmit={submit} className="grid gap-4 md:grid-cols-2">
         <input className="input" placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
         <input className="input" placeholder="Author" value={form.author} onChange={(e) => setForm({ ...form, author: e.target.value })} required />
@@ -63,7 +63,7 @@ export default function EditBook() {
         <label className="label">Replace PDF file<input className="input mt-1" type="file" accept="application/pdf" onChange={(e) => setPdf(e.target.files[0])} /></label>
         <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} /> Featured book</label>
         <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} /> Active</label>
-        <button className="btn-primary md:justify-self-end">Save changes</button>
+        <button className="btn-primary w-full md:w-auto md:justify-self-end">Save changes</button>
       </form>
     </section>
   );

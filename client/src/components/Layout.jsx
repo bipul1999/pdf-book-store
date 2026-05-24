@@ -55,14 +55,14 @@ export default function Layout() {
   const { items } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
   const navClass = ({ isActive }) =>
-    `inline-flex items-center gap-2 rounded-md px-3 py-2 transition ${
+    `inline-flex min-h-10 items-center gap-2 rounded-xl px-3 py-2 transition ${
       isActive
-        ? "text-orange-300"
-        : "text-orange-50/85 hover:text-orange-200"
+        ? "bg-white/12 text-amber-200 shadow-sm"
+        : "text-orange-50/85 hover:bg-white/10 hover:text-orange-100"
     }`;
   const bottomNavClass = ({ isActive }) =>
-    `flex flex-col items-center justify-center gap-0.5 rounded-xl px-2 py-1.5 text-[11px] font-black ${
-      isActive ? "bg-orange-50 text-orange-700" : "text-slate-500"
+    `flex min-h-[54px] flex-col items-center justify-center gap-0.5 rounded-xl px-2 py-1.5 text-[11px] font-black transition ${
+      isActive ? "bg-orange-50 text-orange-700 shadow-sm" : "text-slate-500 hover:bg-orange-50/60 hover:text-orange-700"
     }`;
   const closeMenu = () => setMenuOpen(false);
   const handleLogout = () => {
@@ -72,13 +72,13 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen">
-      <header className="mobile-fixed-header sticky top-0 z-50 border-b border-amber-300/25 bg-gradient-to-r from-[#073b3a] via-[#0f5b55] to-[#b45309] shadow-[0_10px_28px_rgba(15,91,85,.20)] backdrop-blur-xl">
+      <header className="mobile-fixed-header sticky top-0 z-50 border-b border-amber-300/25 bg-gradient-to-r from-[#073b3a] via-[#0f5b55] to-[#a94707] shadow-[0_10px_30px_rgba(7,59,58,.18)] backdrop-blur-xl">
         <div className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-5 translate-y-full bg-gradient-to-b from-amber-300/20 to-transparent sm:block" />
         <div className="relative mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-2.5 sm:gap-3 sm:px-5 sm:py-3">
           <Link to="/" onClick={closeMenu} className="group flex min-w-0 flex-1 items-center gap-2 font-black text-white sm:gap-3">
             <span className="relative shrink-0">
               <span className="absolute inset-0 rounded-full bg-orange-200 blur-md opacity-70 transition group-hover:opacity-100" />
-              <img src={saraswatiLogo} alt={storeName} className="relative h-10 w-10 rounded-full border border-orange-100 bg-white object-cover p-0.5 shadow-sm sm:h-12 sm:w-12" />
+              <img src={saraswatiLogo} alt={storeName} className="relative h-10 w-10 rounded-full border border-orange-100 bg-white object-cover p-0.5 shadow-md sm:h-12 sm:w-12" />
             </span>
             <span className="min-w-0">
               <FallingLetters text={storeName} className="block line-clamp-2 text-[13px] leading-4 sm:truncate sm:text-lg sm:leading-5" />
@@ -113,7 +113,7 @@ export default function Layout() {
           </div>
         </div>
         {menuOpen && (
-          <nav className="border-t border-amber-300/20 bg-gradient-to-r from-[#073b3a] via-[#0f5b55] to-[#b45309] px-3 py-3 text-sm font-bold shadow-sm md:hidden">
+          <nav className="border-t border-amber-300/20 bg-gradient-to-r from-[#073b3a] via-[#0f5b55] to-[#a94707] px-3 py-3 text-sm font-bold shadow-sm md:hidden">
             <div className="mx-auto grid max-w-7xl grid-cols-2 gap-2">
               <NavLink onClick={closeMenu} className={navClass} to="/"><Home size={16} /> <FallingLetters text="Home" /></NavLink>
               <NavLink onClick={closeMenu} className={navClass} to="/books"><BookOpen size={16} /> <FallingLetters text="Books" /></NavLink>
@@ -131,7 +131,7 @@ export default function Layout() {
         )}
       </header>
       <Outlet />
-      <nav className={`fixed inset-x-3 bottom-3 z-40 grid gap-1 rounded-2xl border border-slate-200 bg-white/95 p-1 shadow-[0_16px_40px_rgba(15,23,42,.18)] backdrop-blur md:hidden ${isAdmin ? "grid-cols-3" : "grid-cols-4"}`}>
+      <nav className={`fixed inset-x-3 bottom-[calc(.75rem+env(safe-area-inset-bottom))] z-40 grid gap-1 rounded-2xl border border-orange-100/80 bg-white/95 p-1 shadow-[0_18px_42px_rgba(36,25,21,.16)] backdrop-blur-md md:hidden ${isAdmin ? "grid-cols-3" : "grid-cols-4"}`}>
         <NavLink className={bottomNavClass} to="/"><Home size={20} /> Home</NavLink>
         <NavLink className={bottomNavClass} to="/books"><BookOpen size={20} /> Books</NavLink>
         {isAdmin ? (
@@ -144,19 +144,19 @@ export default function Layout() {
         )}
       </nav>
       <ChatWidget />
-      <footer className="bg-[linear-gradient(180deg,#fffaf5_0%,#fff3e4_100%)] px-4 pb-24 pt-8 text-sm text-ink md:pb-8">
-        <div className="mx-auto max-w-7xl overflow-hidden rounded-xl border border-orange-100/80 bg-white/95 shadow-soft ring-1 ring-white/80 backdrop-blur">
+      <footer className="bg-[linear-gradient(180deg,rgba(255,250,245,.1)_0%,#fff3e4_100%)] px-4 pb-24 pt-10 text-sm text-ink md:pb-10 md:pt-14">
+        <div className="mx-auto max-w-7xl overflow-hidden rounded-3xl border border-orange-100/80 bg-white/95 shadow-[0_18px_46px_rgba(87,45,18,.08)] ring-1 ring-white/80 backdrop-blur">
           <div className="h-1 bg-gradient-to-r from-teal-700 via-orange-400 to-amber-300" />
-          <div className="grid gap-6 p-5 sm:p-6 md:grid-cols-[1.1fr_.9fr_auto] md:items-start">
+          <div className="grid gap-7 p-5 sm:p-7 md:grid-cols-[1.2fr_.8fr_auto] md:items-start">
             <div>
               <p className="text-lg font-black text-[#073b3a]">{storeName}</p>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-gray-600">
+              <p className="mt-2 max-w-xl text-sm leading-7 text-gray-600">
                 {footerDescription}
               </p>
             </div>
             <div className="grid gap-2">
               <p className="text-xs font-black uppercase tracking-wide text-orange-700">Contact Us</p>
-              <a className="inline-flex items-center gap-2 font-semibold text-gray-700 transition hover:text-orange-700" href={`mailto:${contactEmail}`}>
+              <a className="inline-flex items-center gap-2 break-all font-semibold text-gray-700 transition hover:text-orange-700" href={`mailto:${contactEmail}`}>
                 <Mail size={16} /> {contactEmail}
               </a>
               <a className="inline-flex items-center gap-2 font-semibold text-gray-700 transition hover:text-orange-700" href={`tel:${contactPhone}`}>
@@ -170,7 +170,7 @@ export default function Layout() {
                   <a
                     key={name}
                     aria-label={name}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-orange-100 bg-orange-50 text-orange-700 shadow-sm transition hover:-translate-y-0.5 hover:border-orange-300 hover:bg-orange-500 hover:text-white hover:shadow-md"
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-orange-100 bg-orange-50 text-orange-700 shadow-sm transition hover:-translate-y-0.5 hover:border-orange-300 hover:bg-orange-500 hover:text-white hover:shadow-md"
                     href={href}
                     rel="noreferrer"
                     title={name}

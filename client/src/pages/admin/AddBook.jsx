@@ -39,8 +39,8 @@ export default function AddBook() {
   }
 
   return (
-    <section className="panel p-5">
-      <h1 className="mb-5 flex items-center gap-2 text-2xl font-black"><UploadCloud /> Add Book</h1>
+    <section className="panel p-4 sm:p-5">
+      <h1 className="mb-5 flex items-center gap-2 text-2xl font-black"><UploadCloud className="text-orange-600" /> Add Book</h1>
       <form onSubmit={submit} className="grid gap-4 md:grid-cols-2">
         <input className="input" placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
         <input className="input" placeholder="Author" value={form.author} onChange={(e) => setForm({ ...form, author: e.target.value })} required />
@@ -49,7 +49,7 @@ export default function AddBook() {
         <label className="label">Cover image<input className="input mt-1" type="file" accept="image/*" onChange={(e) => setCover(e.target.files[0])} required /></label>
         <label className="label">PDF file<input className="input mt-1" type="file" accept="application/pdf" onChange={(e) => setPdf(e.target.files[0])} required /></label>
         <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} /> Featured book</label>
-        <button className="btn-primary md:justify-self-end" disabled={loading}>{loading ? "Uploading..." : "Publish book"}</button>
+        <button className="btn-primary w-full md:w-auto md:justify-self-end" disabled={loading}>{loading ? "Uploading..." : "Publish book"}</button>
       </form>
     </section>
   );

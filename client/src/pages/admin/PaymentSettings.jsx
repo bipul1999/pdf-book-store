@@ -38,15 +38,15 @@ export default function PaymentSettings() {
   }
 
   return (
-    <section className="panel p-5">
-      <h1 className="mb-5 flex items-center gap-2 text-2xl font-black"><CreditCard /> Payment Options</h1>
+    <section className="panel p-4 sm:p-5">
+      <h1 className="mb-5 flex items-center gap-2 text-2xl font-black"><CreditCard className="text-orange-600" /> Payment Options</h1>
       <form onSubmit={submit} className="grid gap-4 md:grid-cols-2">
         <input className="input" placeholder="UPI ID" value={form.upiId} onChange={(e) => setForm({ ...form, upiId: e.target.value })} required />
         <input className="input" placeholder="Payee name" value={form.payeeName} onChange={(e) => setForm({ ...form, payeeName: e.target.value })} required />
         <textarea className="input min-h-28 md:col-span-2" placeholder="Payment instructions" value={form.instructions} onChange={(e) => setForm({ ...form, instructions: e.target.value })} />
         <label className="label">UPI QR image<input className="input mt-1" type="file" accept="image/*" onChange={(e) => setQr(e.target.files[0])} /></label>
         {qrImage && <img className="h-36 w-36 rounded border object-contain" src={qrImage} alt="Current UPI QR" />}
-        <button className="btn-primary md:col-span-2 md:justify-self-end" disabled={loading}>{loading ? "Saving..." : "Save payment options"}</button>
+        <button className="btn-primary w-full md:col-span-2 md:w-auto md:justify-self-end" disabled={loading}>{loading ? "Saving..." : "Save payment options"}</button>
       </form>
     </section>
   );

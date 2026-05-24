@@ -56,20 +56,21 @@ export default function Orders() {
   }, [notice]);
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-4 sm:py-8">
+    <main className="mx-auto max-w-6xl px-4 py-5 sm:py-9">
       {notice && (
-        <div className={`fixed left-4 right-4 top-20 z-50 rounded-lg border bg-white p-4 shadow-soft sm:left-auto sm:max-w-sm ${notice.type === "success" ? "border-green-300" : "border-red-300"}`}>
+        <div className={`fixed left-4 right-4 top-20 z-50 rounded-2xl border bg-white p-4 shadow-soft sm:left-auto sm:max-w-sm ${notice.type === "success" ? "border-green-300" : "border-red-300"}`}>
           <p className={notice.type === "success" ? "font-black text-green-700" : "font-black text-red-700"}>{notice.message}</p>
           <p className="mt-1 text-sm text-gray-600">This notification will close automatically.</p>
         </div>
       )}
-      <h1 className="mb-4 text-2xl font-black sm:text-3xl">My Orders</h1>
+      <span className="badge mb-3">Order history</span>
+      <h1 className="mb-5 text-2xl font-black sm:text-3xl">My Orders</h1>
       <div className="space-y-4">
         {orders.map((order) => {
           const status = statusMap[order.status] || statusMap.pending;
           const Icon = status.Icon;
           return (
-            <article className="panel p-3 sm:p-4" key={order._id}>
+            <article className="panel p-4 sm:p-5" key={order._id}>
               <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
                 <div className="min-w-0">
                   <div className="mb-3 flex items-center gap-2">
@@ -78,7 +79,7 @@ export default function Orders() {
                   </div>
                   <div className="space-y-2">
                     {order.items.map((item) => (
-                      <div className="rounded-md bg-gray-50 px-3 py-2" key={`${order._id}-${item.book?._id || item.title}`}>
+                      <div className="rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2" key={`${order._id}-${item.book?._id || item.title}`}>
                         <p className="break-words font-bold">{item.title}</p>
                         <p className="text-sm text-gray-600">Rs. {item.price}</p>
                       </div>
@@ -87,7 +88,7 @@ export default function Orders() {
                 </div>
                 <div className="space-y-3 md:min-w-64">
                   <strong className="price-text block text-xl sm:text-2xl">Rs. {order.amount}</strong>
-                  <div className={`flex items-start gap-2 rounded-md border p-3 ${status.className}`}>
+                  <div className={`flex items-start gap-2 rounded-xl border p-3 ${status.className}`}>
                     <Icon size={22} className="shrink-0" />
                     <div className="min-w-0">
                       <p className="font-black">{status.label}</p>

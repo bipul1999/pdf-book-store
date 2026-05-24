@@ -67,21 +67,22 @@ export default function Books() {
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-3 py-5 sm:px-4 sm:py-8">
-      <div className="mb-5 space-y-3">
+    <main className="mobile-page">
+      <div className="mb-6 grid gap-4 rounded-2xl border border-orange-100/80 bg-white/80 p-4 shadow-sm sm:p-5 lg:grid-cols-[1fr_minmax(360px,480px)] lg:items-end">
         <div>
-          <h1 className="text-2xl font-black">Books</h1>
+          <span className="badge mb-3">Digital catalog</span>
+          <h1 className="text-2xl font-black sm:text-3xl">Books</h1>
           <p className="mt-1 text-sm leading-6 text-gray-600">Apni pasand ki PDF book search karein aur details dekhkar purchase karein.</p>
         </div>
-        <form onSubmit={search} className="grid flex-1 gap-2 sm:flex">
-          <input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by title, author, topic" />
+        <form onSubmit={search} className="grid gap-2 sm:flex">
+          <input aria-label="Search books" className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by title, author, topic" />
           <button className="btn-primary w-full sm:w-auto">Search</button>
         </form>
       </div>
       {loading && !books.length ? (
         <BookListSkeleton />
       ) : books.length ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{books.map((book) => <BookCard book={book} key={book._id} />)}</div>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{books.map((book) => <BookCard book={book} key={book._id} />)}</div>
       ) : loadError ? (
         <div className="panel p-8 text-center text-gray-600">
           Books load ho rahi hain. Server wake up ke baad page refresh karein.
