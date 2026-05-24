@@ -154,6 +154,12 @@ p { text-wrap: pretty; }
   box-shadow: 0 25px 58px rgba(36, 25, 21, .2);
 }
 
+.home-promo-section {
+  background:
+    radial-gradient(circle at 14% 42%, rgba(15, 91, 85, .06), transparent 24rem),
+    linear-gradient(118deg, rgba(255, 255, 255, .76), rgba(255, 247, 237, .56));
+}
+
 .home-step-card,
 .home-trust-item {
   transition: transform .25s ease, box-shadow .25s ease, background-color .25s ease;

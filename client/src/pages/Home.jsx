@@ -274,9 +274,9 @@ export default function Home() {
         <div data-home-reveal className="home-reveal mx-auto grid max-w-7xl gap-5 md:grid-cols-[.9fr_1.1fr] md:items-center">
           <div className="home-glass panel space-y-3 p-5 text-center md:p-7 md:text-left">
             <span className="badge mx-auto md:mx-0">लेखक परिचय</span>
-            <h2 className="text-2xl font-black text-ink sm:text-3xl">महेश भारती जी का संदेश</h2>
+            <h2 className="text-2xl font-black text-ink sm:text-3xl">महेश भारती जी के बारे में जानिए</h2>
             <p className="mx-auto max-w-xl text-sm leading-7 text-gray-600 md:mx-0">
-              लेखक की वाणी में इस ई-बुक स्टोर का उद्देश्य जानिए और उनकी पुस्तकों से जुड़ने का सरल डिजिटल अनुभव देखिए।
+              लेखक की यात्रा, विचार और उनकी रचनाओं के पीछे की प्रेरणा को इस परिचय वीडियो के माध्यम से समझिए।
             </p>
           </div>
           <div className="home-video-card overflow-hidden rounded-2xl border border-orange-100 bg-black shadow-[0_18px_42px_rgba(36,25,21,.14)]">
@@ -285,7 +285,7 @@ export default function Home() {
               controls
               playsInline
               preload="metadata"
-              src="/videos/author-intro.mp4"
+              src="/videos/about-author.mp4"
             >
               Your browser does not support the video tag.
             </video>
@@ -321,6 +321,33 @@ export default function Home() {
               </div>
             ))}
           </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="home-section home-promo-section px-4 py-10 sm:py-16">
+        <div data-home-reveal className="home-reveal mx-auto grid max-w-7xl gap-5 lg:grid-cols-[1.05fr_.95fr] lg:items-center">
+          <div className="home-video-card overflow-hidden rounded-2xl border border-orange-100 bg-black shadow-[0_18px_42px_rgba(36,25,21,.14)]">
+            <video
+              className="aspect-video w-full bg-black object-cover"
+              controls
+              playsInline
+              preload="metadata"
+              src="/videos/author-intro.mp4"
+            >
+              Your browser does not support the video tag.
+            </video>
+          </div>
+          <div className="home-glass panel space-y-3 p-5 text-center sm:p-7 lg:text-left">
+            <span className="badge mx-auto lg:mx-0">लेखक का आमंत्रण</span>
+            <h2 className="text-2xl font-black text-ink sm:text-3xl">इस डिजिटल पुस्तक मंच से जुड़िए</h2>
+            <p className="mx-auto max-w-xl text-sm leading-7 text-gray-600 lg:mx-0">
+              महेश भारती जी से जानिए कि यह ई-बुक स्टोर पाठकों को उनकी पुस्तकों से सरल और सुरक्षित रूप में कैसे जोड़ता है।
+            </p>
+            <div className="grid gap-3 pt-2 sm:flex sm:justify-center lg:justify-start">
+              <Link className="btn-primary w-full sm:w-auto" to="/books"><Search size={17} /> पुस्तकें देखें</Link>
+              <Link className="btn-order-book w-full sm:w-auto" to="/order-book"><ShoppingBag size={17} /> Order Book</Link>
+            </div>
           </div>
         </div>
       </section>
