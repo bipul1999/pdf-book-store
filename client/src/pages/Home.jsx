@@ -1,6 +1,6 @@
 import { BookPlus, CheckCircle2, CreditCard, Download, Library, RefreshCw, Search, ShieldCheck, ShoppingBag, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import api from "../api/client.js";
 import BookCard from "../components/BookCard.jsx";
 import { FallingLetters } from "../components/Layout.jsx";
@@ -67,6 +67,8 @@ export default function Home() {
   const [bookOffset, setBookOffset] = useState(0);
   const [isBookTransitioning, setIsBookTransitioning] = useState(false);
   const [quoteSlot, setQuoteSlot] = useState(() => currentQuoteSlot());
+  const promoSectionRef = useRef(null);
+  const promoVideoRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -155,6 +157,27 @@ export default function Home() {
     );
     elements.forEach((element) => observer.observe(element));
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const section = promoSectionRef.current;
+    const video = promoVideoRef.current;
+    if (!section || !video) return undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          video.play().catch(() => {});
+        } else {
+          video.pause();
+        }
+      },
+      { threshold: 0.42 }
+    );
+    observer.observe(section);
+    return () => {
+      observer.disconnect();
+      video.pause();
+    };
   }, []);
 
   const heroBooks = heroBookPool.length <= 4
@@ -325,12 +348,16 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="home-section home-promo-section px-4 py-10 sm:py-16">
+      <section ref={promoSectionRef} className="home-section home-promo-section px-4 py-10 sm:py-16">
         <div data-home-reveal className="home-reveal mx-auto grid max-w-7xl gap-5 lg:grid-cols-[1.05fr_.95fr] lg:items-center">
-          <div className="home-video-card overflow-hidden rounded-2xl border border-orange-100 bg-black shadow-[0_18px_42px_rgba(36,25,21,.14)]">
+          <div className="home-video-card relative overflow-hidden rounded-2xl border border-orange-100 bg-black shadow-[0_18px_42px_rgba(36,25,21,.14)]">
+            <span className="absolute left-3 top-3 z-10 rounded-full bg-black/55 px-3 py-1 text-[11px] font-bold text-white backdrop-blur-sm">Auto play preview | Sound on karein</span>
             <video
+              ref={promoVideoRef}
               className="aspect-video w-full bg-black object-cover"
               controls
+              loop
+              muted
               playsInline
               preload="metadata"
               src="/videos/author-intro.mp4"
