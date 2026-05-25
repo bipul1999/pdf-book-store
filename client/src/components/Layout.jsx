@@ -57,8 +57,8 @@ export default function Layout() {
   const navClass = ({ isActive }) =>
     `inline-flex min-h-10 items-center gap-2 rounded-xl px-3 py-2 transition ${
       isActive
-        ? "bg-white/12 text-amber-200 shadow-sm"
-        : "text-orange-50/85 hover:bg-white/10 hover:text-orange-100"
+        ? "bg-amber-100/90 text-amber-800 shadow-sm ring-1 ring-amber-200/80"
+        : "text-slate-700 hover:bg-amber-50 hover:text-amber-800"
     }`;
   const bottomNavClass = ({ isActive }) =>
     `flex min-h-[54px] flex-col items-center justify-center gap-0.5 rounded-xl px-2 py-1.5 text-[11px] font-black transition ${
@@ -72,17 +72,17 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen">
-      <header className="mobile-fixed-header sticky top-0 z-50 border-b border-amber-300/25 bg-gradient-to-r from-[#073b3a] via-[#0f5b55] to-[#a94707] shadow-[0_10px_30px_rgba(7,59,58,.18)] backdrop-blur-xl">
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-5 translate-y-full bg-gradient-to-b from-amber-300/20 to-transparent sm:block" />
+      <header className="mobile-fixed-header sticky top-0 z-50 border-b border-amber-200/70 bg-[#fff8f0]/90 shadow-[0_10px_30px_rgba(120,53,15,.08)] backdrop-blur-xl">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-5 translate-y-full bg-gradient-to-b from-amber-200/25 to-transparent sm:block" />
         <div className="relative mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-2.5 sm:gap-3 sm:px-5 sm:py-3">
-          <Link to="/" onClick={closeMenu} className="group flex min-w-0 flex-1 items-center gap-2 font-black text-white sm:gap-3">
+          <Link to="/" onClick={closeMenu} className="group flex min-w-0 flex-1 items-center gap-2 font-black text-[#1f2937] sm:gap-3">
             <span className="relative shrink-0">
               <span className="absolute inset-0 rounded-full bg-orange-200 blur-md opacity-70 transition group-hover:opacity-100" />
               <img src={saraswatiLogo} alt={storeName} className="relative h-10 w-10 rounded-full border border-orange-100 bg-white object-cover p-0.5 shadow-md sm:h-12 sm:w-12" />
             </span>
             <span className="min-w-0">
               <FallingLetters text={storeName} className="block line-clamp-2 text-[13px] leading-4 sm:truncate sm:text-lg sm:leading-5" />
-              <FallingLetters text="महेश भारती जी की पुस्तकें" className="hidden text-xs font-bold text-orange-200 sm:block" startDelay={0.18} />
+              <FallingLetters text="महेश भारती जी की पुस्तकें" className="hidden text-xs font-bold text-amber-700/90 sm:block" startDelay={0.18} />
             </span>
           </Link>
           <nav className="hidden items-center gap-2 text-sm font-bold md:flex">
@@ -113,7 +113,7 @@ export default function Layout() {
           </div>
         </div>
         {menuOpen && (
-          <nav className="border-t border-amber-300/20 bg-gradient-to-r from-[#073b3a] via-[#0f5b55] to-[#a94707] px-3 py-3 text-sm font-bold shadow-sm md:hidden">
+          <nav className="border-t border-amber-200/70 bg-[#fff8f0]/95 px-3 py-3 text-sm font-bold shadow-sm md:hidden">
             <div className="mx-auto grid max-w-7xl grid-cols-2 gap-2">
               <NavLink onClick={closeMenu} className={navClass} to="/"><Home size={16} /> <FallingLetters text="Home" /></NavLink>
               <NavLink onClick={closeMenu} className={navClass} to="/books"><BookOpen size={16} /> <FallingLetters text="Books" /></NavLink>
@@ -131,7 +131,7 @@ export default function Layout() {
         )}
       </header>
       <Outlet />
-      <nav className={`fixed inset-x-3 bottom-[calc(.75rem+env(safe-area-inset-bottom))] z-40 grid gap-1 rounded-2xl border border-orange-100/80 bg-white/95 p-1 shadow-[0_18px_42px_rgba(36,25,21,.16)] backdrop-blur-md md:hidden ${isAdmin ? "grid-cols-3" : "grid-cols-4"}`}>
+      <nav className={`fixed inset-x-3 bottom-[calc(.75rem+env(safe-area-inset-bottom))] z-40 grid gap-1 rounded-2xl border border-amber-200/80 bg-[#fffaf5]/95 p-1 shadow-[0_18px_42px_rgba(36,25,21,.16)] backdrop-blur-md md:hidden ${isAdmin ? "grid-cols-3" : "grid-cols-4"}`}>
         <NavLink className={bottomNavClass} to="/"><Home size={20} /> Home</NavLink>
         <NavLink className={bottomNavClass} to="/books"><BookOpen size={20} /> Books</NavLink>
         {isAdmin ? (
@@ -144,33 +144,33 @@ export default function Layout() {
         )}
       </nav>
       <ChatWidget />
-      <footer className="bg-[linear-gradient(180deg,rgba(255,250,245,.1)_0%,#fff3e4_100%)] px-4 pb-24 pt-10 text-sm text-ink md:pb-10 md:pt-14">
-        <div className="mx-auto max-w-7xl overflow-hidden rounded-3xl border border-orange-100/80 bg-white/95 shadow-[0_18px_46px_rgba(87,45,18,.08)] ring-1 ring-white/80 backdrop-blur">
-          <div className="h-1 bg-gradient-to-r from-teal-700 via-orange-400 to-amber-300" />
+      <footer className="bg-[#1f2937] px-4 pb-24 pt-10 text-sm text-amber-50 md:pb-10 md:pt-14">
+        <div className="mx-auto max-w-7xl overflow-hidden rounded-3xl border border-white/10 bg-[linear-gradient(135deg,#1f2937,#29201a)] shadow-[0_20px_52px_rgba(31,41,55,.22)]">
+          <div className="h-1 bg-gradient-to-r from-amber-700 via-amber-400 to-orange-300" />
           <div className="grid gap-7 p-5 sm:p-7 md:grid-cols-[1.2fr_.8fr_auto] md:items-start">
             <div>
-              <p className="text-lg font-black text-[#073b3a]">{storeName}</p>
-              <p className="mt-2 max-w-xl text-sm leading-7 text-gray-600">
+              <p className="text-lg font-black text-amber-50">{storeName}</p>
+              <p className="mt-2 max-w-xl text-sm leading-7 text-stone-300">
                 {footerDescription}
               </p>
             </div>
             <div className="grid gap-2">
-              <p className="text-xs font-black uppercase tracking-wide text-orange-700">Contact Us</p>
-              <a className="inline-flex items-center gap-2 break-all font-semibold text-gray-700 transition hover:text-orange-700" href={`mailto:${contactEmail}`}>
+              <p className="text-xs font-black uppercase tracking-wide text-amber-300">Contact Us</p>
+              <a className="inline-flex items-center gap-2 break-all font-semibold text-stone-200 transition hover:text-amber-300" href={`mailto:${contactEmail}`}>
                 <Mail size={16} /> {contactEmail}
               </a>
-              <a className="inline-flex items-center gap-2 font-semibold text-gray-700 transition hover:text-orange-700" href={`tel:${contactPhone}`}>
+              <a className="inline-flex items-center gap-2 font-semibold text-stone-200 transition hover:text-amber-300" href={`tel:${contactPhone}`}>
                 <Phone size={16} /> +91 {contactPhone}
               </a>
             </div>
             <div>
-              <p className="mb-2 text-xs font-black uppercase tracking-wide text-orange-700 md:text-right">Follow</p>
+              <p className="mb-2 text-xs font-black uppercase tracking-wide text-amber-300 md:text-right">Follow</p>
               <div className="flex items-center gap-2 md:justify-end">
                 {socialLinks.map(({ name, href, icon: Icon }) => (
                   <a
                     key={name}
                     aria-label={name}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-orange-100 bg-orange-50 text-orange-700 shadow-sm transition hover:-translate-y-0.5 hover:border-orange-300 hover:bg-orange-500 hover:text-white hover:shadow-md"
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-amber-200 shadow-sm transition hover:-translate-y-0.5 hover:border-amber-400 hover:bg-amber-500 hover:text-white hover:shadow-md"
                     href={href}
                     rel="noreferrer"
                     title={name}
@@ -181,7 +181,7 @@ export default function Layout() {
               </div>
             </div>
           </div>
-          <div className="border-t border-orange-100 bg-[#073b3a] px-4 py-4">
+          <div className="border-t border-white/10 bg-black/15 px-4 py-4">
             <div className="flex justify-center">
               <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/40 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-wide text-amber-100 shadow-sm">
                 <Sparkles size={14} className="text-amber-300" />

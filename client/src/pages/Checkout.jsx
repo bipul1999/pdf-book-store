@@ -70,7 +70,7 @@ export default function Checkout() {
           email: user?.email || "",
           contact: user?.phone ? `+91${String(user.phone).replace(/\D/g, "").slice(-10)}` : ""
         },
-        theme: { color: "#f97316" },
+        theme: { color: "#d97706" },
         modal: {
           ondismiss: () => toast.error("Payment cancelled")
         },
@@ -120,12 +120,12 @@ export default function Checkout() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-5 sm:py-9">
+    <main className="store-page mx-auto max-w-4xl px-4 py-5 sm:py-9">
       <div className="mb-5">
         <span className="badge mb-3">Secure checkout</span>
         <h1 className="text-2xl font-black sm:text-3xl">Checkout</h1>
       </div>
-      <div className="panel p-4 sm:p-6">
+      <div className="panel warm-summary p-4 sm:p-6">
         <div className="space-y-3">
           {items.map((item) => (
             <div className="grid grid-cols-[56px_1fr] gap-3 border-b border-orange-100/70 pb-3 last:border-0 sm:grid-cols-[56px_1fr_auto] sm:items-center" key={item._id}>
@@ -144,12 +144,12 @@ export default function Checkout() {
         {!payment ? (
           <div className="mt-6 space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
-              <button type="button" className={`rounded-2xl border p-4 text-left outline-none transition hover:border-orange-300 focus-visible:ring-2 focus-visible:ring-[#0f5b55]/30 ${method === "razorpay" ? "border-orange-400 bg-orange-50 shadow-sm" : "border-orange-100 bg-white"}`} onClick={() => setMethod("razorpay")}>
+              <button type="button" className={`rounded-2xl border p-4 text-left outline-none transition hover:border-amber-300 focus-visible:ring-2 focus-visible:ring-[#d97706]/30 ${method === "razorpay" ? "border-amber-400 bg-amber-50 shadow-sm" : "border-amber-100 bg-white"}`} onClick={() => setMethod("razorpay")}>
                 <CreditCard className="mb-2 text-orange-600" />
                 <strong>Razorpay online payment</strong>
                 <p className="mt-1 text-sm text-gray-600">Auto verifies successful payments and unlocks PDFs.</p>
               </button>
-              <button type="button" className={`rounded-2xl border p-4 text-left outline-none transition hover:border-orange-300 focus-visible:ring-2 focus-visible:ring-[#0f5b55]/30 ${method === "upi_manual" ? "border-orange-400 bg-orange-50 shadow-sm" : "border-orange-100 bg-white"}`} onClick={() => setMethod("upi_manual")}>
+              <button type="button" className={`rounded-2xl border p-4 text-left outline-none transition hover:border-amber-300 focus-visible:ring-2 focus-visible:ring-[#d97706]/30 ${method === "upi_manual" ? "border-amber-400 bg-amber-50 shadow-sm" : "border-amber-100 bg-white"}`} onClick={() => setMethod("upi_manual")}>
                 <Smartphone className="mb-2 text-orange-600" />
                 <strong>Manual UPI</strong>
                 <p className="mt-1 text-sm text-gray-600">Pay by UPI and upload screenshot for admin review.</p>
@@ -160,7 +160,7 @@ export default function Checkout() {
             </button>
           </div>
         ) : (
-          <div className="mt-6 rounded-2xl border border-orange-100 bg-[#fffaf5] p-4 sm:p-5">
+          <div className="warm-summary mt-6 rounded-2xl border border-amber-100 p-4 sm:p-5">
             <div className="mb-3 flex items-center gap-2">
               <button
                 className="btn-secondary !px-3"

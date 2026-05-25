@@ -97,5 +97,5 @@ export default function Login() {
 }
 
 export function AuthCard({ title, children }) {
-  return <main className="mx-auto flex min-h-[70vh] max-w-md items-center px-4 py-8 sm:py-12"><section className="panel relative w-full overflow-hidden p-5 sm:p-7"><div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#0f5b55] via-orange-400 to-amber-300" /><span className="badge mb-3 mt-1">Account access</span><h1 className="mb-5 text-2xl font-black sm:text-3xl">{title}</h1>{children}</section></main>;
+  return <main className="store-page mx-auto flex min-h-[70vh] max-w-md items-center px-4 py-8 sm:py-12"><section className="panel relative w-full overflow-hidden p-5 sm:p-7"><div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#d97706] via-amber-400 to-amber-200" /><span className="badge mb-3 mt-1">Account access</span><h1 className="mb-5 text-2xl font-black sm:text-3xl">{title}</h1>{children}</section></main>;
 }

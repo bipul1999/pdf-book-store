@@ -67,8 +67,8 @@ export default function Books() {
   }
 
   return (
-    <main className="mobile-page">
-      <div className="mb-6 grid gap-4 rounded-2xl border border-orange-100/80 bg-white/80 p-4 shadow-sm sm:p-5 lg:grid-cols-[1fr_minmax(360px,480px)] lg:items-end">
+    <main className="mobile-page store-page">
+      <div className="catalog-intro mb-7 grid gap-4 rounded-3xl border border-amber-100/80 p-5 sm:p-7 lg:grid-cols-[1fr_minmax(360px,480px)] lg:items-end">
         <div>
           <span className="badge mb-3">Digital catalog</span>
           <h1 className="text-2xl font-black sm:text-3xl">Books</h1>

@@ -81,7 +81,7 @@ export default function Orders() {
   }, [notice]);
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-5 sm:py-9">
+    <main className="store-page mx-auto max-w-6xl px-4 py-5 sm:py-9">
       {notice && (
         <div className={`fixed left-4 right-4 top-20 z-50 rounded-2xl border bg-white p-4 shadow-soft sm:left-auto sm:max-w-sm ${notice.type === "success" ? "border-green-300" : "border-red-300"}`}>
           <p className={notice.type === "success" ? "font-black text-green-700" : "font-black text-red-700"}>{notice.message}</p>
@@ -97,7 +97,7 @@ export default function Orders() {
             : statusMap[order.status] || statusMap.pending;
           const Icon = status.Icon;
           return (
-            <article className="panel p-4 sm:p-5" key={order._id}>
+            <article className="panel p-4 transition hover:shadow-[0_18px_42px_rgba(120,53,15,.11)] sm:p-5" key={order._id}>
               <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
                 <div className="min-w-0">
                   <div className="mb-3 flex items-center gap-2">

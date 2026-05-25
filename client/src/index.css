@@ -5,17 +5,17 @@
 * { box-sizing: border-box; }
 html {
   scroll-behavior: smooth;
-  background: #fffaf5;
+  background: #fdf6ec;
 }
 html, body, #root { overflow-x: hidden; }
 body {
   margin: 0;
-  color: #241915;
+  color: #1f2937;
   background:
-    radial-gradient(circle at 8% 4%, rgba(217, 119, 6, .09), transparent 28rem),
-    radial-gradient(circle at 96% 12%, rgba(15, 91, 85, .08), transparent 30rem),
-    linear-gradient(180deg, #fffdf9 0%, #fff8ef 44%, #fffaf6 100%);
-  font-family: "Noto Sans Devanagari", "Nirmala UI", "Mangal", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    radial-gradient(circle at 8% 4%, rgba(217, 119, 6, .13), transparent 28rem),
+    radial-gradient(circle at 96% 12%, rgba(245, 158, 11, .11), transparent 30rem),
+    linear-gradient(180deg, #fdf6ec 0%, #fff8f0 44%, #fdf6ec 100%);
+  font-family: "Poppins", "Noto Sans Devanagari", "Nirmala UI", "Mangal", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-feature-settings: "kern", "liga";
   line-height: 1.5;
   text-rendering: optimizeLegibility;
@@ -25,29 +25,37 @@ a { color: inherit; text-decoration: none; }
 button, input, select, textarea { font: inherit; }
 img, video { max-width: 100%; }
 h1, h2, h3 {
-  color: #201613;
-  font-family: "Noto Serif Devanagari", "Noto Sans Devanagari", "Nirmala UI", "Mangal", ui-serif, Georgia, serif;
+  color: #1f2937;
+  font-family: "Noto Serif Devanagari", "Poppins", "Noto Sans Devanagari", "Nirmala UI", "Mangal", ui-serif, Georgia, serif;
   letter-spacing: -.025em;
   text-wrap: balance;
 }
 p { text-wrap: pretty; }
-.btn { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold outline-none transition duration-200 focus-visible:ring-2 focus-visible:ring-[#0f5b55] focus-visible:ring-offset-2 active:translate-y-px disabled:pointer-events-none disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-55 disabled:shadow-none; }
-.btn-primary { @apply btn bg-[#0f5b55] text-white shadow-[0_8px_18px_rgba(15,91,85,.18)] hover:-translate-y-0.5 hover:bg-[#073b3a] hover:shadow-[0_12px_24px_rgba(7,59,58,.25)]; }
-.btn-secondary { @apply btn border border-orange-200/90 bg-white/95 text-ink shadow-sm hover:-translate-y-0.5 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-800 hover:shadow-md; }
-.btn-order-book { @apply btn bg-orange-500 text-white shadow-[0_8px_18px_rgba(234,88,12,.24)] hover:-translate-y-0.5 hover:bg-red-400 hover:shadow-[0_12px_24px_rgba(248,113,113,.3)]; }
-.input { @apply w-full min-h-11 rounded-xl border border-orange-100/90 bg-white px-3.5 py-2.5 text-base text-ink shadow-sm outline-none transition placeholder:text-slate-400 hover:border-orange-200 focus:border-[#0f5b55] focus:ring-2 focus:ring-[#0f5b55]/15 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500 sm:text-sm; }
+.btn { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold outline-none transition duration-200 focus-visible:ring-2 focus-visible:ring-[#d97706] focus-visible:ring-offset-2 focus-visible:ring-offset-[#fff8f0] active:translate-y-px disabled:pointer-events-none disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-55 disabled:shadow-none; }
+.btn-primary { @apply btn bg-[#d97706] text-white shadow-[0_10px_20px_rgba(217,119,6,.24)] hover:-translate-y-0.5 hover:bg-[#b45309] hover:shadow-[0_15px_30px_rgba(180,83,9,.3)]; }
+.btn-secondary { @apply btn border border-amber-200/90 bg-white/95 text-[#1f2937] shadow-sm hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800 hover:shadow-md; }
+.btn-order-book { @apply btn bg-[#f59e0b] text-white shadow-[0_10px_22px_rgba(245,158,11,.28)] hover:-translate-y-0.5 hover:bg-[#ef6c3e] hover:shadow-[0_14px_28px_rgba(239,108,62,.28)]; }
+.input { @apply w-full min-h-11 rounded-xl border border-amber-100/90 bg-white px-3.5 py-2.5 text-base text-ink shadow-sm outline-none transition placeholder:text-slate-400 hover:border-amber-200 focus:border-[#d97706] focus:ring-2 focus:ring-[#d97706]/15 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500 sm:text-sm; }
 .label { @apply text-sm font-bold text-gray-700; }
-.panel { @apply rounded-2xl border border-orange-100/70 bg-white/95 shadow-[0_12px_34px_rgba(87,45,18,.07)] ring-1 ring-white/80; }
-.badge { @apply inline-flex items-center gap-1.5 rounded-full border border-orange-100 bg-orange-50/80 px-3 py-1 text-xs font-bold text-orange-800; }
+.panel { @apply rounded-2xl border border-amber-100/80 bg-white/95 shadow-[0_14px_38px_rgba(120,53,15,.08)] ring-1 ring-white/80; }
+.badge { @apply inline-flex items-center gap-1.5 rounded-full border border-amber-200/80 bg-amber-50/90 px-3 py-1 text-xs font-bold text-amber-800; }
 .mobile-page { @apply mx-auto w-full max-w-7xl px-4 py-5 sm:py-9; }
-.price-text { @apply font-black tracking-tight text-[#a94707]; }
+.price-text { @apply font-black tracking-tight text-[#b45309]; }
+.store-page { position: relative; }
+.catalog-intro {
+  background: linear-gradient(120deg, rgba(255, 251, 235, .96), rgba(255, 255, 255, .9), rgba(254, 243, 199, .48));
+  box-shadow: 0 18px 45px rgba(120, 53, 15, .07);
+}
+.warm-summary {
+  background: linear-gradient(145deg, rgba(255, 251, 235, .94), rgba(255, 255, 255, .96));
+}
 
 .home-section {
   position: relative;
 }
 
 .home-section-tinted {
-  background: linear-gradient(115deg, rgba(255, 247, 237, .55), rgba(255, 255, 255, .68), rgba(254, 243, 199, .24));
+  background: linear-gradient(115deg, rgba(255, 247, 237, .72), rgba(255, 255, 255, .7), rgba(254, 243, 199, .34));
   border-block: 1px solid rgba(253, 230, 205, .5);
 }
 
@@ -67,7 +75,7 @@ p { text-wrap: pretty; }
 }
 
 .home-hero {
-  background: linear-gradient(120deg, #fff7ed, #fffdf8, #ffedd5, #fffaf5);
+  background: linear-gradient(120deg, #fdf6ec, #fffdf7, #ffedd5, #fff8f0);
   background-size: 260% 260%;
   animation: home-gradient-shift 14s ease infinite;
 }
@@ -100,7 +108,7 @@ p { text-wrap: pretty; }
   bottom: -9rem;
   width: clamp(19rem, 41vw, 34rem);
   height: clamp(19rem, 41vw, 34rem);
-  background: radial-gradient(circle, rgba(15, 91, 85, .13), transparent 67%);
+  background: radial-gradient(circle, rgba(245, 158, 11, .16), transparent 67%);
   animation-delay: -4s;
 }
 
@@ -124,7 +132,7 @@ p { text-wrap: pretty; }
 
 .home-hero .btn-primary,
 .home-hero .btn-order-book {
-  box-shadow: 0 14px 30px rgba(15, 91, 85, .2);
+  box-shadow: 0 14px 30px rgba(217, 119, 6, .25);
 }
 
 .home-hero .btn-order-book {
@@ -156,8 +164,15 @@ p { text-wrap: pretty; }
 
 .home-promo-section {
   background:
-    radial-gradient(circle at 14% 42%, rgba(15, 91, 85, .06), transparent 24rem),
+    radial-gradient(circle at 14% 42%, rgba(217, 119, 6, .08), transparent 24rem),
     linear-gradient(118deg, rgba(255, 255, 255, .76), rgba(255, 247, 237, .56));
+}
+
+.home-order-banner {
+  background:
+    radial-gradient(circle at 90% 10%, rgba(245, 158, 11, .2), transparent 18rem),
+    linear-gradient(120deg, #fffaf0, #ffffff 56%, #ffedd5);
+  box-shadow: 0 22px 54px rgba(120, 53, 15, .1);
 }
 
 .home-step-card,
@@ -188,7 +203,7 @@ p { text-wrap: pretty; }
   height: 3px;
   width: 100%;
   opacity: 0;
-  background: linear-gradient(90deg, #0f5b55, #f97316, #fbbf24);
+  background: linear-gradient(90deg, #d97706, #f59e0b, #fcd34d);
   transition: opacity .25s ease;
 }
 
@@ -244,8 +259,8 @@ table tbody tr {
 }
 
 ::selection {
-  background: rgba(15, 91, 85, .18);
-  color: #073b3a;
+  background: rgba(217, 119, 6, .2);
+  color: #78350f;
 }
 
 .pdf-reader-shell:fullscreen,
@@ -312,7 +327,7 @@ table tbody tr {
   max-width: 100%;
   overflow: hidden;
   white-space: nowrap;
-  font-family: "Noto Sans Devanagari", "Mangal", "Nirmala UI", Inter, ui-sans-serif, system-ui, sans-serif;
+  font-family: "Poppins", "Noto Sans Devanagari", "Mangal", "Nirmala UI", ui-sans-serif, system-ui, sans-serif;
 }
 
 .falling-letter {

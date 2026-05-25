@@ -369,7 +369,7 @@ export default function ChatWidget() {
           >
             <X size={18} />
           </button>
-          <div className="flex items-center justify-between bg-gradient-to-r from-[#073b3a] to-[#b45309] px-4 py-3 text-white">
+          <div className="flex items-center justify-between bg-gradient-to-r from-[#d97706] to-[#f59e0b] px-4 py-3 text-white">
             <div className="flex min-w-0 items-center gap-2 pr-10">
               <span className="grid h-9 w-9 place-items-center rounded-full bg-white/15">
                 <GirlAssistantAvatar />

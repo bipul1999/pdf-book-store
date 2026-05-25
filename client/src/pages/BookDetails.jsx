@@ -36,10 +36,10 @@ export default function BookDetails() {
     }
     add(book);
   }
-  if (!book) return <main className="p-8">Loading...</main>;
+  if (!book) return <main className="store-page p-8">Loading...</main>;
   return (
-    <main className="mx-auto grid max-w-6xl gap-6 px-4 pb-28 pt-5 sm:py-10 md:grid-cols-[320px_1fr] md:items-start lg:grid-cols-[360px_1fr]">
-      <div className="panel overflow-hidden bg-orange-50/70 p-3">
+    <main className="store-page mx-auto grid max-w-6xl gap-6 px-4 pb-28 pt-5 sm:py-10 md:grid-cols-[320px_1fr] md:items-start lg:grid-cols-[360px_1fr]">
+      <div className="panel overflow-hidden bg-gradient-to-b from-amber-50 to-white p-3">
         <img src={book.coverImage} className="mx-auto max-h-[520px] w-full rounded-xl object-contain" alt={book.title} />
       </div>
       <section className="space-y-5">
@@ -48,7 +48,7 @@ export default function BookDetails() {
           <p className="mt-1 text-sm font-semibold text-gray-600 sm:text-base">By {book.author}</p>
         </div>
         <p className="text-[15px] leading-7 text-gray-700 sm:text-base">{book.description}</p>
-        <div className="panel bg-[#fffaf5] p-5 sm:p-6">
+        <div className="panel warm-summary p-5 sm:p-6">
           <p className="text-sm font-semibold text-gray-600">PDF price</p>
           <strong className="price-text mt-1 block text-2xl sm:text-3xl">Rs. {book.price}</strong>
           <div className="mt-4 grid gap-3 sm:flex sm:flex-wrap">
@@ -58,7 +58,7 @@ export default function BookDetails() {
           </div>
         </div>
       </section>
-      <div className="fixed inset-x-0 bottom-[calc(72px+env(safe-area-inset-bottom))] z-30 border-t border-orange-100 bg-white/95 px-4 py-3 shadow-[0_-12px_30px_rgba(15,23,42,.10)] backdrop-blur sm:hidden">
+      <div className="fixed inset-x-0 bottom-[calc(72px+env(safe-area-inset-bottom))] z-30 border-t border-amber-100 bg-[#fffaf5]/95 px-4 py-3 shadow-[0_-12px_30px_rgba(15,23,42,.10)] backdrop-blur sm:hidden">
         <button className="btn-primary w-full" onClick={goToCheckout}><CreditCard size={18} /> Buy Now - Rs. {book.price}</button>
       </div>
     </main>

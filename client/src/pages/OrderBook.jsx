@@ -130,7 +130,7 @@ export default function OrderBook() {
         email: details.email,
         contact: `+91${details.mobileNumber}`
       },
-      theme: { color: "#0f5b55" },
+      theme: { color: "#d97706" },
       modal: { ondismiss: () => toast.error("Payment cancelled") },
       handler: async (response) => {
         try {
@@ -189,7 +189,7 @@ export default function OrderBook() {
 
   if (success) {
     return (
-      <main className="mobile-page flex min-h-[60vh] items-center justify-center">
+      <main className="mobile-page store-page flex min-h-[60vh] items-center justify-center">
         <section className="panel max-w-xl p-6 text-center sm:p-9">
           <CheckCircle2 className="mx-auto mb-4 text-green-600" size={52} />
           <h1 className="text-2xl font-black">Order submitted</h1>
@@ -208,7 +208,7 @@ export default function OrderBook() {
   }
 
   return (
-    <main className="mobile-page">
+    <main className="mobile-page store-page">
       <div className="mb-6 max-w-3xl">
         <span className="badge mb-3"><ShoppingBag size={14} /> Direct book order</span>
         <h1 className="text-2xl font-black sm:text-4xl">Order Book</h1>
@@ -249,23 +249,23 @@ export default function OrderBook() {
                   const selected = selectedIds.includes(book._id);
                   const quantity = quantities[book._id] || 1;
                   return (
-                    <article className={`flex min-h-44 flex-col rounded-2xl border p-3 transition ${selected ? "border-[#0f5b55] bg-teal-50/60 ring-2 ring-[#0f5b55]/18" : "border-orange-100 bg-white hover:border-orange-300 hover:shadow-sm"}`} key={book._id}>
+                    <article className={`flex min-h-44 flex-col rounded-2xl border p-3 transition ${selected ? "border-[#d97706] bg-amber-50/70 ring-2 ring-[#d97706]/15" : "border-amber-100 bg-white hover:border-amber-300 hover:shadow-sm"}`} key={book._id}>
                       <button aria-pressed={selected} className="flex flex-1 gap-3 text-left" onClick={() => toggleBook(book._id)} type="button">
                         <img className="h-32 w-24 shrink-0 rounded-xl bg-orange-50 object-contain p-1" src={book.coverImage} onError={(event) => useFallbackImage(event, BOOK_COVER_FALLBACK)} alt={book.title} loading="lazy" />
                         <span className="flex min-w-0 flex-1 flex-col">
-                          <span className={`mb-2 w-fit rounded-full px-2 py-1 text-[11px] font-black ${selected ? "bg-[#0f5b55] text-white" : "bg-orange-50 text-orange-700"}`}>{selected ? "Selected" : "Select"}</span>
+                          <span className={`mb-2 w-fit rounded-full px-2 py-1 text-[11px] font-black ${selected ? "bg-[#d97706] text-white" : "bg-amber-50 text-amber-700"}`}>{selected ? "Selected" : "Select"}</span>
                           <strong className="line-clamp-3 text-sm leading-5">{book.title}</strong>
                           <span className="mt-1 line-clamp-1 text-xs font-semibold text-gray-500">{book.author}</span>
                           <span className="mt-auto block pt-2 font-black text-orange-700">Rs. {money(book.price)}</span>
                         </span>
                       </button>
                       {selected && (
-                        <div className="mt-3 flex items-center justify-between gap-2 border-t border-teal-100 pt-3">
+                        <div className="mt-3 flex items-center justify-between gap-2 border-t border-amber-100 pt-3">
                           <span className="text-xs font-bold text-gray-600">Copies</span>
-                          <div className="flex items-center rounded-lg border border-teal-200 bg-white p-1" aria-label={`Quantity for ${book.title}`}>
-                            <button className="grid h-8 w-8 place-items-center rounded-md text-[#0f5b55] transition hover:bg-teal-50" onClick={() => changeQuantity(book._id, -1)} type="button" aria-label="Decrease quantity"><Minus size={15} /></button>
+                          <div className="flex items-center rounded-lg border border-amber-200 bg-white p-1" aria-label={`Quantity for ${book.title}`}>
+                            <button className="grid h-8 w-8 place-items-center rounded-md text-[#d97706] transition hover:bg-amber-50" onClick={() => changeQuantity(book._id, -1)} type="button" aria-label="Decrease quantity"><Minus size={15} /></button>
                             <span className="min-w-9 text-center text-sm font-black">{quantity}</span>
-                            <button className="grid h-8 w-8 place-items-center rounded-md text-[#0f5b55] transition hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-40" disabled={quantity >= MAX_BOOK_QUANTITY} onClick={() => changeQuantity(book._id, 1)} type="button" aria-label="Increase quantity"><Plus size={15} /></button>
+                            <button className="grid h-8 w-8 place-items-center rounded-md text-[#d97706] transition hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-40" disabled={quantity >= MAX_BOOK_QUANTITY} onClick={() => changeQuantity(book._id, 1)} type="button" aria-label="Increase quantity"><Plus size={15} /></button>
                           </div>
                         </div>
                       )}
@@ -280,7 +280,7 @@ export default function OrderBook() {
         </div>
 
         <aside className="space-y-5 lg:sticky lg:top-24 lg:h-fit">
-          <section className="panel p-4 sm:p-5">
+          <section className="panel warm-summary p-4 sm:p-5">
             <h2 className="mb-4 flex items-center gap-2 text-lg font-black"><ReceiptIndianRupee className="text-orange-700" size={20} /> Order summary</h2>
             {selectedBooks.length ? (
               <div className="mb-4 space-y-2">
@@ -302,11 +302,11 @@ export default function OrderBook() {
           <section className="panel p-4 sm:p-5">
             <h2 className="mb-3 flex items-center gap-2 text-lg font-black"><CreditCard className="text-orange-700" size={20} /> Payment method</h2>
             <div className="grid gap-2">
-              <button type="button" className={`rounded-xl border p-3 text-left transition ${paymentMethod === "razorpay" ? "border-[#0f5b55] bg-teal-50/60 ring-1 ring-[#0f5b55]/20" : "border-orange-100 bg-white"}`} onClick={() => setPaymentMethod("razorpay")}>
+              <button type="button" className={`rounded-xl border p-3 text-left transition ${paymentMethod === "razorpay" ? "border-[#d97706] bg-amber-50/70 ring-1 ring-[#d97706]/20" : "border-amber-100 bg-white"}`} onClick={() => setPaymentMethod("razorpay")}>
                 <span className="flex items-center gap-2 font-black"><CreditCard size={17} className="text-orange-700" /> Razorpay Online Payment</span>
                 <span className="mt-1 block text-xs leading-5 text-gray-600">Pay securely online and confirm your order instantly.</span>
               </button>
-              <button type="button" className={`rounded-xl border p-3 text-left transition ${paymentMethod === "upi_manual" ? "border-[#0f5b55] bg-teal-50/60 ring-1 ring-[#0f5b55]/20" : "border-orange-100 bg-white"}`} onClick={() => setPaymentMethod("upi_manual")}>
+              <button type="button" className={`rounded-xl border p-3 text-left transition ${paymentMethod === "upi_manual" ? "border-[#d97706] bg-amber-50/70 ring-1 ring-[#d97706]/20" : "border-amber-100 bg-white"}`} onClick={() => setPaymentMethod("upi_manual")}>
                 <span className="flex items-center gap-2 font-black"><Smartphone size={17} className="text-orange-700" /> Manual UPI</span>
                 <span className="mt-1 block text-xs leading-5 text-gray-600">Pay by UPI and upload screenshot for verification.</span>
               </button>
@@ -315,7 +315,7 @@ export default function OrderBook() {
               <>
                 <div className="mt-4 rounded-xl border border-orange-100 bg-[#fffaf5] p-3 text-sm">
                   <p className="font-semibold text-gray-600">UPI ID</p>
-                  <p className="break-all font-black text-[#073b3a]">{settings.upiId || "Not configured"}</p>
+                  <p className="break-all font-black text-[#b45309]">{settings.upiId || "Not configured"}</p>
                   {settings.payeeName && <p className="mt-1 text-gray-600">{settings.payeeName}</p>}
                   {settings.qrImage && <img className="mx-auto mt-3 h-44 w-44 rounded-xl bg-white object-contain p-2 shadow-sm" src={settings.qrImage} alt="UPI payment QR" />}
                   {settings.instructions && <p className="mt-3 leading-6 text-gray-600">{settings.instructions}</p>}
@@ -326,7 +326,7 @@ export default function OrderBook() {
                 </div>
               </>
             )}
-            {paymentMethod === "razorpay" && <p className="mt-4 rounded-xl border border-teal-100 bg-teal-50/60 p-3 text-sm leading-6 text-gray-700">Razorpay checkout opens after you submit. Successful payment changes this order to <strong>Confirmed</strong>.</p>}
+            {paymentMethod === "razorpay" && <p className="mt-4 rounded-xl border border-amber-100 bg-amber-50/60 p-3 text-sm leading-6 text-gray-700">Razorpay checkout opens after you submit. Successful payment changes this order to <strong>Confirmed</strong>.</p>}
             {!isAuthenticated && (
               <p className="mt-4 rounded-xl border border-orange-100 bg-orange-50 p-3 text-sm font-semibold text-orange-800">Please log in before submitting so your order appears in your dashboard.</p>
             )}

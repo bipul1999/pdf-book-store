@@ -1,4 +1,4 @@
-import { BookPlus, CheckCircle2, CreditCard, Download, Library, RefreshCw, Search, ShieldCheck, ShoppingBag, Sparkles } from "lucide-react";
+import { BookOpen, BookPlus, CheckCircle2, CreditCard, Download, Library, RefreshCw, Search, ShieldCheck, ShoppingBag, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import api from "../api/client.js";
@@ -254,9 +254,10 @@ export default function Home() {
             <p className="mx-auto max-w-xl text-[15px] leading-7 text-gray-700 sm:text-lg md:mx-0">
               महेश भारती जी की किताबें सीधे PDF और ई-बुक के रूप में खरीदें, डाउनलोड करें और मोबाइल पर आराम से पढ़ें।
             </p>
-            <div className="grid gap-3 sm:flex sm:justify-center md:justify-start">
+            <div className="grid gap-3 sm:flex sm:flex-wrap sm:justify-center md:justify-start">
               <Link to="/books" className="btn-primary w-full sm:w-auto"><Search size={18} /> Browse books</Link>
               <Link to="/order-book" className="btn-order-book w-full sm:w-auto"><ShoppingBag size={18} /> Order Book</Link>
+              <Link to={bestBook ? `/books/${bestBook._id}` : "/books"} className="btn-secondary w-full sm:w-auto"><BookOpen size={18} /> Read Preview</Link>
               <Link to="/signup" className="btn-secondary w-full sm:w-auto"><Sparkles size={18} /> Create account</Link>
             </div>
           </div>
@@ -313,6 +314,17 @@ export default function Home() {
               Your browser does not support the video tag.
             </video>
           </div>
+        </div>
+      </section>
+
+      <section className="home-section px-4 py-8 sm:py-12">
+        <div data-home-reveal className="home-reveal home-order-banner mx-auto grid max-w-7xl items-center gap-5 overflow-hidden rounded-3xl border border-amber-100 px-5 py-7 sm:px-8 md:grid-cols-[1fr_auto]">
+          <div>
+            <span className="badge mb-3"><ShoppingBag size={14} /> Direct order</span>
+            <h2 className="text-2xl font-black sm:text-3xl">अपनी पसंद की पुस्तक सीधे ऑर्डर करें</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-7 text-gray-600">पुस्तक चुनें, मात्रा तय करें और सुरक्षित Razorpay या Manual UPI भुगतान के साथ अपना ऑर्डर जमा करें।</p>
+          </div>
+          <Link className="btn-order-book w-full md:w-auto" to="/order-book"><ShoppingBag size={18} /> Order Book</Link>
         </div>
       </section>
 
