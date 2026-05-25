@@ -1,4 +1,4 @@
-import { BookOpen, Facebook, Home, Instagram, LayoutDashboard, Library, Linkedin, LogOut, Mail, Menu, MessageCircle, Phone, ShoppingCart, Sparkles, User, X } from "lucide-react";
+import { BookOpen, ClipboardList, Facebook, Home, Instagram, LayoutDashboard, Library, Linkedin, LogOut, Mail, Menu, MessageCircle, Phone, Search, ShoppingCart, Sparkles, User, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -83,17 +83,23 @@ export default function Layout() {
   return (
     <div className="min-h-screen">
       <header className={`premium-navbar mobile-fixed-header sticky top-0 z-50 ${isScrolled ? "premium-navbar-scrolled" : ""}`}>
-        <div className="relative mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-3 sm:h-[72px] sm:gap-4 sm:px-6 lg:px-8">
-          <Link to="/" onClick={closeMenu} className="group flex min-w-0 flex-1 items-center gap-2.5 text-[#1f2937] sm:gap-3">
+        <div className="relative mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-3 md:h-[72px] md:gap-4 md:px-6 lg:px-8">
+          <button className="mobile-header-action btn-secondary !min-h-10 !w-10 !rounded-full !p-0 md:hidden" onClick={() => setMenuOpen((value) => !value)} aria-expanded={menuOpen} aria-label={menuOpen ? "Close menu" : "Open menu"}>
+            {menuOpen ? <X size={19} /> : <Menu size={19} />}
+          </button>
+          <Link to="/" onClick={closeMenu} className="mobile-header-brand group flex min-w-0 flex-1 items-center gap-2.5 text-[#1f2937] sm:gap-3">
             <span className="relative shrink-0">
               <span className="absolute inset-0 rounded-2xl bg-orange-300/45 blur-lg opacity-70 transition group-hover:opacity-100" />
-              <img src={saraswatiLogo} alt="" className="relative h-10 w-10 rounded-2xl border border-orange-100 bg-white object-cover p-0.5 shadow-md sm:h-[50px] sm:w-[50px]" />
+              <img src={saraswatiLogo} alt="" className="relative h-9 w-9 rounded-xl border border-orange-100 bg-white object-cover p-0.5 shadow-md sm:h-[50px] sm:w-[50px] sm:rounded-2xl" />
               <span className="absolute -bottom-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-orange-100 bg-[#fff7ed] text-[#d97706] shadow-sm">
                 <BookOpen size={11} />
               </span>
             </span>
             <span className="min-w-0 leading-none">
-              <span className="navbar-brand block truncate text-[13px] font-extrabold tracking-tight sm:text-lg">Mahesh Bharti <span className="font-semibold">E-book Store</span></span>
+              <span className="navbar-brand block truncate text-[12px] font-extrabold tracking-tight sm:text-lg">
+                <span className="md:hidden">Mahesh Bharti <span className="font-semibold">E-book Store</span></span>
+                <FallingLetters text="Mahesh Bharti E-book Store" className="hidden md:inline-block" startDelay={0.08} />
+              </span>
               <span className="mt-1 hidden items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[.15em] text-amber-700/80 sm:flex">
                 <span className="h-px w-5 bg-amber-400" />
                 Premium Hindi Library
@@ -106,8 +112,11 @@ export default function Layout() {
             <NavLink className={desktopNavClass} to="/dashboard/library"><Library size={16} /> <FallingLetters text="Library" startDelay={0.44} /></NavLink>
           </nav>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <Link className="mobile-header-action btn-secondary !min-h-10 !w-10 !rounded-full !p-0 md:!hidden" to="/books" aria-label="Search books">
+              <Search size={19} />
+            </Link>
             {isAuthenticated && !isAdmin && (
-              <Link className="btn-secondary relative !min-h-10 !rounded-full !px-2.5 sm:!min-h-11 sm:!px-3" to="/cart" aria-label="Cart">
+              <Link className="btn-secondary relative !hidden !min-h-10 !rounded-full !px-2.5 sm:!min-h-11 sm:!px-3 md:!inline-flex" to="/cart" aria-label="Cart">
                 <ShoppingCart size={18} />
                 {items.length > 0 && <span className="absolute -right-1.5 -top-1.5 grid min-h-5 min-w-5 place-items-center rounded-full bg-orange-500 px-1.5 text-[11px] font-black leading-none text-white ring-2 ring-white">{items.length}</span>}
               </Link>
@@ -120,11 +129,8 @@ export default function Layout() {
                 <button className="btn-secondary !hidden !min-h-10 !rounded-full !px-2.5 sm:!min-h-11 sm:!px-3 md:!inline-flex" onClick={handleLogout} aria-label="Logout"><LogOut size={18} /></button>
               </>
             ) : (
-              <Link className="btn-primary !min-h-10 !rounded-full !px-2.5 sm:!min-h-11 sm:!px-5" to="/login"><User size={18} /><FallingLetters text="Login" className="hidden sm:inline" startDelay={0.52} /></Link>
+              <Link className="btn-primary !hidden !min-h-10 !rounded-full !px-2.5 sm:!min-h-11 sm:!px-5 md:!inline-flex" to="/login"><User size={18} /><FallingLetters text="Login" className="hidden sm:inline" startDelay={0.52} /></Link>
             )}
-            <button className="btn-secondary !min-h-10 !rounded-full !px-2.5 sm:!min-h-11 sm:!px-3 md:hidden" onClick={() => setMenuOpen((value) => !value)} aria-expanded={menuOpen} aria-label={menuOpen ? "Close menu" : "Open menu"}>
-              {menuOpen ? <X size={18} /> : <Menu size={18} />}
-            </button>
           </div>
         </div>
         {menuOpen && (
@@ -132,7 +138,9 @@ export default function Layout() {
             <nav className="mobile-nav-card mx-auto grid max-w-md grid-cols-2 gap-1.5 rounded-3xl p-2.5 text-sm font-bold">
               <NavLink onClick={closeMenu} className={mobileNavClass} to="/"><Home size={16} /> <FallingLetters text="Home" /></NavLink>
               <NavLink onClick={closeMenu} className={mobileNavClass} to="/books"><BookOpen size={16} /> <FallingLetters text="Books" /></NavLink>
+              {!isAdmin && <NavLink onClick={closeMenu} className={mobileNavClass} to="/dashboard/orders"><ClipboardList size={16} /> Orders</NavLink>}
               {!isAdmin && <NavLink onClick={closeMenu} className={mobileNavClass} to="/dashboard/library"><Library size={16} /> <FallingLetters text="Library" /></NavLink>}
+              {isAuthenticated && !isAdmin && <NavLink onClick={closeMenu} className={mobileNavClass} to="/cart"><ShoppingCart size={16} /> Cart</NavLink>}
               {isAdmin ? (
                 <NavLink onClick={closeMenu} className={mobileNavClass} to="/admin"><LayoutDashboard size={16} /> Go to Admin</NavLink>
               ) : isAuthenticated && <NavLink onClick={closeMenu} className={mobileNavClass} to="/dashboard"><LayoutDashboard size={16} /> <FallingLetters text="Dashboard" /></NavLink>}
@@ -146,15 +154,15 @@ export default function Layout() {
         )}
       </header>
       <Outlet />
-      <nav className={`fixed inset-x-3 bottom-[calc(.75rem+env(safe-area-inset-bottom))] z-40 grid gap-1 rounded-2xl border border-amber-200/80 bg-[#fffaf5]/95 p-1 shadow-[0_18px_42px_rgba(36,25,21,.16)] backdrop-blur-md md:hidden ${isAdmin ? "grid-cols-3" : "grid-cols-4"}`}>
+      <nav className={`mobile-bottom-nav fixed inset-x-0 bottom-0 z-40 grid gap-1 border border-amber-200/80 bg-[#fffaf5]/95 px-2 pb-[calc(.35rem+env(safe-area-inset-bottom))] pt-1.5 shadow-[0_-12px_34px_rgba(36,25,21,.12)] backdrop-blur-md md:hidden ${isAdmin ? "grid-cols-3" : "grid-cols-4"}`}>
         <NavLink className={bottomNavClass} to="/"><Home size={20} /> Home</NavLink>
         <NavLink className={bottomNavClass} to="/books"><BookOpen size={20} /> Books</NavLink>
         {isAdmin ? (
           <NavLink className={bottomNavClass} to="/admin"><LayoutDashboard size={20} /> Admin</NavLink>
         ) : (
           <>
-            <NavLink className={bottomNavClass} to="/cart"><ShoppingCart size={20} /> Cart</NavLink>
-            <NavLink className={bottomNavClass} to={isAuthenticated ? "/dashboard/library" : "/login"}>{isAuthenticated ? <Library size={20} /> : <User size={20} />}{isAuthenticated ? "Library" : "Login"}</NavLink>
+            <NavLink className={bottomNavClass} to="/dashboard/orders"><ClipboardList size={20} /> Orders</NavLink>
+            <NavLink className={bottomNavClass} to="/dashboard"><User size={20} /> Profile</NavLink>
           </>
         )}
       </nav>

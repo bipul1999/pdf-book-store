@@ -67,6 +67,8 @@ export default function Home() {
   const [bookOffset, setBookOffset] = useState(0);
   const [isBookTransitioning, setIsBookTransitioning] = useState(false);
   const [quoteSlot, setQuoteSlot] = useState(() => currentQuoteSlot());
+  const authorVideoSectionRef = useRef(null);
+  const authorVideoRef = useRef(null);
   const promoSectionRef = useRef(null);
   const promoVideoRef = useRef(null);
 
@@ -160,12 +162,31 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    const section = authorVideoSectionRef.current;
+    const video = authorVideoRef.current;
+    if (!section || !video) return undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) video.pause();
+      },
+      { threshold: 0.2 }
+    );
+    observer.observe(section);
+    return () => {
+      observer.disconnect();
+      video.pause();
+    };
+  }, []);
+
+  useEffect(() => {
     const section = promoSectionRef.current;
     const video = promoVideoRef.current;
     if (!section || !video) return undefined;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
+          video.muted = false;
+          video.volume = 1;
           video.play().catch(() => {});
         } else {
           video.pause();
@@ -192,7 +213,6 @@ export default function Home() {
     ...selectedQuote,
     authorImage: selectedQuote.authorImage || quote?.authorImage || defaultQuote.authorImage
   };
-  const bestBook = books[0];
   const featuredBooks = books.slice(0, 4);
   const trustItems = [
     { icon: CheckCircle2, title: "हिंदी सामाजिक चेतना", text: "समाज, इतिहास और पर्यावरण से जुड़े विषय संवेदनशील हिंदी लेखन में प्रस्तुत हैं।" },
@@ -247,17 +267,17 @@ export default function Home() {
           <span className="home-particle home-particle-two" />
           <span className="home-particle home-particle-three" />
         </div>
-        <div data-home-reveal className="home-reveal relative mx-auto grid max-w-7xl items-center gap-7 px-4 py-8 sm:py-10 lg:grid-cols-[1fr_.88fr] lg:gap-8 lg:py-12">
-          <div className="space-y-4 text-center lg:text-left">
+        <div data-home-reveal className="home-reveal hero-layout relative mx-auto grid max-w-7xl items-center gap-7 px-4 py-8 sm:py-10 lg:grid-cols-[1fr_.88fr] lg:gap-8 lg:py-12">
+          <div className="hero-copy space-y-4 text-center lg:text-left">
             <span className="hero-kicker mx-auto lg:mx-0"><Sparkles size={14} /> महेश भारती डिजिटल पुस्तकालय</span>
-            <h1 className="mx-auto max-w-3xl text-[32px] font-black leading-[1.17] sm:text-[44px] lg:mx-0 lg:text-[52px]">
+            <h1 className="hero-title mx-auto max-w-3xl text-[32px] font-black leading-[1.17] sm:text-[44px] lg:mx-0 lg:text-[52px]">
               हिंदी विचारों की रोशनी,
               <span className="block text-amber-300">अब आपके डिजिटल पुस्तकालय में</span>
             </h1>
-            <p className="mx-auto max-w-2xl text-[15px] leading-7 text-amber-50/85 sm:text-base lg:mx-0">
+            <p className="hero-description mx-auto max-w-2xl text-[15px] leading-7 text-amber-50/85 sm:text-base lg:mx-0">
               सामाजिक चेतना, इतिहास, पर्यावरण और जनजीवन पर केंद्रित महेश भारती जी की हिंदी पुस्तकें पढ़ें। सुरक्षित भुगतान के साथ PDF प्राप्त करें और कहीं भी डिजिटल रूप में पढ़ें।
             </p>
-            <div className="grid gap-3 sm:flex sm:justify-center lg:justify-start">
+            <div className="hero-actions grid gap-3 sm:flex sm:justify-center lg:justify-start">
               <Link to="/books" className="hero-primary-cta btn w-full sm:w-auto"><Search size={18} /> पुस्तकें देखें</Link>
               <Link to="/order-book" className="hero-secondary-cta btn w-full sm:w-auto"><ShoppingBag size={18} /> अभी ऑर्डर करें</Link>
             </div>
@@ -288,12 +308,11 @@ export default function Home() {
                 </Link>
               ))}
             </div>
-            <Link className="hero-preview-link" to={bestBook ? `/books/${bestBook._id}` : "/books"}><BookOpen size={16} /> Preview पढ़ें</Link>
           </div>
         </div>
       </section>
 
-      <section className="home-section author-spotlight px-4 py-12 sm:py-20">
+      <section ref={authorVideoSectionRef} className="home-section author-spotlight px-4 py-12 sm:py-20">
         <div data-home-reveal className="home-reveal mx-auto grid max-w-7xl gap-6 lg:grid-cols-[.94fr_1.06fr] lg:items-center">
           <div className="author-profile-card panel p-5 sm:p-7">
             <span className="badge mb-5">लेखक परिचय</span>
@@ -314,6 +333,7 @@ export default function Home() {
           </div>
           <div className="home-video-card overflow-hidden rounded-3xl border border-amber-200/70 bg-black shadow-[0_28px_68px_rgba(69,26,3,.2)]">
             <video
+              ref={authorVideoRef}
               className="aspect-video w-full bg-black object-cover"
               controls
               playsInline
@@ -370,14 +390,13 @@ export default function Home() {
       </section>
 
       <section ref={promoSectionRef} className="home-section home-promo-section promotion-stage px-4 py-12 sm:py-20">
-        <div data-home-reveal className="home-reveal mx-auto grid max-w-7xl gap-5 lg:grid-cols-[1.05fr_.95fr] lg:items-center">
-          <div className="home-video-card relative overflow-hidden rounded-2xl border border-orange-100 bg-black shadow-[0_18px_42px_rgba(36,25,21,.14)]">
+        <div data-home-reveal className="home-reveal promo-grid mx-auto grid max-w-7xl gap-5 lg:grid-cols-[1.05fr_.95fr] lg:items-center">
+          <div className="home-video-card promo-video-panel relative overflow-hidden rounded-2xl border border-orange-100 bg-black shadow-[0_18px_42px_rgba(36,25,21,.14)]">
             <video
               ref={promoVideoRef}
-              className="aspect-video w-full bg-black object-cover"
+              className="promo-video aspect-video w-full bg-black object-cover"
               controls
               loop
-              muted
               playsInline
               preload="metadata"
               src="/videos/author-intro.mp4"
@@ -385,7 +404,7 @@ export default function Home() {
               Your browser does not support the video tag.
             </video>
           </div>
-          <div className="home-glass panel space-y-3 p-5 text-center sm:p-7 lg:text-left">
+          <div className="home-glass promo-copy-panel panel space-y-3 p-5 text-center sm:p-7 lg:text-left">
             <span className="badge mx-auto lg:mx-0">लेखक का आमंत्रण</span>
             <h2 className="text-2xl font-black text-ink sm:text-3xl">इस डिजिटल पुस्तक मंच से जुड़िए</h2>
             <p className="mx-auto max-w-xl text-sm leading-7 text-gray-600 lg:mx-0">
@@ -412,7 +431,7 @@ export default function Home() {
           {loading && !featuredBooks.length ? (
             <BookGridSkeleton />
           ) : featuredBooks.length ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="featured-books-rail grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {featuredBooks.map((book) => <BookCard key={book._id} book={book} compact />)}
             </div>
           ) : loadError ? (

@@ -31,12 +31,12 @@ export default function PdfReader() {
       try {
         setError("");
         const [{ data }, pdfRes] = await Promise.all([
-          api.get(`/books/${id}`),
+          api.get(`/users/library/${id}`),
           fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/books/${id}/download`, {
             headers: { Authorization: `Bearer ${getStoredToken()}` }
           })
         ]);
-        if (!pdfRes.ok) throw new Error(pdfRes.status === 403 ? "Your 30 day access has expired or payment is not verified." : "PDF could not be opened");
+        if (!pdfRes.ok) throw new Error(pdfRes.status === 403 ? "Your reading access has expired or payment is not verified." : "PDF could not be opened");
         const pdfData = await pdfRes.arrayBuffer();
         loadingTask = getDocument({ data: new Uint8Array(pdfData) });
         loadedDocument = await loadingTask.promise;
@@ -49,7 +49,11 @@ export default function PdfReader() {
         setPageCount(loadedDocument.numPages);
         setPageNumber(1);
       } catch (err) {
-        if (!cancelled) setError(err.message || "Unable to open PDF");
+        if (!cancelled) {
+          setError(err.response?.status === 403
+            ? "Your reading access has expired or payment is not verified."
+            : err.message || "Unable to open PDF");
+        }
       }
     }
 

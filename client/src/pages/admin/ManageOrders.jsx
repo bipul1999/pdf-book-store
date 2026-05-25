@@ -19,6 +19,17 @@ function statusOptions(order) {
   return order.orderType === "manual_book" ? manualStatuses : digitalStatuses;
 }
 
+function dateTimeValue(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  const offset = date.getTimezoneOffset() * 60 * 1000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+}
+
+function accessKey(order, item) {
+  return `${order._id}:${item.book?._id || item.book}`;
+}
+
 function CustomerDetails({ order }) {
   if (order.orderType !== "manual_book") {
     return <><strong>{order.user?.name}</strong><p className="break-words text-gray-600">{order.user?.email}</p></>;
@@ -36,10 +47,14 @@ function CustomerDetails({ order }) {
 
 export default function ManageOrders() {
   const [orders, setOrders] = useState([]);
+  const [accessDrafts, setAccessDrafts] = useState({});
 
   async function load() {
     const { data } = await api.get("/admin/orders");
     setOrders(data.orders);
+    setAccessDrafts(Object.fromEntries(data.orders.flatMap((order) =>
+      order.items.map((item) => [accessKey(order, item), dateTimeValue(item.accessExpiresAt)])
+    )));
   }
 
   useEffect(() => { load(); }, []);
@@ -48,6 +63,49 @@ export default function ManageOrders() {
     await api.patch(`/admin/orders/${id}/status`, { status });
     toast.success("Order updated");
     load();
+  }
+
+  function shiftAccess(order, item, days) {
+    const key = accessKey(order, item);
+    const currentValue = accessDrafts[key] || dateTimeValue(item.accessExpiresAt) || dateTimeValue(new Date());
+    const nextDate = new Date(currentValue);
+    nextDate.setDate(nextDate.getDate() + days);
+    setAccessDrafts((values) => ({ ...values, [key]: dateTimeValue(nextDate) }));
+  }
+
+  async function saveAccess(order, item) {
+    const accessExpiresAt = accessDrafts[accessKey(order, item)];
+    if (!accessExpiresAt) {
+      toast.error("Select access expiry date and time");
+      return;
+    }
+    await api.patch(`/admin/orders/${order._id}/access`, {
+      bookId: item.book?._id || item.book,
+      accessExpiresAt: new Date(accessExpiresAt).toISOString()
+    });
+    toast.success("PDF access duration updated");
+    load();
+  }
+
+  function renderAccessEditor(order, item, mobile = false) {
+    if (order.orderType === "manual_book" || order.status !== "success") return null;
+    const key = accessKey(order, item);
+    return (
+      <div className={`${mobile ? "mt-3" : "mt-3 min-w-56"} rounded-xl border border-amber-100 bg-amber-50/60 p-2`}>
+        <p className="mb-1 text-xs font-bold text-amber-800">PDF access until</p>
+        <input
+          className="input !min-h-10 !p-2 text-xs"
+          type="datetime-local"
+          value={accessDrafts[key] || ""}
+          onChange={(event) => setAccessDrafts((values) => ({ ...values, [key]: event.target.value }))}
+        />
+        <div className="mt-2 flex gap-1.5">
+          <button className="btn-secondary !min-h-9 !px-2 text-xs" onClick={() => shiftAccess(order, item, -7)} type="button">-7 days</button>
+          <button className="btn-secondary !min-h-9 !px-2 text-xs" onClick={() => shiftAccess(order, item, 7)} type="button">+7 days</button>
+          <button className="btn-primary !min-h-9 !px-3 text-xs" onClick={() => saveAccess(order, item)} type="button">Save</button>
+        </div>
+      </div>
+    );
   }
 
   async function viewProof(order) {
@@ -82,7 +140,12 @@ export default function ManageOrders() {
         {orders.map((order) => (
           <article className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm" key={order._id}>
             <div className="text-sm"><CustomerDetails order={order} /></div>
-            <p className="mt-2 line-clamp-2 text-sm">{order.items.map((item) => `${item.title} x ${item.quantity || 1}`).join(", ")}</p>
+            <div className="mt-2 space-y-2 text-sm">{order.items.map((item) => (
+              <div className="rounded-xl border border-slate-100 p-2" key={item.book?._id || item.title}>
+                <p>{item.title} x {item.quantity || 1}</p>
+                {renderAccessEditor(order, item, true)}
+              </div>
+            ))}</div>
             <p className="price-text mt-2">Rs. {order.amount}</p>
             {order.orderType === "manual_book" && <p className="text-xs text-gray-600">Books Rs. {order.bookTotal || 0} + Extra Rs. {order.extraCharge || 0}</p>}
             {order.orderType === "manual_book" && <p className="mt-1 text-xs font-bold text-gray-600">Payment: {order.provider === "razorpay" ? "Razorpay" : "Manual UPI"}</p>}
@@ -101,7 +164,14 @@ export default function ManageOrders() {
             {orders.map((order) => (
               <tr className="border-t border-gray-100" key={order._id}>
                 <td className="p-3 align-top"><CustomerDetails order={order} /></td>
-                <td className="p-3">{order.items.map((item) => `${item.title} x ${item.quantity || 1}`).join(", ")}</td>
+                <td className="p-3 align-top">
+                  <div className="space-y-3">{order.items.map((item) => (
+                    <div key={item.book?._id || item.title}>
+                      <p>{item.title} x {item.quantity || 1}</p>
+                      {renderAccessEditor(order, item)}
+                    </div>
+                  ))}</div>
+                </td>
                 <td className="p-3">
                   <strong>Rs. {order.amount}</strong>
                   {order.orderType === "manual_book" && <p className="mt-1 whitespace-nowrap text-xs text-gray-600">Rs. {order.bookTotal || 0} + Rs. {order.extraCharge || 0}</p>}

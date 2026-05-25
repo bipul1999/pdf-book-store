@@ -4,6 +4,9 @@ import path from "path";
 import Book from "../models/Book.js";
 import Order from "../models/Order.js";
 
+const DEFAULT_DIGITAL_ACCESS_DAYS = 30;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 function coverUrl(req, filePath) {
   if (!filePath?.startsWith("uploads")) return filePath;
   const normalized = filePath.replaceAll("\\", "/").replace("uploads/covers/", "");
@@ -76,11 +79,20 @@ export async function downloadBook(req, res) {
   if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: "Book not found" });
   const book = await Book.findById(req.params.id).select("+pdfPath");
   if (!book) return res.status(404).json({ message: "Book not found" });
-  const accessWindowStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  const successfulOrder = req.user.role === "admin"
-    ? true
-    : await Order.exists({ user: req.user._id, status: "success", updatedAt: { $gte: accessWindowStart }, "items.book": book._id });
-  const owns = Boolean(successfulOrder);
+  let owns = req.user.role === "admin";
+  if (!owns) {
+    const successfulOrders = await Order.find({
+      user: req.user._id,
+      status: "success",
+      orderType: { $ne: "manual_book" },
+      "items.book": book._id
+    }).select("items updatedAt");
+    owns = successfulOrders.some((order) => {
+      const item = order.items.find((orderItem) => String(orderItem.book) === String(book._id));
+      const expiry = item?.accessExpiresAt || new Date(order.updatedAt.getTime() + DEFAULT_DIGITAL_ACCESS_DAYS * DAY_MS);
+      return Boolean(item) && expiry.getTime() > Date.now();
+    });
+  }
   if (!owns) return res.status(403).json({ message: "Purchase required or access expired for this PDF" });
   const uploadRoot = path.resolve(process.env.UPLOAD_DIR || "uploads");
   const absolute = path.resolve(book.pdfPath);

@@ -11,6 +11,8 @@ import { sendEmail } from "../utils/email.js";
 
 const MIN_RAZORPAY_AMOUNT = 100;
 const MAX_BOOK_QUANTITY = 20;
+const DEFAULT_DIGITAL_ACCESS_DAYS = 30;
+const DAY_MS = 24 * 60 * 60 * 1000;
 const DIGITAL_ORDER_STATUSES = new Set(["pending", "submitted", "success", "failed"]);
 const MANUAL_BOOK_ORDER_STATUSES = new Set(["pending", "confirmed", "completed", "rejected"]);
 
@@ -45,6 +47,19 @@ function signaturesMatch(expected, received) {
   const expectedBuffer = Buffer.from(expected);
   const receivedBuffer = Buffer.from(received);
   return expectedBuffer.length === receivedBuffer.length && crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
+}
+
+function digitalAccessExpiry(order, item) {
+  if (item.accessExpiresAt) return new Date(item.accessExpiresAt);
+  return new Date(order.updatedAt.getTime() + DEFAULT_DIGITAL_ACCESS_DAYS * DAY_MS);
+}
+
+function initializeDigitalAccess(order) {
+  if (order.orderType === "manual_book") return;
+  const expiresAt = new Date(Date.now() + DEFAULT_DIGITAL_ACCESS_DAYS * DAY_MS);
+  order.items.forEach((item) => {
+    if (!item.accessExpiresAt) item.accessExpiresAt = expiresAt;
+  });
 }
 
 async function unlockBooks(order) {
@@ -422,6 +437,7 @@ export async function verifyPayment(req, res) {
   order.status = order.orderType === "manual_book" ? "confirmed" : "success";
   order.razorpayPaymentId = razorpay_payment_id;
   order.razorpaySignature = razorpay_signature;
+  initializeDigitalAccess(order);
   await order.save();
   if (order.orderType !== "manual_book") {
     await unlockBooks(order);
@@ -492,6 +508,7 @@ export async function razorpayWebhook(req, res) {
 
   order.status = order.orderType === "manual_book" ? "confirmed" : "success";
   order.razorpayPaymentId = payment.id;
+  initializeDigitalAccess(order);
   await order.save();
   if (order.orderType !== "manual_book") {
     await unlockBooks(order);
@@ -512,20 +529,41 @@ export async function myOrders(req, res) {
 }
 
 export async function myLibrary(req, res) {
-  const accessWindowStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  const orders = await Order.find({ user: req.user._id, status: "success", updatedAt: { $gte: accessWindowStart } }).populate({ path: "items.book", populate: "category" });
+  const orders = await Order.find({ user: req.user._id, status: "success", orderType: { $ne: "manual_book" } })
+    .populate({ path: "items.book", populate: "category" });
   const uniqueBooks = new Map();
   orders.forEach((order) => {
     order.items.forEach((item) => {
-      if (item.book && item.book.isActive !== false) {
-        uniqueBooks.set(String(item.book._id), {
+      const accessExpiresAt = digitalAccessExpiry(order, item);
+      if (item.book && accessExpiresAt.getTime() > Date.now()) {
+        const key = String(item.book._id);
+        const current = uniqueBooks.get(key);
+        if (!current || accessExpiresAt > current.accessExpiresAt) uniqueBooks.set(key, {
           book: item.book,
-          accessExpiresAt: new Date(order.updatedAt.getTime() + 30 * 24 * 60 * 60 * 1000)
+          accessExpiresAt
         });
       }
     });
   });
   res.json({ books: [...uniqueBooks.values()].map(({ book, accessExpiresAt }) => ({ ...publicBook(req, book), accessExpiresAt })) });
+}
+
+export async function myLibraryBook(req, res) {
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: "Book not found" });
+  const orders = await Order.find({
+    user: req.user._id,
+    status: "success",
+    orderType: { $ne: "manual_book" },
+    "items.book": req.params.id
+  });
+  const owns = orders.some((order) => order.items.some((item) =>
+    String(item.book) === req.params.id && digitalAccessExpiry(order, item).getTime() > Date.now()
+  ));
+  if (!owns) return res.status(403).json({ message: "Purchase required or access expired for this PDF" });
+  const book = await Book.findById(req.params.id).populate("category");
+  if (!book) return res.status(404).json({ message: "Book not found" });
+  res.setHeader("Cache-Control", "private, no-store, max-age=0");
+  res.json({ book: publicBook(req, book) });
 }
 
 export async function updateOrderStatus(req, res) {
@@ -536,6 +574,7 @@ export async function updateOrderStatus(req, res) {
   if (!allowedStatuses.has(req.body.status)) return res.status(422).json({ message: "Invalid order status" });
   const previousStatus = order.status;
   order.status = req.body.status;
+  if (!manualBookOrder && order.status === "success") initializeDigitalAccess(order);
   await order.save();
   if (manualBookOrder) return res.json({ order });
   if (order.status === "success") await unlockBooks(order);
@@ -544,6 +583,21 @@ export async function updateOrderStatus(req, res) {
     await sendPaymentStatusEmail(order);
   }
   res.json({ order });
+}
+
+export async function updateDigitalAccess(req, res) {
+  const order = await Order.findById(req.params.id);
+  if (!order) return res.status(404).json({ message: "Order not found" });
+  if (order.orderType === "manual_book" || order.status !== "success") {
+    return res.status(422).json({ message: "Access duration can only be updated for successful PDF purchases" });
+  }
+  const item = order.items.find((orderItem) => String(orderItem.book) === String(req.body.bookId));
+  if (!item) return res.status(404).json({ message: "Purchased book not found in this order" });
+  const accessExpiresAt = new Date(req.body.accessExpiresAt);
+  if (Number.isNaN(accessExpiresAt.getTime())) return res.status(422).json({ message: "Enter a valid access expiry date and time" });
+  item.accessExpiresAt = accessExpiresAt;
+  await order.save();
+  res.json({ order, bookId: item.book, accessExpiresAt: item.accessExpiresAt });
 }
 
 export async function getPaymentSettings(req, res) {

@@ -5,6 +5,9 @@ import Category from "../models/Category.js";
 import fs from "fs";
 import path from "path";
 
+const DEFAULT_DIGITAL_ACCESS_DAYS = 30;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 export async function dashboardStats(_req, res) {
   const [users, books, orders, categories, revenue] = await Promise.all([
     User.countDocuments({ role: "user" }),
@@ -26,6 +29,12 @@ export async function listOrders(_req, res) {
   res.json({
     orders: orders.map((order) => ({
       ...order.toObject(),
+      items: order.items.map((item) => ({
+        ...item.toObject(),
+        accessExpiresAt: order.orderType !== "manual_book" && order.status === "success"
+          ? item.accessExpiresAt || new Date(order.updatedAt.getTime() + DEFAULT_DIGITAL_ACCESS_DAYS * DAY_MS)
+          : item.accessExpiresAt
+      })),
       paymentProof: order.paymentProof ? `/api/admin/orders/${order._id}/proof` : ""
     }))
   });

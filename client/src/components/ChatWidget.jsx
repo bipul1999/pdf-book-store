@@ -125,12 +125,8 @@ export default function ChatWidget() {
       .trim();
   }
 
-  function shouldUseMobileVoice() {
-    return typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches;
-  }
-
   function speakAssistantText(text, interrupt = false) {
-    if (!shouldUseMobileVoice() || !("speechSynthesis" in window)) return;
+    if (!("speechSynthesis" in window)) return;
     if (interrupt) window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     const voices = window.speechSynthesis.getVoices();
@@ -360,7 +356,7 @@ export default function ChatWidget() {
   return (
     <>
       {open && (
-        <section className="fixed bottom-24 right-3 z-50 flex max-h-[calc(100vh-7rem)] w-[calc(100vw-1.5rem)] max-w-sm flex-col overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-[0_20px_60px_rgba(15,23,42,.25)] sm:bottom-6 sm:right-6 sm:max-h-[calc(100vh-3rem)]">
+        <section className="fixed bottom-24 right-3 z-50 flex max-h-[calc(100vh-7rem)] w-[calc(100vw-1.5rem)] max-w-sm flex-col overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-[0_20px_60px_rgba(15,23,42,.25)] md:bottom-6 md:right-6 md:max-h-[calc(100vh-3rem)]">
           <button
             className="absolute right-2 top-2 z-10 grid h-9 w-9 place-items-center rounded-full bg-white/95 text-slate-700 shadow-md ring-1 ring-orange-100 transition hover:bg-orange-50 hover:text-orange-700"
             onClick={closeAssistant}
@@ -457,7 +453,7 @@ export default function ChatWidget() {
         </section>
       )}
       <button
-        className="fixed bottom-24 right-4 z-40 grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-[#e24b13] via-[#f97316] to-[#fbbf24] text-white shadow-[0_14px_32px_rgba(234,88,12,.45)] ring-4 ring-orange-100 transition hover:scale-105 hover:from-[#ef5b25] hover:to-[#fde047] sm:bottom-6 sm:right-6"
+        className="fixed bottom-24 right-4 z-40 grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-[#e24b13] via-[#f97316] to-[#fbbf24] text-white shadow-[0_14px_32px_rgba(234,88,12,.45)] ring-4 ring-orange-100 transition hover:scale-105 hover:from-[#ef5b25] hover:to-[#fde047] md:bottom-6 md:right-6"
         onClick={() => setOpen((value) => !value)}
         aria-label="Open AI help chat"
       >

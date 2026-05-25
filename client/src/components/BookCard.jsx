@@ -43,8 +43,8 @@ export default function BookCard({ book, compact = false }) {
       <div className={`flex flex-1 flex-col ${compact ? "p-3.5 sm:p-4" : "p-4 sm:p-5"}`}>
         <div>
           <Link to={`/books/${book._id}`} className={`block line-clamp-2 font-black leading-snug transition hover:text-orange-700 ${compact ? "min-h-[2.7rem] text-base" : "min-h-[3.2rem] text-lg"}`}>{book.title}</Link>
-          <p className="mt-1 text-sm font-semibold text-gray-600">{book.author}</p>
-          <p className={`${compact ? "mt-2 min-h-[2.5rem] leading-5" : "mt-3 min-h-[3rem] leading-6"} line-clamp-2 text-sm text-gray-600`}>{book.description}</p>
+          <p className="book-card-author mt-1 text-sm font-semibold text-gray-600">{book.author}</p>
+          <p className={`book-card-description ${compact ? "mt-2 min-h-[2.5rem] leading-5" : "mt-3 min-h-[3rem] leading-6"} line-clamp-2 text-sm text-gray-600`}>{book.description}</p>
         </div>
         <div className={`mt-auto ${compact ? "pt-3" : "pt-5"}`}>
           <div className={`book-price-box flex items-center justify-between gap-2 ${compact ? "mb-3" : "mb-4"}`}>
