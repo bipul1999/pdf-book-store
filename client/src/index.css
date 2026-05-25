@@ -272,7 +272,7 @@ p { text-wrap: pretty; }
 
 .hero-library-visual {
   position: relative;
-  min-height: clamp(25rem, 43vw, 34rem);
+  min-height: clamp(21.5rem, 36vw, 28rem);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -281,7 +281,7 @@ p { text-wrap: pretty; }
 .hero-phone-card {
   position: relative;
   z-index: 3;
-  width: clamp(12.6rem, 44vw, 16rem);
+  width: clamp(11.75rem, 38vw, 14.25rem);
   border: 1px solid rgba(253, 230, 138, .55);
   border-radius: 2rem;
   background: #fffaf0;
@@ -301,7 +301,7 @@ p { text-wrap: pretty; }
 }
 
 .hero-phone-cover {
-  height: clamp(13.5rem, 28vw, 19rem);
+  height: clamp(11.5rem, 23vw, 15.5rem);
   width: 100%;
   border-radius: 1.2rem;
   background: linear-gradient(180deg, #fef3c7, #fff7ed);
@@ -317,8 +317,8 @@ p { text-wrap: pretty; }
 .home-hero-book {
   position: absolute;
   display: block;
-  height: clamp(9.6rem, 19vw, 13.5rem);
-  width: clamp(7rem, 14vw, 9.5rem);
+  height: clamp(8.2rem, 16vw, 11rem);
+  width: clamp(6.1rem, 12vw, 8rem);
   overflow: hidden;
   border: 1px solid rgba(253, 230, 138, .48);
   border-radius: 1.25rem;
@@ -730,11 +730,11 @@ table tbody tr {
   }
 
   .hero-library-visual {
-    min-height: 27rem;
+    min-height: 21.75rem;
   }
 
   .hero-phone-card {
-    width: 12.75rem;
+    width: 11.5rem;
   }
 
   .home-hero-book:nth-child(1) {

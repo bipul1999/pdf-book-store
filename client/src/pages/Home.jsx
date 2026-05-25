@@ -218,21 +218,21 @@ export default function Home() {
           <span className="home-particle home-particle-two" />
           <span className="home-particle home-particle-three" />
         </div>
-        <div data-home-reveal className="home-reveal relative mx-auto grid max-w-7xl items-center gap-10 px-4 py-12 sm:py-16 lg:grid-cols-[1fr_.88fr] lg:py-24">
-          <div className="space-y-5 text-center lg:text-left">
+        <div data-home-reveal className="home-reveal relative mx-auto grid max-w-7xl items-center gap-7 px-4 py-8 sm:py-10 lg:grid-cols-[1fr_.88fr] lg:gap-8 lg:py-12">
+          <div className="space-y-4 text-center lg:text-left">
             <span className="hero-kicker mx-auto lg:mx-0"><Sparkles size={14} /> महेश भारती डिजिटल पुस्तकालय</span>
-            <h1 className="mx-auto max-w-3xl text-[34px] font-black leading-[1.17] sm:text-5xl lg:mx-0 lg:text-[58px]">
+            <h1 className="mx-auto max-w-3xl text-[32px] font-black leading-[1.17] sm:text-[44px] lg:mx-0 lg:text-[52px]">
               हिंदी विचारों की रोशनी,
               <span className="block text-amber-300">अब आपके डिजिटल पुस्तकालय में</span>
             </h1>
-            <p className="mx-auto max-w-2xl text-[15px] leading-8 text-amber-50/85 sm:text-lg lg:mx-0">
+            <p className="mx-auto max-w-2xl text-[15px] leading-7 text-amber-50/85 sm:text-base lg:mx-0">
               सामाजिक चेतना, इतिहास, पर्यावरण और जनजीवन पर केंद्रित महेश भारती जी की हिंदी पुस्तकें पढ़ें। सुरक्षित भुगतान के साथ PDF प्राप्त करें और कहीं भी डिजिटल रूप में पढ़ें।
             </p>
             <div className="grid gap-3 sm:flex sm:justify-center lg:justify-start">
               <Link to="/books" className="hero-primary-cta btn w-full sm:w-auto"><Search size={18} /> पुस्तकें देखें</Link>
               <Link to="/order-book" className="hero-secondary-cta btn w-full sm:w-auto"><ShoppingBag size={18} /> अभी ऑर्डर करें</Link>
             </div>
-            <div className="hero-benefits grid gap-3 pt-3 sm:grid-cols-3">
+            <div className="hero-benefits grid gap-3 pt-1 sm:grid-cols-3">
               <div><BookOpen size={18} /><strong>PDF Access</strong><span>तुरंत पढ़ना शुरू करें</span></div>
               <div><ShieldCheck size={18} /><strong>Secure Pay</strong><span>विश्वसनीय भुगतान</span></div>
               <div><Sparkles size={18} /><strong>Hindi Works</strong><span>चेतना और साहित्य</span></div>
