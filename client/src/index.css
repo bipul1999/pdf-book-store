@@ -724,18 +724,12 @@ table tbody tr {
 
 @media (max-width: 767px) {
   body {
-    padding-top: 56px;
     padding-bottom: calc(70px + env(safe-area-inset-bottom));
     font-size: 15px;
   }
 
   h1, h2, h3 {
     line-height: 1.34;
-  }
-
-  .mobile-fixed-header {
-    position: fixed;
-    inset: 0 0 auto 0;
   }
 
   .premium-navbar {

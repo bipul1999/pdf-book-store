@@ -82,7 +82,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen">
-      <header className={`premium-navbar mobile-fixed-header sticky top-0 z-50 ${isScrolled ? "premium-navbar-scrolled" : ""}`}>
+      <header className={`premium-navbar fixed inset-x-0 top-0 z-50 ${isScrolled ? "premium-navbar-scrolled" : ""}`}>
         <div className="relative mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-3 md:h-[72px] md:gap-4 md:px-6 lg:px-8">
           <button className="mobile-header-action btn-secondary !min-h-10 !w-10 !rounded-full !p-0 md:hidden" onClick={() => setMenuOpen((value) => !value)} aria-expanded={menuOpen} aria-label={menuOpen ? "Close menu" : "Open menu"}>
             {menuOpen ? <X size={19} /> : <Menu size={19} />}
@@ -152,7 +152,9 @@ export default function Layout() {
           </div>
         )}
       </header>
-      <Outlet />
+      <div className="pt-14 md:pt-[72px]">
+        <Outlet />
+      </div>
       <nav className={`mobile-bottom-nav fixed inset-x-0 bottom-0 z-40 grid gap-1 border border-amber-200/80 bg-[#fffaf5]/95 px-2 pb-[calc(.35rem+env(safe-area-inset-bottom))] pt-1.5 shadow-[0_-12px_34px_rgba(36,25,21,.12)] backdrop-blur-md md:hidden ${isAdmin ? "grid-cols-3" : "grid-cols-4"}`}>
         <NavLink className={bottomNavClass} to="/"><Home size={20} /> Home</NavLink>
         <NavLink className={bottomNavClass} to="/books"><BookOpen size={20} /> Books</NavLink>
