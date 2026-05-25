@@ -209,6 +209,35 @@ export default function Home() {
 
   return (
     <main className="home-page">
+      <section className="home-section px-4 py-5 sm:py-9">
+        <div className="mx-auto max-w-4xl">
+          <article data-home-reveal className="home-reveal home-quote-card panel relative overflow-hidden p-4 sm:p-6 md:p-7">
+            <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,247,237,.98),rgba(255,255,255,.92))]" />
+            <div className="relative grid items-center gap-3 sm:gap-6 md:grid-cols-[120px_1fr]">
+              <div className="flex justify-center">
+                {activeQuote.authorImage ? (
+                  <img className="h-24 w-24 shrink-0 rounded-full object-cover shadow-soft ring-4 ring-orange-100" src={activeQuote.authorImage} onError={(event) => useFallbackImage(event, fallbackAuthorImage)} alt={activeQuote.authorName} decoding="async" fetchPriority="high" loading="eager" />
+                ) : (
+                  <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-orange-500 text-3xl font-black text-white shadow-soft ring-4 ring-orange-100">
+                    {activeQuote.authorName?.[0] || "म"}
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0 text-center md:text-left">
+                <p className="text-[15px] font-bold leading-7 text-ink sm:text-lg sm:leading-8 md:text-xl md:leading-9">
+                  <span aria-hidden="true">&ldquo;</span>
+                  <FallingLetters key={`header-quote-${quoteSlot}-${activeQuote.quote}`} text={activeQuote.quote || defaultQuote.quote} className="quote-fall-word" startDelay={0.2} wrap />
+                  <span aria-hidden="true">&rdquo;</span>
+                </p>
+                <p className="mt-3 text-sm font-semibold text-gray-600">
+                  ~ {activeQuote.authorName || defaultQuote.authorName}
+                </p>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
       <section className="home-hero library-hero relative isolate overflow-hidden">
         <div aria-hidden="true" className="home-hero-atmosphere">
           <span className="home-hero-pattern" />
