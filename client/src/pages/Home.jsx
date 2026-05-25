@@ -310,13 +310,6 @@ export default function Home() {
               <span>इतिहास</span>
               <span>पर्यावरण</span>
             </div>
-            <blockquote className="author-quote mt-5">
-              <p>
-                <span aria-hidden="true">&ldquo;</span>
-                <FallingLetters key={`quote-${quoteSlot}-${activeQuote.quote}`} text={activeQuote.quote || defaultQuote.quote} className="quote-fall-word" startDelay={0.2} wrap />
-                <span aria-hidden="true">&rdquo;</span>
-              </p>
-            </blockquote>
             <Link className="btn-secondary mt-5 w-full sm:w-auto" to="/books"><BookOpen size={17} /> रचनाएं देखें</Link>
           </div>
           <div className="home-video-card overflow-hidden rounded-3xl border border-amber-200/70 bg-black shadow-[0_28px_68px_rgba(69,26,3,.2)]">
