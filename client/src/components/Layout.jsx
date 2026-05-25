@@ -97,7 +97,11 @@ export default function Layout() {
             </span>
             <span className="min-w-0 leading-none">
               <span className="navbar-brand block truncate text-[12px] font-extrabold tracking-tight sm:text-lg">
-                <FallingLetters text="Mahesh Bharti E-book Store" className="navbar-brand-falling" startDelay={0.08} />
+                <span className="navbar-brand-mobile md:hidden">
+                  <FallingLetters text="Mahesh Bharti" className="navbar-brand-falling" startDelay={0.08} />
+                  <FallingLetters text="E-book Store" className="navbar-brand-mobile-subtitle" startDelay={0.34} />
+                </span>
+                <FallingLetters text="Mahesh Bharti E-book Store" className="navbar-brand-falling hidden md:inline-block" startDelay={0.08} />
               </span>
               <span className="mt-1 hidden items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[.15em] text-amber-700/80 sm:flex">
                 <span className="h-px w-5 bg-amber-400" />

@@ -760,6 +760,25 @@ table tbody tr {
     text-align: center;
   }
 
+  .navbar-brand-mobile {
+    display: grid;
+    gap: .16rem;
+  }
+
+  .navbar-brand-mobile-subtitle {
+    color: #b45309;
+    font-size: .63rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    -webkit-text-fill-color: #b45309;
+  }
+
+  .navbar-brand-mobile-subtitle .falling-letter {
+    color: #b45309;
+    -webkit-text-fill-color: #b45309;
+  }
+
   .mobile-header-brand .navbar-brand + span {
     display: none;
   }
