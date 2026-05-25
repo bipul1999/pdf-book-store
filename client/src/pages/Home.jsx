@@ -377,12 +377,12 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="home-section featured-library px-4 py-12 sm:py-20">
+      <section className="home-section featured-library px-4 py-9 sm:py-14">
         <div data-home-reveal className="home-reveal mx-auto max-w-7xl">
-          <div className="mb-5 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
+          <div className="mb-4 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
             <div>
               <span className="badge mb-3">Featured Books</span>
-              <h2 className="text-3xl font-black sm:text-4xl">लोकप्रिय हिंदी पुस्तकें</h2>
+              <h2 className="text-2xl font-black sm:text-3xl">लोकप्रिय हिंदी पुस्तकें</h2>
               <p className="mt-2 max-w-2xl text-sm leading-7 text-gray-600">सामाजिक सरोकार, स्थानीय इतिहास और जनजीवन से जुड़ी चुनिंदा डिजिटल पुस्तकें।</p>
             </div>
             <Link className="btn-secondary w-full md:w-auto" to="/books">पूरा संग्रह देखें</Link>
@@ -390,8 +390,8 @@ export default function Home() {
           {loading && !featuredBooks.length ? (
             <BookGridSkeleton />
           ) : featuredBooks.length ? (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {featuredBooks.map((book) => <BookCard key={book._id} book={book} />)}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {featuredBooks.map((book) => <BookCard key={book._id} book={book} compact />)}
             </div>
           ) : loadError ? (
             <div className="panel p-8 text-center text-gray-600">Books load ho rahi hain. Server wake up ke baad page refresh karein.</div>

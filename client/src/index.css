@@ -500,6 +500,11 @@ p { text-wrap: pretty; }
   opacity: 1;
 }
 
+.premium-book-card-compact {
+  border-radius: 1.25rem;
+  box-shadow: 0 12px 32px rgba(87, 45, 18, .08);
+}
+
 .premium-book-image {
   overflow: hidden;
 }
@@ -513,6 +518,10 @@ p { text-wrap: pretty; }
   border-radius: .9rem;
   background: #fffaf0;
   padding: .65rem .8rem;
+}
+
+.premium-book-card-compact .book-price-box {
+  padding: .48rem .65rem;
 }
 
 .card-cart-action {
