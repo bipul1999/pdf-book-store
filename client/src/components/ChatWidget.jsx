@@ -83,13 +83,13 @@ export default function ChatWidget() {
   const [messages, setMessages] = useState([]);
   const [step, setStep] = useState("welcome");
   const [input, setInput] = useState("");
-  const [started, setStarted] = useState(false);
   const [listening, setListening] = useState(false);
   const timers = useRef([]);
   const chatEndRef = useRef(null);
   const recognitionRef = useRef(null);
   const transcriptRef = useRef("");
   const voiceSentRef = useRef(false);
+  const utterancesRef = useRef(new Set());
 
   const placeholders = {
     problem: "Apna question likhiye ya mic se boliye..."
@@ -105,6 +105,10 @@ export default function ChatWidget() {
     transcriptRef.current = "";
     voiceSentRef.current = false;
     setListening(false);
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      utterancesRef.current.clear();
+    }
     setOpen(false);
   }
 
@@ -127,9 +131,14 @@ export default function ChatWidget() {
 
   function speakAssistantText(text, interrupt = false) {
     if (!("speechSynthesis" in window)) return;
-    if (interrupt) window.speechSynthesis.cancel();
+    const speech = window.speechSynthesis;
+    if (interrupt) {
+      speech.cancel();
+      utterancesRef.current.clear();
+    }
+    if (speech.paused) speech.resume();
     const utterance = new SpeechSynthesisUtterance(text);
-    const voices = window.speechSynthesis.getVoices();
+    const voices = speech.getVoices();
     const preferredVoice = voices.find((voice) => /hi-IN|en-IN/i.test(voice.lang) && /female|zira|heera|lekha|google/i.test(voice.name))
       || voices.find((voice) => /hi-IN/i.test(voice.lang))
       || voices.find((voice) => /en-IN/i.test(voice.lang));
@@ -137,7 +146,10 @@ export default function ChatWidget() {
     utterance.lang = preferredVoice?.lang || "hi-IN";
     utterance.rate = 0.95;
     utterance.pitch = 1.08;
-    window.speechSynthesis.speak(utterance);
+    utterance.onend = () => utterancesRef.current.delete(utterance);
+    utterance.onerror = () => utterancesRef.current.delete(utterance);
+    utterancesRef.current.add(utterance);
+    speech.speak(utterance);
   }
 
   function addBotMessage(text, delay = 450) {
@@ -150,7 +162,6 @@ export default function ChatWidget() {
 
   function startConversation() {
     clearTimers();
-    setStarted(true);
     setStep("welcome");
     setInput("");
     setMessages([{ role: "assistant", text: welcomeText }]);
@@ -162,15 +173,24 @@ export default function ChatWidget() {
     }, 2300));
   }
 
+  function openAssistant() {
+    setOpen(true);
+    startConversation();
+  }
+
   useEffect(() => () => {
     clearTimers();
     recognitionRef.current?.abort?.();
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    utterancesRef.current.clear();
   }, []);
 
   useEffect(() => {
-    if (open && !started) startConversation();
-    if (!open && "speechSynthesis" in window) window.speechSynthesis.cancel();
-  }, [open, started]);
+    if (!open && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      utterancesRef.current.clear();
+    }
+  }, [open]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -454,7 +474,7 @@ export default function ChatWidget() {
       )}
       <button
         className="fixed bottom-24 right-4 z-40 grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-[#e24b13] via-[#f97316] to-[#fbbf24] text-white shadow-[0_14px_32px_rgba(234,88,12,.45)] ring-4 ring-orange-100 transition hover:scale-105 hover:from-[#ef5b25] hover:to-[#fde047] md:bottom-6 md:right-6"
-        onClick={() => setOpen((value) => !value)}
+        onClick={open ? closeAssistant : openAssistant}
         aria-label="Open AI help chat"
       >
         {open ? <X size={24} /> : <GirlAssistantAvatar size="lg" />}
