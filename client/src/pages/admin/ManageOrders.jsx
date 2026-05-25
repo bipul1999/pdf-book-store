@@ -51,12 +51,26 @@ export default function ManageOrders() {
   }
 
   async function viewProof(order) {
+    const proofWindow = window.open("", "_blank");
+    if (proofWindow) {
+      proofWindow.document.title = "Loading payment proof...";
+      proofWindow.document.body.textContent = "Loading payment proof...";
+    }
     try {
       const { data } = await api.get(order.paymentProof, { responseType: "blob" });
       const proofUrl = URL.createObjectURL(data);
-      window.open(proofUrl, "_blank", "noopener,noreferrer");
+      if (proofWindow) {
+        proofWindow.location.assign(proofUrl);
+      } else {
+        const link = document.createElement("a");
+        link.href = proofUrl;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.click();
+      }
       setTimeout(() => URL.revokeObjectURL(proofUrl), 60 * 1000);
     } catch (error) {
+      proofWindow?.close();
       toast.error(error.response?.data?.message || "Payment proof could not be opened");
     }
   }

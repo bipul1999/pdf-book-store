@@ -8,7 +8,7 @@ const BOOK_RETRY_DELAYS_MS = [1500, 3500, 7000];
 
 function BookListSkeleton() {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {Array.from({ length: 8 }, (_, index) => (
         <div key={index} className="panel h-80 animate-pulse bg-orange-50/70" />
       ))}
@@ -82,7 +82,7 @@ export default function Books() {
       {loading && !books.length ? (
         <BookListSkeleton />
       ) : books.length ? (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{books.map((book) => <BookCard book={book} key={book._id} />)}</div>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{books.map((book) => <BookCard book={book} key={book._id} />)}</div>
       ) : loadError ? (
         <div className="panel p-8 text-center text-gray-600">
           Books load ho rahi hain. Server wake up ke baad page refresh karein.

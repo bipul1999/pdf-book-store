@@ -1,4 +1,4 @@
-import { BookOpen, BookPlus, CheckCircle2, CreditCard, Download, Library, RefreshCw, Search, ShieldCheck, ShoppingBag, Sparkles } from "lucide-react";
+import { BookOpen, BookPlus, CheckCircle2, CreditCard, Download, Library, Search, ShieldCheck, ShoppingBag, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import api from "../api/client.js";
@@ -193,11 +193,12 @@ export default function Home() {
     authorImage: selectedQuote.authorImage || quote?.authorImage || defaultQuote.authorImage
   };
   const bestBook = books[0];
+  const featuredBooks = books.slice(0, 4);
   const trustItems = [
-    { icon: CheckCircle2, title: "विचारपूर्ण लेखन", text: "विषय को सरल, शांत और पढ़ने योग्य भाषा में रखा गया है।" },
+    { icon: CheckCircle2, title: "हिंदी सामाजिक चेतना", text: "समाज, इतिहास और पर्यावरण से जुड़े विषय संवेदनशील हिंदी लेखन में प्रस्तुत हैं।" },
     { icon: ShieldCheck, title: "सुरक्षित भुगतान", text: "खरीदारी के बाद PDF access आपके account से जुड़ जाता है।" },
-    { icon: Library, title: "लाइब्रेरी में उपलब्ध", text: "Purchased books आपकी library में रहती हैं, जहां से आप पढ़ सकते हैं।" },
-    { icon: Download, title: "मोबाइल-फ्रेंडली", text: "फोन, टैबलेट या लैपटॉप पर आराम से पढ़ने का अनुभव।" }
+    { icon: Download, title: "Instant PDF Access", text: "Verification के बाद purchased PDF आपकी digital library में पढ़ने के लिए उपलब्ध होती है।" },
+    { icon: Library, title: "मोबाइल डिजिटल लाइब्रेरी", text: "फोन, टैबलेट या लैपटॉप पर अपनी खरीदी हुई पुस्तकें आराम से पढ़ें।" }
   ];
   const processSteps = [
     { icon: Search, title: "पुस्तक खोजें", text: "Catalog में विषय, नाम या लेखक के अनुसार सही पुस्तक चुनें।" },
@@ -207,103 +208,89 @@ export default function Home() {
   ];
 
   return (
-    <main>
-      <section className="home-section px-4 py-5 sm:py-9">
-        <div className="mx-auto max-w-4xl">
-          <article data-home-reveal className="home-reveal home-quote-card panel relative overflow-hidden p-4 sm:p-6 md:p-7">
-            <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,247,237,.98),rgba(255,255,255,.92))]" />
-            <div className="relative grid items-center gap-3 sm:gap-6 md:grid-cols-[120px_1fr]">
-              <div className="flex justify-center">
-                {activeQuote.authorImage ? (
-                  <img className="h-24 w-24 shrink-0 rounded-full object-cover shadow-soft ring-4 ring-orange-100" src={activeQuote.authorImage} onError={(event) => useFallbackImage(event, fallbackAuthorImage)} alt={activeQuote.authorName} decoding="async" fetchPriority="high" loading="eager" />
-                ) : (
-                  <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-orange-500 text-3xl font-black text-white shadow-soft ring-4 ring-orange-100">
-                    {activeQuote.authorName?.[0] || "म"}
-                  </div>
-                )}
-              </div>
-              <div className="min-w-0 text-center md:text-left">
-                <p className="text-[15px] font-bold leading-7 text-ink sm:text-lg sm:leading-8 md:text-xl md:leading-9">
-                  <span aria-hidden="true">&ldquo;</span>
-                  <FallingLetters key={`quote-${quoteSlot}-${activeQuote.quote}`} text={activeQuote.quote || defaultQuote.quote} className="quote-fall-word" startDelay={0.2} wrap />
-                  <span aria-hidden="true">&rdquo;</span>
-                </p>
-                <p className="mt-3 text-sm font-semibold text-gray-600">
-                  ~ {activeQuote.authorName || defaultQuote.authorName}
-                </p>
-              </div>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <section className="home-hero relative isolate overflow-hidden border-y border-orange-100/70">
+    <main className="home-page">
+      <section className="home-hero library-hero relative isolate overflow-hidden">
         <div aria-hidden="true" className="home-hero-atmosphere">
+          <span className="home-hero-pattern" />
           <span className="home-glow home-glow-one" />
           <span className="home-glow home-glow-two" />
           <span className="home-particle home-particle-one" />
           <span className="home-particle home-particle-two" />
           <span className="home-particle home-particle-three" />
         </div>
-        <div data-home-reveal className="home-reveal relative mx-auto grid max-w-7xl items-center gap-8 px-4 py-10 sm:py-14 md:grid-cols-[1.05fr_.95fr] md:py-20">
-          <div className="space-y-4 text-center md:text-left">
-            <span className="badge mx-auto items-center gap-1.5 md:mx-0"><ShieldCheck size={14} /> Secure PDF downloads</span>
-            <h1 className="mx-auto max-w-2xl text-[26px] font-black leading-tight sm:text-3xl md:mx-0 md:text-4xl lg:text-5xl">
-              महेश भारती ई-बुक स्टोर
+        <div data-home-reveal className="home-reveal relative mx-auto grid max-w-7xl items-center gap-10 px-4 py-12 sm:py-16 lg:grid-cols-[1fr_.88fr] lg:py-24">
+          <div className="space-y-5 text-center lg:text-left">
+            <span className="hero-kicker mx-auto lg:mx-0"><Sparkles size={14} /> महेश भारती डिजिटल पुस्तकालय</span>
+            <h1 className="mx-auto max-w-3xl text-[34px] font-black leading-[1.17] sm:text-5xl lg:mx-0 lg:text-[58px]">
+              हिंदी विचारों की रोशनी,
+              <span className="block text-amber-300">अब आपके डिजिटल पुस्तकालय में</span>
             </h1>
-            <p className="mx-auto max-w-xl text-[15px] leading-7 text-gray-700 sm:text-lg md:mx-0">
-              महेश भारती जी की किताबें सीधे PDF और ई-बुक के रूप में खरीदें, डाउनलोड करें और मोबाइल पर आराम से पढ़ें।
+            <p className="mx-auto max-w-2xl text-[15px] leading-8 text-amber-50/85 sm:text-lg lg:mx-0">
+              सामाजिक चेतना, इतिहास, पर्यावरण और जनजीवन पर केंद्रित महेश भारती जी की हिंदी पुस्तकें पढ़ें। सुरक्षित भुगतान के साथ PDF प्राप्त करें और कहीं भी डिजिटल रूप में पढ़ें।
             </p>
-            <div className="grid gap-3 sm:flex sm:flex-wrap sm:justify-center md:justify-start">
-              <Link to="/books" className="btn-primary w-full sm:w-auto"><Search size={18} /> Browse books</Link>
-              <Link to="/order-book" className="btn-order-book w-full sm:w-auto"><ShoppingBag size={18} /> Order Book</Link>
-              <Link to={bestBook ? `/books/${bestBook._id}` : "/books"} className="btn-secondary w-full sm:w-auto"><BookOpen size={18} /> Read Preview</Link>
-              <Link to="/signup" className="btn-secondary w-full sm:w-auto"><Sparkles size={18} /> Create account</Link>
+            <div className="grid gap-3 sm:flex sm:justify-center lg:justify-start">
+              <Link to="/books" className="hero-primary-cta btn w-full sm:w-auto"><Search size={18} /> पुस्तकें देखें</Link>
+              <Link to="/order-book" className="hero-secondary-cta btn w-full sm:w-auto"><ShoppingBag size={18} /> अभी ऑर्डर करें</Link>
+            </div>
+            <div className="hero-benefits grid gap-3 pt-3 sm:grid-cols-3">
+              <div><BookOpen size={18} /><strong>PDF Access</strong><span>तुरंत पढ़ना शुरू करें</span></div>
+              <div><ShieldCheck size={18} /><strong>Secure Pay</strong><span>विश्वसनीय भुगतान</span></div>
+              <div><Sparkles size={18} /><strong>Hindi Works</strong><span>चेतना और साहित्य</span></div>
             </div>
           </div>
 
-          <div className={`home-hero-books grid grid-cols-2 gap-2 transition-all duration-500 ease-out sm:gap-3 ${
+          <div className="hero-library-visual">
+            <div className="hero-phone-card">
+              <span className="hero-phone-head"><BookOpen size={14} /> Digital Preview</span>
+              {heroBooks[0] && (
+                <Link to={`/books/${heroBooks[0]._id}`} className="group block">
+                  <img src={heroBooks[0].coverImage} onError={(event) => useFallbackImage(event, BOOK_COVER_FALLBACK)} className="hero-phone-cover transition duration-300 group-hover:scale-[1.03]" alt={heroBooks[0].title} decoding="async" loading="eager" />
+                  <strong className="mt-3 block line-clamp-2 text-sm leading-6 text-[#1f2937]">{heroBooks[0].title}</strong>
+                  <span className="mt-1 block text-sm font-black text-amber-700">Rs. {heroBooks[0].price}</span>
+                </Link>
+              )}
+            </div>
+            <div className={`hero-collage transition-all duration-500 ease-out ${
             isBookTransitioning ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100"
           }`}>
-            {heroBooks.map((book) => (
-              <Link key={book._id} to={`/books/${book._id}`} className="home-hero-book group relative overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-soft transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(124,45,18,.14)]">
-                <img src={book.coverImage} onError={(event) => useFallbackImage(event, BOOK_COVER_FALLBACK)} className="h-44 w-full bg-orange-50/70 object-contain p-3 transition duration-300 group-hover:scale-105 sm:h-52" alt={book.title} decoding="async" fetchPriority="high" loading="eager" sizes="(min-width: 768px) 25vw, 50vw" />
-                <span className="absolute bottom-2 left-2 right-2 line-clamp-2 rounded-xl bg-white/95 px-2.5 py-1.5 text-[11px] font-bold leading-4 text-ink shadow-sm sm:text-xs">
-                  {book.title}
-                </span>
-              </Link>
-            ))}
-            {loading && !heroBooks.length && <div className="col-span-2"><BookGridSkeleton compact /></div>}
-            {!loading && loadError && !heroBooks.length && (
-              <div className="col-span-2 panel flex min-h-60 flex-col items-center justify-center gap-3 p-6 text-center">
-                <RefreshCw className="text-orange-500" size={42} />
-                <h2 className="text-xl font-black">Books load ho rahi hain</h2>
-                <p className="max-w-sm text-sm text-gray-600">Server wake up ho raha hai. Thodi der mein refresh karte hi books aur images aa jayengi.</p>
-                <button className="btn-primary" onClick={() => window.location.reload()}>Refresh</button>
-              </div>
-            )}
-            {!loading && !loadError && !heroBooks.length && (
-              <div className="col-span-2 panel flex min-h-60 flex-col items-center justify-center gap-3 p-6 text-center">
-                <BookPlus className="text-orange-500" size={42} />
-                <h2 className="text-xl font-black">Books coming soon</h2>
-                <p className="max-w-sm text-sm text-gray-600">Books will appear here with cover, description, price, and Buy PDF button.</p>
-                <Link className="btn-primary" to="/books">Browse Books</Link>
-              </div>
-            )}
+              {heroBooks.slice(1, 4).map((book) => (
+                <Link key={book._id} to={`/books/${book._id}`} className="home-hero-book group">
+                  <img src={book.coverImage} onError={(event) => useFallbackImage(event, BOOK_COVER_FALLBACK)} className="h-full w-full object-contain p-2 transition duration-300 group-hover:scale-105" alt={book.title} decoding="async" fetchPriority="high" loading="eager" />
+                </Link>
+              ))}
+            </div>
+            <Link className="hero-preview-link" to={bestBook ? `/books/${bestBook._id}` : "/books"}><BookOpen size={16} /> Preview पढ़ें</Link>
           </div>
         </div>
       </section>
 
-      <section className="home-section home-section-tinted px-4 py-10 sm:py-14">
-        <div data-home-reveal className="home-reveal mx-auto grid max-w-7xl gap-5 md:grid-cols-[.9fr_1.1fr] md:items-center">
-          <div className="home-glass panel space-y-3 p-5 text-center md:p-7 md:text-left">
-            <span className="badge mx-auto md:mx-0">लेखक परिचय</span>
-            <h2 className="text-2xl font-black text-ink sm:text-3xl">महेश भारती जी के बारे में जानिए</h2>
-            <p className="mx-auto max-w-xl text-sm leading-7 text-gray-600 md:mx-0">
-              लेखक की यात्रा, विचार और उनकी रचनाओं के पीछे की प्रेरणा को इस परिचय वीडियो के माध्यम से समझिए।
-            </p>
+      <section className="home-section author-spotlight px-4 py-12 sm:py-20">
+        <div data-home-reveal className="home-reveal mx-auto grid max-w-7xl gap-6 lg:grid-cols-[.94fr_1.06fr] lg:items-center">
+          <div className="author-profile-card panel p-5 sm:p-7">
+            <span className="badge mb-5">लेखक परिचय</span>
+            <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
+              <img className="h-24 w-24 shrink-0 rounded-2xl object-cover shadow-soft ring-4 ring-amber-100" src={activeQuote.authorImage || fallbackAuthorImage} onError={(event) => useFallbackImage(event, fallbackAuthorImage)} alt={activeQuote.authorName || defaultQuote.authorName} loading="lazy" />
+              <div>
+                <h2 className="text-2xl font-black text-ink sm:text-3xl">महेश भारती</h2>
+                <p className="mt-1 text-sm font-bold text-amber-700">हिंदी लेखक और सामाजिक विषयों के दस्तावेजकार</p>
+                <p className="mt-2 text-sm leading-7 text-gray-600">इतिहास, पर्यावरण और जनजीवन से जुड़ी रचनाओं को पाठकों तक डिजिटल रूप में पहुँचाने का मंच।</p>
+              </div>
+            </div>
+            <div className="author-themes mt-5 grid grid-cols-3 gap-2 text-center">
+              <span>सामाजिक चेतना</span>
+              <span>इतिहास</span>
+              <span>पर्यावरण</span>
+            </div>
+            <blockquote className="author-quote mt-5">
+              <p>
+                <span aria-hidden="true">&ldquo;</span>
+                <FallingLetters key={`quote-${quoteSlot}-${activeQuote.quote}`} text={activeQuote.quote || defaultQuote.quote} className="quote-fall-word" startDelay={0.2} wrap />
+                <span aria-hidden="true">&rdquo;</span>
+              </p>
+            </blockquote>
+            <Link className="btn-secondary mt-5 w-full sm:w-auto" to="/books"><BookOpen size={17} /> रचनाएं देखें</Link>
           </div>
-          <div className="home-video-card overflow-hidden rounded-2xl border border-orange-100 bg-black shadow-[0_18px_42px_rgba(36,25,21,.14)]">
+          <div className="home-video-card overflow-hidden rounded-3xl border border-amber-200/70 bg-black shadow-[0_28px_68px_rgba(69,26,3,.2)]">
             <video
               className="aspect-video w-full bg-black object-cover"
               controls
@@ -317,20 +304,20 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="home-section px-4 py-8 sm:py-12">
+      <section className="home-section px-4 py-9 sm:py-14">
         <div data-home-reveal className="home-reveal home-order-banner mx-auto grid max-w-7xl items-center gap-5 overflow-hidden rounded-3xl border border-amber-100 px-5 py-7 sm:px-8 md:grid-cols-[1fr_auto]">
           <div>
-            <span className="badge mb-3"><ShoppingBag size={14} /> Direct order</span>
+            <span className="badge mb-3"><ShoppingBag size={14} /> सरल और सुरक्षित ऑर्डर</span>
             <h2 className="text-2xl font-black sm:text-3xl">अपनी पसंद की पुस्तक सीधे ऑर्डर करें</h2>
             <p className="mt-2 max-w-2xl text-sm leading-7 text-gray-600">पुस्तक चुनें, मात्रा तय करें और सुरक्षित Razorpay या Manual UPI भुगतान के साथ अपना ऑर्डर जमा करें।</p>
           </div>
-          <Link className="btn-order-book w-full md:w-auto" to="/order-book"><ShoppingBag size={18} /> Order Book</Link>
+          <Link className="btn-order-book w-full md:w-auto" to="/order-book"><ShoppingBag size={18} /> अभी ऑर्डर करें</Link>
         </div>
       </section>
 
-      <section className="home-section px-4 py-10 sm:py-16">
+      <section className="home-section reading-process px-4 py-12 sm:py-20">
         <div data-home-reveal className="home-reveal mx-auto max-w-7xl">
-          <div className="home-glass panel p-5 sm:p-7">
+          <div className="journey-panel panel p-5 sm:p-8">
           <div className="mb-6 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
             <div>
               <span className="badge mb-3">खरीदने की प्रक्रिया</span>
@@ -344,7 +331,7 @@ export default function Home() {
           </div>
           <div className="grid gap-3 md:grid-cols-4">
             {processSteps.map(({ icon: Icon, title, text }, index) => (
-              <div className="home-step-card relative rounded-2xl border border-orange-100/80 bg-[#fffaf5] p-4 transition hover:border-orange-200 hover:bg-white" key={title}>
+              <div className="home-step-card journey-step relative p-4" key={title}>
                 <div className="mb-4 flex items-center justify-between">
                   <span className="grid h-10 w-10 place-items-center rounded-xl bg-white text-orange-700 shadow-sm ring-1 ring-orange-100">
                     <Icon size={20} />
@@ -360,10 +347,9 @@ export default function Home() {
         </div>
       </section>
 
-      <section ref={promoSectionRef} className="home-section home-promo-section px-4 py-10 sm:py-16">
+      <section ref={promoSectionRef} className="home-section home-promo-section promotion-stage px-4 py-12 sm:py-20">
         <div data-home-reveal className="home-reveal mx-auto grid max-w-7xl gap-5 lg:grid-cols-[1.05fr_.95fr] lg:items-center">
           <div className="home-video-card relative overflow-hidden rounded-2xl border border-orange-100 bg-black shadow-[0_18px_42px_rgba(36,25,21,.14)]">
-            <span className="absolute left-3 top-3 z-10 rounded-full bg-black/55 px-3 py-1 text-[11px] font-bold text-white backdrop-blur-sm">Auto play preview | Sound on karein</span>
             <video
               ref={promoVideoRef}
               className="aspect-video w-full bg-black object-cover"
@@ -391,32 +377,21 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="home-section home-section-tinted px-4 py-10 sm:py-16">
+      <section className="home-section featured-library px-4 py-12 sm:py-20">
         <div data-home-reveal className="home-reveal mx-auto max-w-7xl">
           <div className="mb-5 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
             <div>
-              <span className="badge mb-3">आज की प्रमुख पुस्तक</span>
-              <h2 className="text-2xl font-black sm:text-3xl">पढ़ने के लिए खास चयन</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">यहां एक प्रमुख पुस्तक को highlight किया गया है। बाकी सभी पुस्तकों के लिए पूरा catalog देखें।</p>
+              <span className="badge mb-3">Featured Books</span>
+              <h2 className="text-3xl font-black sm:text-4xl">लोकप्रिय हिंदी पुस्तकें</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-7 text-gray-600">सामाजिक सरोकार, स्थानीय इतिहास और जनजीवन से जुड़ी चुनिंदा डिजिटल पुस्तकें।</p>
             </div>
-            <Link className="btn-secondary w-full md:w-auto" to="/books">सभी पुस्तकें देखें</Link>
+            <Link className="btn-secondary w-full md:w-auto" to="/books">पूरा संग्रह देखें</Link>
           </div>
-          {loading && !bestBook ? (
+          {loading && !featuredBooks.length ? (
             <BookGridSkeleton />
-          ) : bestBook ? (
-            <div className="mx-auto grid max-w-5xl gap-5 lg:grid-cols-[260px_1fr] lg:items-stretch">
-              <div className="mx-auto w-full max-w-[260px] lg:mx-0">
-                <BookCard book={bestBook} />
-              </div>
-              <div className="home-glass panel flex flex-col justify-center p-5 sm:p-7">
-                <span className="badge mb-3 w-fit">Featured read</span>
-                <h3 className="text-xl font-black leading-snug text-ink sm:text-2xl">{bestBook.title}</h3>
-                <p className="mt-3 line-clamp-3 text-sm leading-7 text-gray-600">{bestBook.description}</p>
-                <div className="mt-5 grid gap-3 sm:flex">
-                  <Link className="btn-primary w-full sm:w-auto" to={`/books/${bestBook._id}`}>विवरण देखें</Link>
-                  <Link className="btn-secondary w-full sm:w-auto" to="/books">और पुस्तकें देखें</Link>
-                </div>
-              </div>
+          ) : featuredBooks.length ? (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {featuredBooks.map((book) => <BookCard key={book._id} book={book} />)}
             </div>
           ) : loadError ? (
             <div className="panel p-8 text-center text-gray-600">Books load ho rahi hain. Server wake up ke baad page refresh karein.</div>
@@ -431,30 +406,23 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="home-section px-4 py-10 sm:py-16">
+      <section className="home-section why-library px-4 py-12 sm:py-20">
         <div data-home-reveal className="home-reveal mx-auto max-w-7xl">
-          <div className="home-glass panel overflow-hidden">
-            <div className="grid gap-0 lg:grid-cols-[.9fr_1.1fr]">
-              <div className="border-b border-slate-200 p-5 text-center sm:p-7 lg:border-b-0 lg:border-r lg:text-left">
-              <span className="badge mb-3">विश्वास और सुविधा</span>
-              <h2 className="text-2xl font-black leading-tight text-ink sm:text-3xl">पुस्तकों तक पहुंचने का भरोसेमंद डिजिटल तरीका</h2>
-              <p className="mt-3 text-sm leading-7 text-gray-600">यह मंच पाठकों को महेश भारती जी की पुस्तकों से सीधे जोड़ता है। उद्देश्य साफ है: पुस्तक खोजें, सुरक्षित रूप से खरीदें और अपनी लाइब्रेरी में पढ़ें।</p>
-              <Link className="btn-primary mt-5 w-full sm:w-auto" to="/books">पुस्तकें देखें</Link>
-            </div>
-              <div className="divide-y divide-slate-200">
-                {trustItems.map(({ icon: Icon, title, text }) => (
-                  <div className="home-trust-item grid gap-3 p-4 sm:grid-cols-[44px_1fr] sm:p-5" key={title}>
-                    <span className="grid h-11 w-11 place-items-center rounded-xl bg-orange-50 text-orange-700 ring-1 ring-orange-100">
-                      <Icon size={21} />
-                    </span>
-                    <div>
-                      <h3 className="font-black text-ink">{title}</h3>
-                      <p className="mt-1 text-sm leading-6 text-gray-600">{text}</p>
-                    </div>
-                  </div>
-                ))}
+          <div className="mb-8 text-center">
+            <span className="badge mb-3">Why Choose Us</span>
+            <h2 className="text-3xl font-black leading-tight text-ink sm:text-4xl">क्यों चुनें यह हिंदी डिजिटल पुस्तकालय?</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-gray-600">लेखक की प्रामाणिक रचनाएं, सुरक्षित खरीद और सुविधाजनक डिजिटल अध्ययन एक ही स्थान पर।</p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {trustItems.map(({ icon: Icon, title, text }) => (
+              <div className="home-trust-item benefit-card" key={title}>
+                <span className="grid h-12 w-12 place-items-center rounded-2xl bg-amber-100 text-amber-700">
+                  <Icon size={23} />
+                </span>
+                <h3 className="mt-5 text-lg font-black text-ink">{title}</h3>
+                <p className="mt-2 text-sm leading-7 text-gray-600">{text}</p>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>

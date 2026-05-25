@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import fs from "fs";
 import mongoose from "mongoose";
 import QRCode from "qrcode";
 import Book from "../models/Book.js";
@@ -125,6 +126,12 @@ function fileUrl(req, filePath) {
   const normalized = filePath.replaceAll("\\", "/");
   if (normalized.startsWith("uploads/payment-qrs/")) return `${req.protocol}://${req.get("host")}/${normalized}`;
   return "";
+}
+
+function withoutPaymentProofData(order) {
+  const safeOrder = order.toObject ? order.toObject() : { ...order };
+  delete safeOrder.paymentProofData;
+  return safeOrder;
 }
 
 function normalizedExtraCharge(value) {
@@ -271,6 +278,8 @@ export async function createManualBookOrder(req, res) {
     customerDetails,
     provider: paymentMethod,
     paymentProof: req.file?.path,
+    paymentProofData: req.file ? await fs.promises.readFile(req.file.path) : undefined,
+    paymentProofMimeType: req.file?.mimetype,
     paymentNote: transactionId || undefined,
     transactionId: transactionId || undefined,
     razorpayOrderId: razorpayOrder?.id,
@@ -279,7 +288,7 @@ export async function createManualBookOrder(req, res) {
   if (paymentMethod === "upi_manual") await sendAdminPaymentProofEmail(req, order);
   res.status(201).json({
     message: paymentMethod === "upi_manual" ? "Your order has been submitted successfully and is pending verification." : "",
-    order,
+    order: withoutPaymentProofData(order),
     razorpay: razorpayOrder
       ? {
           keyId: process.env.RAZORPAY_KEY_ID,
@@ -379,11 +388,13 @@ export async function confirmManualPayment(req, res) {
   if (!req.file) return res.status(422).json({ message: "Upload payment screenshot for verification" });
   order.status = "submitted";
   order.paymentProof = req.file.path;
+  order.paymentProofData = await fs.promises.readFile(req.file.path);
+  order.paymentProofMimeType = req.file.mimetype;
   order.paymentNote = req.body.paymentNote || "";
   await order.save();
   await lockBooks(order);
   await sendAdminPaymentProofEmail(req, order);
-  res.json({ message: "Payment proof submitted. Admin will verify and unlock your PDFs.", order });
+  res.json({ message: "Payment proof submitted. Admin will verify and unlock your PDFs.", order: withoutPaymentProofData(order) });
 }
 
 export async function verifyPayment(req, res) {

@@ -32,13 +32,18 @@ export async function listOrders(_req, res) {
 }
 
 export async function viewOrderProof(req, res) {
-  const order = await Order.findById(req.params.id);
+  const order = await Order.findById(req.params.id).select("+paymentProofData");
   if (!order?.paymentProof) return res.status(404).json({ message: "Payment proof not found" });
+  res.setHeader("Cache-Control", "private, no-store, max-age=0");
+  res.setHeader("Content-Disposition", "inline");
+  if (order.paymentProofData?.length) {
+    res.type(order.paymentProofMimeType || "image/jpeg");
+    return res.send(order.paymentProofData);
+  }
   const uploadRoot = path.resolve(process.env.UPLOAD_DIR || "uploads");
   const absolute = path.resolve(order.paymentProof);
   if (!absolute.startsWith(`${uploadRoot}${path.sep}`) || !fs.existsSync(absolute)) {
     return res.status(404).json({ message: "Payment proof file missing" });
   }
-  res.setHeader("Cache-Control", "private, no-store, max-age=0");
-  res.sendFile(absolute);
+  return res.sendFile(absolute);
 }

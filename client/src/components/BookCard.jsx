@@ -35,25 +35,27 @@ export default function BookCard({ book }) {
   }
 
   return (
-    <article className="premium-book-card panel group flex h-full flex-col overflow-hidden transition duration-300 hover:-translate-y-1 hover:border-amber-200 hover:shadow-[0_24px_52px_rgba(120,53,15,.14)]">
-      <Link to={`/books/${book._id}`} className="premium-book-image relative block border-b border-amber-100/70 bg-gradient-to-b from-amber-50/90 to-white">
-        <img src={book.coverImage} onError={(event) => useFallbackImage(event, BOOK_COVER_FALLBACK)} alt={book.title} className="h-64 w-full object-contain p-4 transition duration-300 group-hover:scale-[1.025] sm:h-56 lg:h-60" decoding="async" loading="lazy" sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw" />
-        {book.category?.name && <span className="absolute left-3 top-3 rounded-full border border-amber-100 bg-white/95 px-2.5 py-1 text-[11px] font-bold text-amber-800 shadow-sm">{book.category.name}</span>}
+    <article className="premium-book-card panel group flex h-full flex-col overflow-hidden transition duration-300 hover:-translate-y-1.5 hover:border-amber-200 hover:shadow-[0_26px_56px_rgba(120,53,15,.16)]">
+      <Link to={`/books/${book._id}`} className="premium-book-image relative block border-b border-amber-100/70 bg-gradient-to-b from-[#fff8ec] to-white">
+        <img src={book.coverImage} onError={(event) => useFallbackImage(event, BOOK_COVER_FALLBACK)} alt={book.title} className="h-72 w-full object-contain p-5 transition duration-500 group-hover:scale-[1.05] sm:h-72" decoding="async" loading="lazy" sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw" />
+        <span className="absolute left-3 top-3 rounded-full border border-amber-100 bg-white/95 px-2.5 py-1 text-[11px] font-bold text-amber-800 shadow-sm">{book.category?.name || "Hindi PDF"}</span>
       </Link>
-      <div className="flex flex-1 flex-col p-4">
+      <div className="flex flex-1 flex-col p-4 sm:p-5">
         <div>
-          <Link to={`/books/${book._id}`} className="block line-clamp-2 min-h-[3rem] text-lg font-black leading-snug transition hover:text-orange-700 sm:text-base">{book.title}</Link>
+          <Link to={`/books/${book._id}`} className="block line-clamp-2 min-h-[3.2rem] text-lg font-black leading-snug transition hover:text-orange-700">{book.title}</Link>
           <p className="mt-1 text-sm font-semibold text-gray-600">{book.author}</p>
-          <p className="mt-2 line-clamp-2 min-h-[3rem] text-sm leading-6 text-gray-600">{book.description}</p>
-          <Link className="mt-2 inline-flex text-sm font-bold text-orange-700 transition hover:text-orange-900" to={`/books/${book._id}`}>Read more</Link>
+          <p className="mt-3 line-clamp-2 min-h-[3rem] text-sm leading-6 text-gray-600">{book.description}</p>
         </div>
-        <div className="mt-auto space-y-3 pt-4">
-          <strong className="price-text block text-xl">Rs. {book.price}</strong>
-          <button className="btn-primary w-full" onClick={buyPdf}><CreditCard size={18} /> Buy PDF</button>
-          <div className="flex gap-2">
-            <Link className="btn-secondary !px-3" to={`/books/${book._id}`} title="View details" aria-label={`View ${book.title}`}><Eye size={18} /></Link>
-            <button className="btn-secondary flex-1" onClick={addToCart} title="Add to cart"><ShoppingCart size={18} /> Cart</button>
+        <div className="mt-auto pt-5">
+          <div className="book-price-box mb-4 flex items-center justify-between gap-2">
+            <span className="text-xs font-bold uppercase tracking-wide text-gray-500">PDF Price</span>
+            <strong className="price-text text-2xl">Rs. {book.price}</strong>
           </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Link className="btn-secondary w-full" to={`/books/${book._id}`} title="Preview book"><Eye size={17} /> Preview</Link>
+            <button className="btn-primary w-full !px-2" onClick={buyPdf}><CreditCard size={17} /> Buy PDF</button>
+          </div>
+          <button className="card-cart-action mt-3 w-full" onClick={addToCart} title="Add to cart"><ShoppingCart size={16} /> Add to Cart</button>
         </div>
       </div>
     </article>

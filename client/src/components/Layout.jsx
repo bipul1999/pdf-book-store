@@ -1,5 +1,5 @@
 import { BookOpen, Facebook, Home, Instagram, LayoutDashboard, Library, Linkedin, LogOut, Mail, Menu, MessageCircle, Phone, ShoppingCart, Sparkles, User, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
@@ -54,11 +54,14 @@ export default function Layout() {
   const { logout, isAuthenticated, isAdmin } = useAuth();
   const { items } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
-  const navClass = ({ isActive }) =>
-    `inline-flex min-h-10 items-center gap-2 rounded-xl px-3 py-2 transition ${
+  const [isScrolled, setIsScrolled] = useState(false);
+  const desktopNavClass = ({ isActive }) =>
+    `premium-nav-link inline-flex min-h-11 items-center gap-2 px-3 py-2 transition ${isActive ? "is-active text-[#b45309]" : "text-slate-700 hover:text-[#d97706]"}`;
+  const mobileNavClass = ({ isActive }) =>
+    `inline-flex min-h-12 items-center gap-2 rounded-2xl border px-3.5 py-2.5 transition ${
       isActive
-        ? "bg-amber-100/90 text-amber-800 shadow-sm ring-1 ring-amber-200/80"
-        : "text-slate-700 hover:bg-amber-50 hover:text-amber-800"
+        ? "border-amber-200 bg-amber-50 text-amber-800 shadow-sm"
+        : "border-transparent text-slate-700 hover:border-orange-100 hover:bg-orange-50 hover:text-amber-800"
     }`;
   const bottomNavClass = ({ isActive }) =>
     `flex min-h-[54px] flex-col items-center justify-center gap-0.5 rounded-xl px-2 py-1.5 text-[11px] font-black transition ${
@@ -70,64 +73,76 @@ export default function Layout() {
     logout();
   };
 
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 8);
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
     <div className="min-h-screen">
-      <header className="mobile-fixed-header sticky top-0 z-50 border-b border-amber-200/70 bg-[#fff8f0]/90 shadow-[0_10px_30px_rgba(120,53,15,.08)] backdrop-blur-xl">
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-5 translate-y-full bg-gradient-to-b from-amber-200/25 to-transparent sm:block" />
-        <div className="relative mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-2.5 sm:gap-3 sm:px-5 sm:py-3">
-          <Link to="/" onClick={closeMenu} className="group flex min-w-0 flex-1 items-center gap-2 font-black text-[#1f2937] sm:gap-3">
+      <header className={`premium-navbar mobile-fixed-header sticky top-0 z-50 ${isScrolled ? "premium-navbar-scrolled" : ""}`}>
+        <div className="relative mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-3 sm:h-[72px] sm:gap-4 sm:px-6 lg:px-8">
+          <Link to="/" onClick={closeMenu} className="group flex min-w-0 flex-1 items-center gap-2.5 text-[#1f2937] sm:gap-3">
             <span className="relative shrink-0">
-              <span className="absolute inset-0 rounded-full bg-orange-200 blur-md opacity-70 transition group-hover:opacity-100" />
-              <img src={saraswatiLogo} alt={storeName} className="relative h-10 w-10 rounded-full border border-orange-100 bg-white object-cover p-0.5 shadow-md sm:h-12 sm:w-12" />
+              <span className="absolute inset-0 rounded-2xl bg-orange-300/45 blur-lg opacity-70 transition group-hover:opacity-100" />
+              <img src={saraswatiLogo} alt="" className="relative h-10 w-10 rounded-2xl border border-orange-100 bg-white object-cover p-0.5 shadow-md sm:h-[50px] sm:w-[50px]" />
+              <span className="absolute -bottom-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-orange-100 bg-[#fff7ed] text-[#d97706] shadow-sm">
+                <BookOpen size={11} />
+              </span>
             </span>
-            <span className="min-w-0">
-              <FallingLetters text={storeName} className="block line-clamp-2 text-[13px] leading-4 sm:truncate sm:text-lg sm:leading-5" />
-              <FallingLetters text="महेश भारती जी की पुस्तकें" className="hidden text-xs font-bold text-amber-700/90 sm:block" startDelay={0.18} />
+            <span className="min-w-0 leading-none">
+              <span className="navbar-brand block truncate text-[13px] font-extrabold tracking-tight sm:text-lg">Mahesh Bharti <span className="font-semibold">E-book Store</span></span>
+              <span className="mt-1 hidden items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[.15em] text-amber-700/80 sm:flex">
+                <span className="h-px w-5 bg-amber-400" />
+                Premium Hindi Library
+              </span>
             </span>
           </Link>
-          <nav className="hidden items-center gap-2 text-sm font-bold md:flex">
-            <NavLink className={navClass} to="/"><Home size={16} /> <FallingLetters text="Home" startDelay={0.28} /></NavLink>
-            <NavLink className={navClass} to="/books"><BookOpen size={16} /> <FallingLetters text="Books" startDelay={0.36} /></NavLink>
-            <NavLink className={navClass} to="/dashboard/library"><Library size={16} /> <FallingLetters text="Library" startDelay={0.44} /></NavLink>
+          <nav className="hidden items-center gap-3 text-sm font-bold md:flex">
+            <NavLink className={desktopNavClass} to="/"><Home size={16} /> <FallingLetters text="Home" startDelay={0.28} /></NavLink>
+            <NavLink className={desktopNavClass} to="/books"><BookOpen size={16} /> <FallingLetters text="Books" startDelay={0.36} /></NavLink>
+            <NavLink className={desktopNavClass} to="/dashboard/library"><Library size={16} /> <FallingLetters text="Library" startDelay={0.44} /></NavLink>
           </nav>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             {isAuthenticated && !isAdmin && (
-              <Link className="btn-secondary relative !min-h-10 !px-2.5 sm:!min-h-11 sm:!px-3" to="/cart" aria-label="Cart">
+              <Link className="btn-secondary relative !min-h-10 !rounded-full !px-2.5 sm:!min-h-11 sm:!px-3" to="/cart" aria-label="Cart">
                 <ShoppingCart size={18} />
                 {items.length > 0 && <span className="absolute -right-1.5 -top-1.5 grid min-h-5 min-w-5 place-items-center rounded-full bg-orange-500 px-1.5 text-[11px] font-black leading-none text-white ring-2 ring-white">{items.length}</span>}
               </Link>
             )}
             {isAdmin ? (
-              <Link className="btn-primary !min-h-10 !px-2.5 sm:!min-h-11 sm:!px-4" to="/admin"><LayoutDashboard size={18} /><span className="hidden sm:inline">Go to Admin</span></Link>
+              <Link className="btn-primary !min-h-10 !rounded-full !px-2.5 sm:!min-h-11 sm:!px-4" to="/admin"><LayoutDashboard size={18} /><span className="hidden sm:inline">Go to Admin</span></Link>
             ) : isAuthenticated ? (
               <>
-                <Link className="btn-secondary !hidden md:!inline-flex" to="/dashboard"><LayoutDashboard size={18} /><FallingLetters text="Dashboard" className="hidden lg:inline" startDelay={0.52} /></Link>
-                <button className="btn-secondary !hidden !min-h-10 !px-2.5 sm:!min-h-11 sm:!px-3 md:!inline-flex" onClick={handleLogout} aria-label="Logout"><LogOut size={18} /></button>
+                <Link className="btn-secondary !hidden !rounded-full md:!inline-flex" to="/dashboard"><LayoutDashboard size={18} /><FallingLetters text="Dashboard" className="hidden lg:inline" startDelay={0.52} /></Link>
+                <button className="btn-secondary !hidden !min-h-10 !rounded-full !px-2.5 sm:!min-h-11 sm:!px-3 md:!inline-flex" onClick={handleLogout} aria-label="Logout"><LogOut size={18} /></button>
               </>
             ) : (
-              <Link className="btn-primary !min-h-10 !px-2.5 sm:!min-h-11 sm:!px-4" to="/login"><User size={18} /><FallingLetters text="Login" className="hidden sm:inline" startDelay={0.52} /></Link>
+              <Link className="btn-primary !min-h-10 !rounded-full !px-2.5 sm:!min-h-11 sm:!px-5" to="/login"><User size={18} /><FallingLetters text="Login" className="hidden sm:inline" startDelay={0.52} /></Link>
             )}
-            <button className="btn-secondary !min-h-10 !px-2.5 sm:!min-h-11 sm:!px-3 md:hidden" onClick={() => setMenuOpen((value) => !value)} aria-label={menuOpen ? "Close menu" : "Open menu"}>
+            <button className="btn-secondary !min-h-10 !rounded-full !px-2.5 sm:!min-h-11 sm:!px-3 md:hidden" onClick={() => setMenuOpen((value) => !value)} aria-expanded={menuOpen} aria-label={menuOpen ? "Close menu" : "Open menu"}>
               {menuOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
           </div>
         </div>
         {menuOpen && (
-          <nav className="border-t border-amber-200/70 bg-[#fff8f0]/95 px-3 py-3 text-sm font-bold shadow-sm md:hidden">
-            <div className="mx-auto grid max-w-7xl grid-cols-2 gap-2">
-              <NavLink onClick={closeMenu} className={navClass} to="/"><Home size={16} /> <FallingLetters text="Home" /></NavLink>
-              <NavLink onClick={closeMenu} className={navClass} to="/books"><BookOpen size={16} /> <FallingLetters text="Books" /></NavLink>
-              {!isAdmin && <NavLink onClick={closeMenu} className={navClass} to="/dashboard/library"><Library size={16} /> <FallingLetters text="Library" /></NavLink>}
+          <div className="absolute inset-x-0 top-full px-3 pt-2 md:hidden">
+            <nav className="mobile-nav-card mx-auto grid max-w-md grid-cols-2 gap-1.5 rounded-3xl p-2.5 text-sm font-bold">
+              <NavLink onClick={closeMenu} className={mobileNavClass} to="/"><Home size={16} /> <FallingLetters text="Home" /></NavLink>
+              <NavLink onClick={closeMenu} className={mobileNavClass} to="/books"><BookOpen size={16} /> <FallingLetters text="Books" /></NavLink>
+              {!isAdmin && <NavLink onClick={closeMenu} className={mobileNavClass} to="/dashboard/library"><Library size={16} /> <FallingLetters text="Library" /></NavLink>}
               {isAdmin ? (
-                <NavLink onClick={closeMenu} className={navClass} to="/admin"><LayoutDashboard size={16} /> Go to Admin</NavLink>
-              ) : isAuthenticated && <NavLink onClick={closeMenu} className={navClass} to="/dashboard"><LayoutDashboard size={16} /> <FallingLetters text="Dashboard" /></NavLink>}
+                <NavLink onClick={closeMenu} className={mobileNavClass} to="/admin"><LayoutDashboard size={16} /> Go to Admin</NavLink>
+              ) : isAuthenticated && <NavLink onClick={closeMenu} className={mobileNavClass} to="/dashboard"><LayoutDashboard size={16} /> <FallingLetters text="Dashboard" /></NavLink>}
               {isAuthenticated && !isAdmin && (
-                <button onClick={handleLogout} className={`${navClass({ isActive: false })} text-left`}>
+                <button onClick={handleLogout} className={`${mobileNavClass({ isActive: false })} text-left`}>
                   <LogOut size={16} /> <FallingLetters text="Logout" />
                 </button>
               )}
-            </div>
-          </nav>
+            </nav>
+          </div>
         )}
       </header>
       <Outlet />
@@ -147,12 +162,18 @@ export default function Layout() {
       <footer className="bg-[#1f2937] px-4 pb-24 pt-10 text-sm text-amber-50 md:pb-10 md:pt-14">
         <div className="mx-auto max-w-7xl overflow-hidden rounded-3xl border border-white/10 bg-[linear-gradient(135deg,#1f2937,#29201a)] shadow-[0_20px_52px_rgba(31,41,55,.22)]">
           <div className="h-1 bg-gradient-to-r from-amber-700 via-amber-400 to-orange-300" />
-          <div className="grid gap-7 p-5 sm:p-7 md:grid-cols-[1.2fr_.8fr_auto] md:items-start">
+          <div className="grid gap-7 p-5 sm:p-7 lg:grid-cols-[1.25fr_.62fr_.75fr_auto] lg:items-start">
             <div>
               <p className="text-lg font-black text-amber-50">{storeName}</p>
               <p className="mt-2 max-w-xl text-sm leading-7 text-stone-300">
                 {footerDescription}
               </p>
+            </div>
+            <div className="grid gap-2">
+              <p className="text-xs font-black uppercase tracking-wide text-amber-300">Quick Links</p>
+              <Link className="font-semibold text-stone-200 transition hover:text-amber-300" to="/books">पुस्तकें देखें</Link>
+              <Link className="font-semibold text-stone-200 transition hover:text-amber-300" to="/order-book">Order Book</Link>
+              <Link className="font-semibold text-stone-200 transition hover:text-amber-300" to="/dashboard/library">My Library</Link>
             </div>
             <div className="grid gap-2">
               <p className="text-xs font-black uppercase tracking-wide text-amber-300">Contact Us</p>
@@ -162,6 +183,7 @@ export default function Layout() {
               <a className="inline-flex items-center gap-2 font-semibold text-stone-200 transition hover:text-amber-300" href={`tel:${contactPhone}`}>
                 <Phone size={16} /> +91 {contactPhone}
               </a>
+              <p className="mt-2 rounded-xl border border-white/10 bg-white/5 p-3 text-xs leading-5 text-stone-300">Secure online payment and verified PDF access available.</p>
             </div>
             <div>
               <p className="mb-2 text-xs font-black uppercase tracking-wide text-amber-300 md:text-right">Follow</p>

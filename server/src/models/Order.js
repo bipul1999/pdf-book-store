@@ -35,6 +35,8 @@ const orderSchema = new mongoose.Schema(
     customerDetails: customerDetailsSchema,
     provider: { type: String, enum: ["razorpay", "upi_manual"], default: "razorpay" },
     paymentProof: String,
+    paymentProofData: { type: Buffer, select: false },
+    paymentProofMimeType: { type: String, enum: ["image/jpeg", "image/png", "image/webp", "image/gif"] },
     paymentNote: String,
     transactionId: { type: String, trim: true, maxlength: 120 },
     razorpayOrderId: String,
