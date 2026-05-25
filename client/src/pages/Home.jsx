@@ -167,9 +167,17 @@ export default function Home() {
     if (!section || !video) return undefined;
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (!entry.isIntersecting) video.pause();
+        if (entry.isIntersecting) {
+          video.muted = false;
+          video.play().catch(() => {
+            video.muted = true;
+            video.play().catch(() => {});
+          });
+        } else {
+          video.pause();
+        }
       },
-      { threshold: 0.2 }
+      { threshold: 0.42 }
     );
     observer.observe(section);
     return () => {

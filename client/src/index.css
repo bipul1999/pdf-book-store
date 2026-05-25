@@ -68,6 +68,13 @@ p { text-wrap: pretty; }
   color: transparent;
 }
 
+.navbar-brand-falling .falling-letter {
+  background: linear-gradient(105deg, #1f2937 12%, #78350f 52%, #d97706 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
 .premium-nav-link {
   position: relative;
 }
@@ -759,18 +766,7 @@ table tbody tr {
     text-align: center;
   }
 
-  .mobile-header-brand .navbar-brand span {
-    display: block;
-    margin-top: .16rem;
-    color: #b45309;
-    font-size: .63rem;
-    font-weight: 700;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    -webkit-text-fill-color: #b45309;
-  }
-
-  .mobile-header-brand span > span:nth-child(2) {
+  .mobile-header-brand .navbar-brand + span {
     display: none;
   }
 
