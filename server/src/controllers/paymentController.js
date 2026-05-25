@@ -6,6 +6,7 @@ import Book from "../models/Book.js";
 import Order from "../models/Order.js";
 import PaymentSettings from "../models/PaymentSettings.js";
 import User from "../models/User.js";
+import { clearPublicResponseCache } from "../middleware/publicResponseCache.js";
 import { getRazorpay } from "../config/razorpay.js";
 import { sendEmail } from "../utils/email.js";
 
@@ -224,6 +225,7 @@ function manualCustomerDetails(body) {
 
 export async function getOrderBookSettings(req, res) {
   const settings = await paymentSettings();
+  res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
   res.json({
     settings: {
       upiId: settings.upiId,
@@ -617,5 +619,6 @@ export async function updatePaymentSettings(req, res) {
     },
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
+  clearPublicResponseCache("/api/payments/order-book-settings");
   res.json({ settings: { ...settings.toObject(), qrImage: fileUrl(req, settings.qrImage) } });
 }

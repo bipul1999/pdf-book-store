@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import compression from "compression";
 import helmet from "helmet";
 import morgan from "morgan";
 import path from "path";
@@ -58,6 +59,13 @@ app.use(cors({
   },
   credentials: true
 }));
+app.use(compression({
+  threshold: 1024,
+  filter(req, res) {
+    if (req.path.endsWith("/download")) return false;
+    return compression.filter(req, res);
+  }
+}));
 app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -82,7 +90,7 @@ function requireDatabase(_req, res, next) {
 const staticOptions = {
   setHeaders(res) {
     res.setHeader("X-Content-Type-Options", "nosniff");
-    res.setHeader("Cache-Control", "public, max-age=86400");
+    res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
   }
 };
 app.use("/uploads/covers", express.static(path.join(__dirname, "..", "uploads", "covers"), { ...staticOptions, index: false }));

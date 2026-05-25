@@ -1,4 +1,5 @@
 import QuoteSetting from "../models/QuoteSetting.js";
+import { clearPublicResponseCache } from "../middleware/publicResponseCache.js";
 
 function fileUrl(req, filePath) {
   if (!filePath?.startsWith("uploads")) return filePath;
@@ -34,5 +35,6 @@ export async function updateQuoteSetting(req, res) {
     },
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
+  clearPublicResponseCache("/api/site/quote");
   res.json({ quote: { ...setting.toObject(), authorImage: fileUrl(req, setting.authorImage) } });
 }

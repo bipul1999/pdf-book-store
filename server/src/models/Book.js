@@ -16,5 +16,8 @@ const bookSchema = new mongoose.Schema(
 );
 
 bookSchema.index({ title: "text", author: "text", description: "text" });
+bookSchema.index({ isActive: 1, createdAt: -1 });
+bookSchema.index({ isActive: 1, featured: 1, createdAt: -1 });
+bookSchema.index({ isActive: 1, category: 1, createdAt: -1 });
 
 export default mongoose.model("Book", bookSchema);

@@ -48,4 +48,8 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+orderSchema.index({ user: 1, status: 1, orderType: 1, updatedAt: -1 });
+orderSchema.index({ user: 1, status: 1, orderType: 1, "items.book": 1 });
+orderSchema.index({ razorpayOrderId: 1 }, { sparse: true });
+
 export default mongoose.model("Order", orderSchema);

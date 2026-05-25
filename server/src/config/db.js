@@ -17,6 +17,10 @@ export async function connectDB() {
 
   connectionPromise = mongoose.connect(process.env.MONGO_URI, {
     dbName: process.env.MONGO_DB_NAME || "pdf-book-store",
+    maxPoolSize: Number(process.env.MONGO_MAX_POOL_SIZE || 20),
+    minPoolSize: Number(process.env.MONGO_MIN_POOL_SIZE || 1),
+    maxIdleTimeMS: Number(process.env.MONGO_MAX_IDLE_MS || 60000),
+    waitQueueTimeoutMS: Number(process.env.MONGO_WAIT_QUEUE_TIMEOUT_MS || 5000),
     serverSelectionTimeoutMS: 10000,
     socketTimeoutMS: 20000
   }).finally(() => {

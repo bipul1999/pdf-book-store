@@ -18,6 +18,10 @@ services:
         sync: false
       - key: MONGO_DB_NAME
         value: pdf-book-store
+      - key: MONGO_MAX_POOL_SIZE
+        value: 20
+      - key: MONGO_MIN_POOL_SIZE
+        value: 1
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRES_IN

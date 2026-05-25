@@ -345,7 +345,7 @@ export default function Home() {
               className="aspect-video w-full bg-black object-cover"
               controls
               playsInline
-              preload="metadata"
+              preload="none"
               src="/videos/about-author.mp4"
             >
               Your browser does not support the video tag.
@@ -406,7 +406,7 @@ export default function Home() {
               controls
               loop
               playsInline
-              preload="metadata"
+              preload="none"
               src="/videos/author-intro.mp4"
             >
               Your browser does not support the video tag.

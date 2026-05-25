@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import api from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
-import assistantAvatar from "../assets/ai-assistant-sari.png";
+import assistantAvatar from "../assets/ai-assistant-sari-small.jpg";
 
 const welcomeText = "Namaste, main Mahesh Bharti Store AI Assistant hoon.";
 const quickProblems = [

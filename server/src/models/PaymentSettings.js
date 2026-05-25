@@ -11,4 +11,6 @@ const paymentSettingsSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+paymentSettingsSchema.index({ updatedAt: -1 });
+
 export default mongoose.model("PaymentSettings", paymentSettingsSchema);

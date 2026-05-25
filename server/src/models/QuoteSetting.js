@@ -13,4 +13,6 @@ const quoteSettingSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+quoteSettingSchema.index({ isActive: 1, updatedAt: -1 });
+
 export default mongoose.model("QuoteSetting", quoteSettingSchema);

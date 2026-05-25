@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import path from "path";
 import Book from "../models/Book.js";
 import Order from "../models/Order.js";
+import { clearPublicResponseCache } from "../middleware/publicResponseCache.js";
 
 const DEFAULT_DIGITAL_ACCESS_DAYS = 30;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -51,6 +52,7 @@ export async function createBook(req, res) {
     coverImage: cover.path,
     pdfPath: pdf.path
   });
+  clearPublicResponseCache("/api/books");
   res.status(201).json({ book: serializeBook(req, await book.populate("category")) });
 }
 
@@ -66,12 +68,14 @@ export async function updateBook(req, res) {
   if (req.files?.cover?.[0]) book.coverImage = req.files.cover[0].path;
   if (req.files?.pdf?.[0]) book.pdfPath = req.files.pdf[0].path;
   await book.save();
+  clearPublicResponseCache("/api/books");
   res.json({ book: serializeBook(req, await book.populate("category")) });
 }
 
 export async function deleteBook(req, res) {
   const book = await Book.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
   if (!book) return res.status(404).json({ message: "Book not found" });
+  clearPublicResponseCache("/api/books");
   res.json({ message: "Book archived" });
 }
 

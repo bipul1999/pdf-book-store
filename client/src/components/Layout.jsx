@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
-import saraswatiLogo from "../assets/saraswati-logo.png";
+import saraswatiLogo from "../assets/saraswati-logo-small.png";
 import ChatWidget from "./ChatWidget.jsx";
 
 const contactEmail = "maheshbharti851127@gmail.com";
