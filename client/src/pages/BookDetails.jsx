@@ -58,7 +58,7 @@ export default function BookDetails() {
           </div>
         </div>
       </section>
-      <div className="fixed inset-x-0 bottom-[calc(72px+env(safe-area-inset-bottom))] z-30 border-t border-amber-100 bg-[#fffaf5]/95 px-4 py-3 shadow-[0_-12px_30px_rgba(15,23,42,.10)] backdrop-blur sm:hidden">
+      <div className="mobile-purchase-bar fixed inset-x-0 bottom-[calc(72px+env(safe-area-inset-bottom))] z-30 border-t border-amber-100 bg-[#fffaf5]/95 px-4 py-3 shadow-[0_-12px_30px_rgba(15,23,42,.10)] backdrop-blur sm:hidden">
         <button className="btn-primary w-full" onClick={goToCheckout}><CreditCard size={18} /> Buy Now - Rs. {book.price}</button>
       </div>
     </main>

@@ -64,7 +64,7 @@ export default function Layout() {
         : "border-transparent text-slate-700 hover:border-orange-100 hover:bg-orange-50 hover:text-amber-800"
     }`;
   const bottomNavClass = ({ isActive }) =>
-    `flex min-h-[54px] flex-col items-center justify-center gap-0.5 rounded-xl px-2 py-1.5 text-[11px] font-black transition ${
+    `flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-[10px] font-black transition ${
       isActive ? "bg-orange-50 text-orange-700 shadow-sm" : "text-slate-500 hover:bg-orange-50/60 hover:text-orange-700"
     }`;
   const closeMenu = () => setMenuOpen(false);
@@ -98,10 +98,10 @@ export default function Layout() {
             <span className="min-w-0 leading-none">
               <span className="navbar-brand block truncate text-[12px] font-extrabold tracking-tight sm:text-lg">
                 <span className="navbar-brand-mobile md:hidden">
-                  <FallingLetters text="Mahesh Bharti" className="navbar-brand-falling" startDelay={0.08} />
-                  <FallingLetters text="E-book Store" className="navbar-brand-mobile-subtitle" startDelay={0.34} />
+                  <span>Mahesh Bharti</span>
+                  <span className="navbar-brand-mobile-subtitle">E-book Store</span>
                 </span>
-                <FallingLetters text="Mahesh Bharti E-book Store" className="navbar-brand-falling hidden md:inline-block" startDelay={0.08} />
+                <FallingLetters text="Mahesh Bharti E-book Store" className="desktop-brand-falling navbar-brand-falling hidden md:inline-block" startDelay={0.08} />
               </span>
               <span className="mt-1 hidden items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[.15em] text-amber-700/80 sm:flex">
                 <span className="h-px w-5 bg-amber-400" />
@@ -139,17 +139,18 @@ export default function Layout() {
         {menuOpen && (
           <div className="absolute inset-x-0 top-full px-3 pt-2 md:hidden">
             <nav className="mobile-nav-card mx-auto grid max-w-md grid-cols-2 gap-1.5 rounded-3xl p-2.5 text-sm font-bold">
-              <NavLink onClick={closeMenu} className={mobileNavClass} to="/"><Home size={16} /> <FallingLetters text="Home" /></NavLink>
-              <NavLink onClick={closeMenu} className={mobileNavClass} to="/books"><BookOpen size={16} /> <FallingLetters text="Books" /></NavLink>
+              <NavLink onClick={closeMenu} className={mobileNavClass} to="/"><Home size={16} /> Home</NavLink>
+              <NavLink onClick={closeMenu} className={mobileNavClass} to="/books"><BookOpen size={16} /> Books</NavLink>
+              {!isAdmin && <NavLink onClick={closeMenu} className={mobileNavClass} to="/order-book"><ShoppingCart size={16} /> Order Book</NavLink>}
               {!isAdmin && <NavLink onClick={closeMenu} className={mobileNavClass} to="/dashboard/orders"><ClipboardList size={16} /> Orders</NavLink>}
-              {!isAdmin && <NavLink onClick={closeMenu} className={mobileNavClass} to="/dashboard/library"><Library size={16} /> <FallingLetters text="Library" /></NavLink>}
+              {!isAdmin && <NavLink onClick={closeMenu} className={mobileNavClass} to="/dashboard/library"><Library size={16} /> Library</NavLink>}
               {isAuthenticated && !isAdmin && <NavLink onClick={closeMenu} className={mobileNavClass} to="/cart"><ShoppingCart size={16} /> Cart</NavLink>}
               {isAdmin ? (
                 <NavLink onClick={closeMenu} className={mobileNavClass} to="/admin"><LayoutDashboard size={16} /> Go to Admin</NavLink>
-              ) : isAuthenticated && <NavLink onClick={closeMenu} className={mobileNavClass} to="/dashboard"><LayoutDashboard size={16} /> <FallingLetters text="Dashboard" /></NavLink>}
+              ) : isAuthenticated && <NavLink onClick={closeMenu} className={mobileNavClass} to="/dashboard"><LayoutDashboard size={16} /> Dashboard</NavLink>}
               {isAuthenticated && !isAdmin && (
                 <button onClick={handleLogout} className={`${mobileNavClass({ isActive: false })} text-left`}>
-                  <LogOut size={16} /> <FallingLetters text="Logout" />
+                  <LogOut size={16} /> Logout
                 </button>
               )}
             </nav>
@@ -159,26 +160,29 @@ export default function Layout() {
       <div className="pt-14 md:pt-[72px]">
         <Outlet />
       </div>
-      <nav className={`mobile-bottom-nav fixed inset-x-0 bottom-0 z-40 grid gap-1 border border-amber-200/80 bg-[#fffaf5]/95 px-2 pb-[calc(.35rem+env(safe-area-inset-bottom))] pt-1.5 shadow-[0_-12px_34px_rgba(36,25,21,.12)] backdrop-blur-md md:hidden ${isAdmin ? "grid-cols-3" : "grid-cols-4"}`}>
+      <nav aria-label="Mobile shortcuts" className={`mobile-bottom-nav fixed inset-x-0 bottom-0 z-40 grid gap-1 border border-amber-200/80 bg-[#fffaf5]/95 px-1.5 pb-[calc(.35rem+env(safe-area-inset-bottom))] pt-1.5 shadow-[0_-12px_34px_rgba(36,25,21,.12)] backdrop-blur-md md:hidden ${isAdmin ? "grid-cols-3" : "grid-cols-5"}`}>
         <NavLink className={bottomNavClass} to="/"><Home size={20} /> Home</NavLink>
         <NavLink className={bottomNavClass} to="/books"><BookOpen size={20} /> Books</NavLink>
         {isAdmin ? (
           <NavLink className={bottomNavClass} to="/admin"><LayoutDashboard size={20} /> Admin</NavLink>
         ) : (
           <>
-            <NavLink className={bottomNavClass} to="/dashboard/orders"><ClipboardList size={20} /> Orders</NavLink>
-            <NavLink className={bottomNavClass} to="/dashboard"><User size={20} /> Profile</NavLink>
+            <NavLink className={bottomNavClass} to="/order-book"><ShoppingCart size={20} /> Order</NavLink>
+            <NavLink className={bottomNavClass} to="/dashboard/orders"><ClipboardList size={20} /> My Orders</NavLink>
+            <a className="flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-[10px] font-black text-emerald-700 transition hover:bg-emerald-50" href={`https://wa.me/91${contactPhone}`} rel="noreferrer" target="_blank">
+              <MessageCircle size={20} /> WhatsApp
+            </a>
           </>
         )}
       </nav>
       <ChatWidget />
-      <footer className="bg-[#1f2937] px-4 pb-24 pt-10 text-sm text-amber-50 md:pb-10 md:pt-14">
-        <div className="mx-auto max-w-7xl overflow-hidden rounded-3xl border border-white/10 bg-[linear-gradient(135deg,#1f2937,#29201a)] shadow-[0_20px_52px_rgba(31,41,55,.22)]">
+      <footer className="site-footer bg-[#1f2937] px-4 pb-24 pt-10 text-sm text-amber-50 md:pb-10 md:pt-14">
+        <div className="site-footer-card mx-auto max-w-7xl overflow-hidden rounded-3xl border border-white/10 bg-[linear-gradient(135deg,#1f2937,#29201a)] shadow-[0_20px_52px_rgba(31,41,55,.22)]">
           <div className="h-1 bg-gradient-to-r from-amber-700 via-amber-400 to-orange-300" />
           <div className="grid gap-7 p-5 sm:p-7 lg:grid-cols-[1.25fr_.62fr_.75fr_auto] lg:items-start">
             <div>
               <p className="text-lg font-black text-amber-50">{storeName}</p>
-              <p className="mt-2 max-w-xl text-sm leading-7 text-stone-300">
+              <p className="footer-description mt-2 max-w-xl text-sm leading-7 text-stone-300">
                 {footerDescription}
               </p>
             </div>
@@ -196,7 +200,7 @@ export default function Layout() {
               <a className="inline-flex items-center gap-2 font-semibold text-stone-200 transition hover:text-amber-300" href={`tel:${contactPhone}`}>
                 <Phone size={16} /> +91 {contactPhone}
               </a>
-              <p className="mt-2 rounded-xl border border-white/10 bg-white/5 p-3 text-xs leading-5 text-stone-300">Secure online payment and verified PDF access available.</p>
+              <p className="footer-security-note mt-2 rounded-xl border border-white/10 bg-white/5 p-3 text-xs leading-5 text-stone-300">Secure online payment and verified PDF access available.</p>
             </div>
             <div>
               <p className="mb-2 text-xs font-black uppercase tracking-wide text-amber-300 md:text-right">Follow</p>

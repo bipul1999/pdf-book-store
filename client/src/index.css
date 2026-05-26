@@ -22,7 +22,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 a { color: inherit; text-decoration: none; }
-button, input, select, textarea { font: inherit; }
+button, input, select, textarea {
+  min-width: 0;
+  font: inherit;
+}
 img, video { max-width: 100%; }
 h1, h2, h3 {
   color: #1f2937;
@@ -724,12 +727,13 @@ table tbody tr {
 
 @media (max-width: 767px) {
   body {
-    padding-bottom: calc(70px + env(safe-area-inset-bottom));
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
     font-size: 15px;
   }
 
   h1, h2, h3 {
     line-height: 1.34;
+    overflow-wrap: anywhere;
   }
 
   .premium-navbar {
@@ -763,6 +767,10 @@ table tbody tr {
   .navbar-brand-mobile {
     display: grid;
     gap: .16rem;
+  }
+
+  .desktop-brand-falling {
+    display: none;
   }
 
   .navbar-brand-mobile-subtitle {
@@ -802,6 +810,11 @@ table tbody tr {
 
   .mobile-bottom-nav {
     border-radius: 1.45rem 1.45rem 0 0;
+    overflow: hidden;
+  }
+
+  .mobile-bottom-nav > * {
+    min-width: 0;
   }
 
   .mobile-bottom-nav a:active {
@@ -827,11 +840,25 @@ table tbody tr {
   }
 
   .home-page > .home-hero {
-    order: -2;
+    order: -3;
   }
 
   .home-page > .home-section:first-child {
-    order: -1;
+    display: block;
+    order: -4;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  .home-page > .featured-library {
+    order: -2;
+  }
+
+  .author-spotlight,
+  .reading-process,
+  .home-promo-section,
+  .why-library {
+    display: none;
   }
 
   .home-section {
@@ -842,7 +869,7 @@ table tbody tr {
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
-    padding-block: 1.45rem 1.6rem;
+    padding-block: 1.15rem 1.25rem;
   }
 
   .hero-copy {
@@ -879,12 +906,15 @@ table tbody tr {
 
   .hero-actions .btn {
     min-height: 48px;
+    min-width: 0;
     padding-inline: .55rem;
     font-size: .78rem;
+    line-height: 1.35;
+    white-space: normal;
   }
 
   .hero-library-visual {
-    min-height: 14.5rem;
+    min-height: 12.5rem;
   }
 
   .hero-phone-card {
@@ -911,21 +941,34 @@ table tbody tr {
   }
 
   .home-quote-card .relative.grid {
-    display: block;
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+    align-items: center;
+    gap: .75rem;
   }
 
   .home-quote-card img,
   .home-quote-card .flex > div {
-    display: none;
+    display: block;
+    height: 4.25rem;
+    width: 4.25rem;
   }
 
   .home-quote-card .relative.grid > .flex {
-    display: none;
+    display: flex;
+    justify-content: flex-start;
   }
 
   .home-quote-card p:first-child {
-    font-size: .9rem;
-    line-height: 1.75;
+    font-size: .82rem;
+    line-height: 1.62;
+    text-align: left;
+  }
+
+  .home-quote-card p:last-child {
+    margin-top: .35rem;
+    text-align: left;
+    font-size: .76rem;
   }
 
   .author-profile-card,
@@ -936,8 +979,8 @@ table tbody tr {
   }
 
   .featured-library {
-    padding-top: 1.6rem;
-    padding-bottom: 1rem;
+    padding-top: 1.35rem;
+    padding-bottom: 1.35rem;
   }
 
   .featured-library h2,
@@ -947,26 +990,17 @@ table tbody tr {
 
   .featured-books-rail,
   .catalog-books-grid {
-    display: flex;
-    gap: .9rem;
-    margin-inline: -1rem;
-    overflow-x: auto;
-    padding: .15rem 1rem 1.1rem;
-    scroll-padding-inline: 1rem;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-
-  .featured-books-rail::-webkit-scrollbar,
-  .catalog-books-grid::-webkit-scrollbar {
-    display: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    margin-inline: 0;
+    overflow: visible;
+    padding: 0;
   }
 
   .featured-books-rail > *,
   .catalog-books-grid > * {
-    flex: 0 0 min(69vw, 16.5rem);
-    scroll-snap-align: start;
+    min-width: 0;
   }
 
   .premium-book-card,
@@ -981,8 +1015,8 @@ table tbody tr {
 
   .featured-books-rail .premium-book-image img,
   .catalog-books-grid .premium-book-image img {
-    height: 12rem;
-    padding: .7rem;
+    height: 13.5rem;
+    padding: .85rem;
   }
 
   .featured-books-rail .premium-book-card > div,
@@ -992,7 +1026,11 @@ table tbody tr {
 
   .featured-books-rail .book-card-description,
   .catalog-books-grid .book-card-description {
-    display: none;
+    display: -webkit-box;
+    min-height: auto;
+    margin-top: .4rem;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
   }
 
   .featured-books-rail .book-card-author,
@@ -1020,15 +1058,15 @@ table tbody tr {
 
   .featured-books-rail .premium-book-card .btn,
   .catalog-books-grid .premium-book-card .btn {
-    min-height: 42px;
-    padding: .4rem .3rem;
-    font-size: .72rem;
+    min-height: 46px;
+    padding: .45rem .6rem;
+    font-size: .8rem;
   }
 
   .featured-books-rail .card-cart-action,
   .catalog-books-grid .card-cart-action {
-    min-height: 41px;
-    margin-top: .4rem;
+    min-height: 46px;
+    margin-top: .55rem;
     border-radius: 999px;
     background: #fff7ed;
   }
@@ -1048,8 +1086,69 @@ table tbody tr {
     padding-inline: 1rem;
   }
 
+  .catalog-intro form > *,
+  .premium-book-card .grid > * {
+    min-width: 0;
+  }
+
   .panel {
     box-shadow: 0 10px 28px rgba(120, 53, 15, .07);
+  }
+
+  .home-order-banner {
+    padding: 1.1rem;
+  }
+
+  .home-order-banner h2 {
+    font-size: 1.3rem;
+  }
+
+  .home-order-banner p {
+    display: none;
+  }
+
+  .home-order-banner .btn-order-book {
+    min-height: 52px;
+    background: #d97706;
+    font-size: .95rem;
+    box-shadow: 0 14px 28px rgba(180, 83, 9, .3);
+  }
+
+  .site-footer {
+    padding-top: 1.35rem;
+  }
+
+  .site-footer-card {
+    border-radius: 1.25rem;
+  }
+
+  .site-footer-card > .grid {
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .footer-description,
+  .footer-security-note {
+    display: none;
+  }
+
+  .site-footer-card > div:last-child {
+    padding-block: .7rem;
+  }
+
+  .mobile-chat-toggle {
+    bottom: calc(5.2rem + env(safe-area-inset-bottom));
+    right: .8rem;
+    height: 3.25rem;
+    width: 3.25rem;
+  }
+
+  .mobile-chat-panel {
+    bottom: calc(4.8rem + env(safe-area-inset-bottom));
+  }
+
+  body:has(.mobile-purchase-bar) .mobile-chat-toggle {
+    bottom: calc(9.9rem + env(safe-area-inset-bottom));
   }
 }
 

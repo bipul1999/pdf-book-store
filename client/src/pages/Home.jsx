@@ -50,7 +50,7 @@ const rotatingQuotes = [
 
 function BookGridSkeleton({ compact = false }) {
   return (
-    <div className={`grid gap-4 ${compact ? "grid-cols-2 sm:gap-3" : "sm:grid-cols-2 lg:grid-cols-4"}`}>
+    <div className={`grid gap-4 ${compact ? "grid-cols-1 sm:grid-cols-2 sm:gap-3" : "sm:grid-cols-2 lg:grid-cols-4"}`}>
       {Array.from({ length: 4 }, (_, index) => (
         <div key={index} className={`${compact ? "h-44 sm:h-52" : "h-80"} animate-pulse rounded-2xl bg-orange-50 shadow-soft`} />
       ))}
