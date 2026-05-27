@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "./AuthContext.jsx";
 import { getStoredToken } from "../utils/authStorage.js";
+import { isBookPdfAvailable, ownerUploadMessage } from "../utils/bookAvailability.js";
 
 const CartContext = createContext(null);
 
@@ -20,6 +21,10 @@ export function CartProvider({ children }) {
   }
 
   function add(book) {
+    if (!isBookPdfAvailable(book)) {
+      toast.error(ownerUploadMessage);
+      return false;
+    }
     if (!isAuthenticated && !getStoredToken()) {
       toast.error("Please login first to add books");
       return false;
@@ -31,6 +36,10 @@ export function CartProvider({ children }) {
   }
 
   function buyNow(book) {
+    if (!isBookPdfAvailable(book)) {
+      toast.error(ownerUploadMessage);
+      return false;
+    }
     if (!isAuthenticated && !getStoredToken()) {
       toast.error("Please login first to buy PDF");
       return false;
@@ -47,7 +56,7 @@ export function CartProvider({ children }) {
     persist([]);
   }
 
-  const total = items.reduce((sum, item) => sum + Number(item.price || 0), 0);
+  const total = items.filter((item) => isBookPdfAvailable(item)).reduce((sum, item) => sum + Number(item.price || 0), 0);
   const value = useMemo(() => ({ items, add, buyNow, remove, clear, total }), [items, total]);
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

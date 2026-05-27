@@ -9,6 +9,7 @@ import User from "../models/User.js";
 import { clearPublicResponseCache } from "../middleware/publicResponseCache.js";
 import { getRazorpay } from "../config/razorpay.js";
 import { sendEmail } from "../utils/email.js";
+import { hasOwnerUploadedPdf } from "../utils/bookAvailability.js";
 
 const MIN_RAZORPAY_AMOUNT = 100;
 const MAX_BOOK_QUANTITY = 20;
@@ -257,8 +258,11 @@ export async function createManualBookOrder(req, res) {
   if (paymentMethod === "upi_manual" && !transactionId) return res.status(422).json({ message: "Enter transaction ID." });
   if (transactionId.length > 120) return res.status(422).json({ message: "Transaction ID is too long." });
 
-  const books = await Book.find({ _id: { $in: ids }, isActive: true });
+  const books = await Book.find({ _id: { $in: ids }, isActive: true }).select("+pdfPath");
   if (books.length !== ids.length) return res.status(422).json({ message: "One or more selected books are unavailable." });
+  if (books.some((book) => !hasOwnerUploadedPdf(book.pdfPath))) {
+    return res.status(422).json({ message: "Not uploaded by owner" });
+  }
 
   const booksById = new Map(books.map((book) => [String(book._id), book]));
   const settings = await paymentSettings();
@@ -325,8 +329,11 @@ export async function createOrder(req, res) {
   const ids = [...new Set(submittedIds)];
   const paymentMethod = req.body.paymentMethod || "auto";
   if (!ids.length) return res.status(422).json({ message: "Cart is empty" });
-  const books = await Book.find({ _id: { $in: ids }, isActive: true });
+  const books = await Book.find({ _id: { $in: ids }, isActive: true }).select("+pdfPath");
   if (books.length !== ids.length) return res.status(422).json({ message: "One or more books are unavailable" });
+  if (books.some((book) => !hasOwnerUploadedPdf(book.pdfPath))) {
+    return res.status(422).json({ message: "Not uploaded by owner" });
+  }
 
   const amount = books.reduce((sum, book) => sum + book.price, 0);
   const currency = process.env.RAZORPAY_CURRENCY || "INR";

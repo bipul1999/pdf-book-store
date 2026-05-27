@@ -72,7 +72,7 @@ export default function Books() {
         <div>
           <span className="badge mb-3">Digital catalog</span>
           <h1 className="text-2xl font-black sm:text-3xl">Books</h1>
-          <p className="mt-1 text-sm leading-6 text-gray-600">Apni pasand ki PDF book search karein aur details dekhkar purchase karein.</p>
+          <p className="mt-1 text-sm leading-6 text-gray-600">Apni pasand ki book search karein. Owner-uploaded PDF hi purchase ke liye available hogi.</p>
         </div>
         <form onSubmit={search} className="grid gap-2 sm:flex">
           <input aria-label="Search books" className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by title, author, topic" />

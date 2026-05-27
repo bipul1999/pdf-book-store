@@ -1,10 +1,12 @@
 import { BookOpen, BookPlus, CheckCircle2, CreditCard, Download, Library, Search, ShieldCheck, ShoppingBag, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import api from "../api/client.js";
 import BookCard from "../components/BookCard.jsx";
 import { FallingLetters } from "../components/Layout.jsx";
 import { fallbackAuthorImage, fallbackBooks } from "../data/fallbackCatalog.js";
+import { isBookPdfAvailable, ownerUploadMessage } from "../utils/bookAvailability.js";
 import { BOOK_COVER_FALLBACK, useFallbackImage } from "../utils/imageFallback.js";
 
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
@@ -224,16 +226,22 @@ export default function Home() {
   const featuredBooks = books.slice(0, 4);
   const trustItems = [
     { icon: CheckCircle2, title: "हिंदी सामाजिक चेतना", text: "समाज, इतिहास और पर्यावरण से जुड़े विषय संवेदनशील हिंदी लेखन में प्रस्तुत हैं।" },
-    { icon: ShieldCheck, title: "सुरक्षित भुगतान", text: "खरीदारी के बाद PDF access आपके account से जुड़ जाता है।" },
-    { icon: Download, title: "Instant PDF Access", text: "Verification के बाद purchased PDF आपकी digital library में पढ़ने के लिए उपलब्ध होती है।" },
+    { icon: ShieldCheck, title: "सुरक्षित भुगतान", text: "उपलब्ध PDF खरीदने के बाद access आपके account से जुड़ जाता है।" },
+    { icon: Download, title: "Instant PDF Access", text: "Verification के बाद खरीदी हुई PDF आपकी digital library में पढ़ने के लिए उपलब्ध होती है।" },
     { icon: Library, title: "मोबाइल डिजिटल लाइब्रेरी", text: "फोन, टैबलेट या लैपटॉप पर अपनी खरीदी हुई पुस्तकें आराम से पढ़ें।" }
   ];
   const processSteps = [
     { icon: Search, title: "पुस्तक खोजें", text: "Catalog में विषय, नाम या लेखक के अनुसार सही पुस्तक चुनें।" },
     { icon: CheckCircle2, title: "विवरण समझें", text: "Cover, description और price देखकर निर्णय लें।" },
-    { icon: CreditCard, title: "भुगतान करें", text: "Razorpay या UPI/manual payment से सुरक्षित checkout करें।" },
-    { icon: Library, title: "लाइब्रेरी में पढ़ें", text: "Payment verify होने के बाद PDF आपकी library में उपलब्ध होगी।" }
+    { icon: CreditCard, title: "भुगतान करें", text: "उपलब्ध PDF के लिए Razorpay या UPI/manual payment से checkout करें।" },
+    { icon: Library, title: "लाइब्रेरी में पढ़ें", text: "Payment verify होने के बाद खरीदी हुई PDF आपकी library में उपलब्ध होगी।" }
   ];
+
+  function handleBookOpen(event, book) {
+    if (isBookPdfAvailable(book)) return;
+    event.preventDefault();
+    toast.error(ownerUploadMessage);
+  }
 
   return (
     <main className="home-page">
@@ -283,14 +291,14 @@ export default function Home() {
               <span className="block text-amber-300">अब आपके डिजिटल पुस्तकालय में</span>
             </h1>
             <p className="hero-description mx-auto max-w-2xl text-[15px] leading-7 text-amber-50/85 sm:text-base lg:mx-0">
-              सामाजिक चेतना, इतिहास, पर्यावरण और जनजीवन पर केंद्रित महेश भारती जी की हिंदी पुस्तकें पढ़ें। सुरक्षित भुगतान के साथ PDF प्राप्त करें और कहीं भी डिजिटल रूप में पढ़ें।
+              सामाजिक चेतना, इतिहास, पर्यावरण और जनजीवन पर केंद्रित महेश भारती जी की हिंदी पुस्तकें देखें। उपलब्ध PDF को सुरक्षित भुगतान के साथ प्राप्त करें और कहीं भी पढ़ें।
             </p>
             <div className="hero-actions grid gap-3 sm:flex sm:justify-center lg:justify-start">
               <Link to="/books" className="hero-primary-cta btn w-full sm:w-auto"><Search size={18} /> पुस्तकें देखें</Link>
               <Link to="/order-book" className="hero-secondary-cta btn w-full sm:w-auto"><ShoppingBag size={18} /> अभी ऑर्डर करें</Link>
             </div>
             <div className="hero-benefits grid gap-3 pt-1 sm:grid-cols-3">
-              <div><BookOpen size={18} /><strong>PDF Access</strong><span>तुरंत पढ़ना शुरू करें</span></div>
+              <div><BookOpen size={18} /><strong>PDF Access</strong><span>उपलब्ध PDF पढ़ें</span></div>
               <div><ShieldCheck size={18} /><strong>Secure Pay</strong><span>विश्वसनीय भुगतान</span></div>
               <div><Sparkles size={18} /><strong>Hindi Works</strong><span>चेतना और साहित्य</span></div>
             </div>
@@ -300,10 +308,10 @@ export default function Home() {
             <div className="hero-phone-card">
               <span className="hero-phone-head"><BookOpen size={14} /> Digital Preview</span>
               {heroBooks[0] && (
-                <Link to={`/books/${heroBooks[0]._id}`} className="group block">
+                <Link to={`/books/${heroBooks[0]._id}`} onClick={(event) => handleBookOpen(event, heroBooks[0])} className="group block">
                   <img src={heroBooks[0].coverImage} onError={(event) => useFallbackImage(event, BOOK_COVER_FALLBACK)} className="hero-phone-cover transition duration-300 group-hover:scale-[1.03]" alt={heroBooks[0].title} decoding="async" loading="eager" />
                   <strong className="mt-3 block line-clamp-2 text-sm leading-6 text-[#1f2937]">{heroBooks[0].title}</strong>
-                  <span className="mt-1 block text-sm font-black text-amber-700">Rs. {heroBooks[0].price}</span>
+                  <span className="mt-1 block text-sm font-black text-amber-700">{isBookPdfAvailable(heroBooks[0]) ? `Rs. ${heroBooks[0].price}` : ownerUploadMessage}</span>
                 </Link>
               )}
             </div>
@@ -311,7 +319,7 @@ export default function Home() {
             isBookTransitioning ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100"
           }`}>
               {heroBooks.slice(1, 4).map((book) => (
-                <Link key={book._id} to={`/books/${book._id}`} className="home-hero-book group">
+                <Link key={book._id} to={`/books/${book._id}`} onClick={(event) => handleBookOpen(event, book)} className="home-hero-book group">
                   <img src={book.coverImage} onError={(event) => useFallbackImage(event, BOOK_COVER_FALLBACK)} className="h-full w-full object-contain p-2 transition duration-300 group-hover:scale-105" alt={book.title} decoding="async" fetchPriority="high" loading="eager" />
                 </Link>
               ))}

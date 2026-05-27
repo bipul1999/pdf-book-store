@@ -6,6 +6,7 @@ import api from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
 import { getStoredToken } from "../utils/authStorage.js";
+import { isBookPdfAvailable, ownerUploadMessage } from "../utils/bookAvailability.js";
 
 export default function BookDetails() {
   const { id } = useParams();
@@ -14,11 +15,16 @@ export default function BookDetails() {
   const { add, buyNow } = useCart();
   const [book, setBook] = useState(null);
   useEffect(() => { api.get(`/books/${id}`).then(({ data }) => setBook(data.book)); }, [id]);
+  const pdfAvailable = isBookPdfAvailable(book);
   function hasLogin() {
     return isAuthenticated || Boolean(getStoredToken());
   }
 
   function goToCheckout() {
+    if (!pdfAvailable) {
+      toast.error(ownerUploadMessage);
+      return;
+    }
     if (!hasLogin()) {
       toast.error("Login first to purchase this PDF");
       navigate(`/login?redirect=${encodeURIComponent(`/books/${id}`)}`);
@@ -29,6 +35,10 @@ export default function BookDetails() {
   }
 
   function addToCart() {
+    if (!pdfAvailable) {
+      toast.error(ownerUploadMessage);
+      return;
+    }
     if (!hasLogin()) {
       toast.error("Login first to add this book");
       navigate(`/login?redirect=${encodeURIComponent(`/books/${id}`)}`);
@@ -48,7 +58,7 @@ export default function BookDetails() {
           <p className="mt-1 text-sm font-semibold text-gray-600 sm:text-base">By {book.author}</p>
         </div>
         <p className="text-[15px] leading-7 text-gray-700 sm:text-base">{book.description}</p>
-        <div className="panel warm-summary p-5 sm:p-6">
+        {pdfAvailable ? <div className="panel warm-summary p-5 sm:p-6">
           <p className="text-sm font-semibold text-gray-600">PDF price</p>
           <strong className="price-text mt-1 block text-2xl sm:text-3xl">Rs. {book.price}</strong>
           <div className="mt-4 grid gap-3 sm:flex sm:flex-wrap">
@@ -56,11 +66,14 @@ export default function BookDetails() {
             <button className="btn-secondary w-full sm:w-auto" onClick={addToCart}><ShoppingCart size={18} /> Add to cart</button>
             <Link className="btn-secondary w-full sm:w-auto" to="/dashboard/library"><Download size={18} /> Read purchased books</Link>
           </div>
-        </div>
+        </div> : <div className="panel warm-summary p-5 sm:p-6">
+          <p className="text-lg font-black text-[#b45309]">{ownerUploadMessage}</p>
+          <p className="mt-2 text-sm leading-6 text-gray-600">This book will be available for purchase after the owner uploads the PDF.</p>
+        </div>}
       </section>
-      <div className="mobile-purchase-bar fixed inset-x-0 bottom-[calc(72px+env(safe-area-inset-bottom))] z-30 border-t border-amber-100 bg-[#fffaf5]/95 px-4 py-3 shadow-[0_-12px_30px_rgba(15,23,42,.10)] backdrop-blur sm:hidden">
+      {pdfAvailable && <div className="mobile-purchase-bar fixed inset-x-0 bottom-[calc(72px+env(safe-area-inset-bottom))] z-30 border-t border-amber-100 bg-[#fffaf5]/95 px-4 py-3 shadow-[0_-12px_30px_rgba(15,23,42,.10)] backdrop-blur sm:hidden">
         <button className="btn-primary w-full" onClick={goToCheckout}><CreditCard size={18} /> Buy Now - Rs. {book.price}</button>
-      </div>
+      </div>}
     </main>
   );
 }

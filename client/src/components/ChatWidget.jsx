@@ -16,20 +16,20 @@ const quickProblems = [
   { label: "PDF download/open nahi ho raha" }
 ];
 
-const authorAnswer = "Mahesh Bharti ji ek lekhak hain jinki pustakein is digital store par PDF aur e-book format me available hain. Yahan user unki books browse, purchase, download aur library me read kar sakte hain.";
+const authorAnswer = "Mahesh Bharti ji ek lekhak hain jinki pustakein is digital store par dikhayi gayi hain. Owner-uploaded PDFs available hone par user unhe purchase karke library me read kar sakte hain.";
 
 const answerRules = [
   {
     words: ["buy", "purchase", "kharid", "kaise kharide", "order"],
-    reply: "Book kharidne ke liye Books section me jaiye, book open kijiye, Buy PDF par tap kijiye, payment complete kijiye. Payment verify hone ke baad book Library me unlock ho jayegi."
+    reply: "Owner-uploaded PDF wali book kharidne ke liye Books section me jaiye, book open kijiye, Buy PDF par tap kijiye aur payment complete kijiye. Verification ke baad PDF Library me unlock ho jayegi."
   },
   {
     words: ["payment", "upi", "razorpay", "pay", "paid"],
-    reply: "Payment ke liye Razorpay ya UPI option milega. UPI manual payment me exact amount pay karke screenshot upload karna hota hai. Verify hone ke baad PDF Library me unlock hoti hai."
+    reply: "Available PDF ke payment ke liye Razorpay ya UPI option milega. UPI manual payment me exact amount pay karke screenshot upload karna hota hai. Verify hone ke baad PDF Library me unlock hoti hai."
   },
   {
     words: ["download", "pdf", "open nahi", "read", "library"],
-    reply: "PDF padhne ya download karne ke liye login karke Library section open kijiye. Sirf successful payment wali books Library me read/open hoti hain."
+    reply: "Purchased PDF padhne ya download karne ke liye login karke Library section open kijiye. Sirf owner-uploaded aur successful payment wali PDFs Library me read/open hoti hain."
   },
   {
     words: ["login", "otp", "password", "account"],

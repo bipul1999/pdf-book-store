@@ -1,4 +1,4 @@
-import { BookOpen, ClipboardList, Facebook, Home, Instagram, LayoutDashboard, Library, Linkedin, LogOut, Mail, Menu, MessageCircle, Phone, Search, ShoppingCart, Sparkles, User, X } from "lucide-react";
+import { BookOpen, ClipboardList, Facebook, Home, LayoutDashboard, Library, LogOut, Mail, Menu, MessageCircle, Phone, Search, ShoppingCart, User, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -9,13 +9,10 @@ import ChatWidget from "./ChatWidget.jsx";
 const contactEmail = "maheshbharti851127@gmail.com";
 const contactPhone = "8877941491";
 const storeName = "महेश भारती ई-बुक स्टोर";
-const storeDescription = "प्रसिद्ध लेखक महेश भारती जी की लिखी सभी किताबों का एकमात्र डिजिटल स्टोर। यहाँ आपको इतिहास, पर्यावरण और साहित्य से जुड़ी उनकी सभी पुस्तकें सीधे PDF और ई-बुक के रूप में मिलेंगी, जिन्हें आप आसानी से डाउनलोड करके कहीं भी पढ़ सकते हैं।";
 const footerDescription = "© 2026 महेश भारती ई-बुक स्टोर। सभी अधिकार सुरक्षित हैं। यहाँ उपलब्ध सभी पुस्तकें और सामग्री लेखक महेश भारती जी की बौद्धिक संपदा (Intellectual Property) हैं। बिना अनुमति के इनका व्यावसायिक उपयोग या कॉपी करना वर्जित है।";
 const socialLinks = [
   { name: "Facebook", href: "https://www.facebook.com/mahesh.bharti.142/", icon: Facebook },
-  { name: "WhatsApp", href: `https://wa.me/91${contactPhone}`, icon: MessageCircle },
-  { name: "LinkedIn", href: "#", icon: Linkedin },
-  { name: "Instagram", href: "#", icon: Instagram }
+  { name: "WhatsApp", href: `https://wa.me/91${contactPhone}`, icon: MessageCircle }
 ];
 
 export function FallingLetters({ text, className = "", startDelay = 0, wrap = false, repeat = false }) {
@@ -200,7 +197,7 @@ export default function Layout() {
               <a className="inline-flex items-center gap-2 font-semibold text-stone-200 transition hover:text-amber-300" href={`tel:${contactPhone}`}>
                 <Phone size={16} /> +91 {contactPhone}
               </a>
-              <p className="footer-security-note mt-2 rounded-xl border border-white/10 bg-white/5 p-3 text-xs leading-5 text-stone-300">Secure online payment and verified PDF access available.</p>
+              <p className="footer-security-note mt-2 rounded-xl border border-white/10 bg-white/5 p-3 text-xs leading-5 text-stone-300">Secure payment is available for owner-uploaded PDFs.</p>
             </div>
             <div>
               <p className="mb-2 text-xs font-black uppercase tracking-wide text-amber-300 md:text-right">Follow</p>
@@ -218,14 +215,6 @@ export default function Layout() {
                   </a>
                 ))}
               </div>
-            </div>
-          </div>
-          <div className="border-t border-white/10 bg-black/15 px-4 py-4">
-            <div className="flex justify-center">
-              <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/40 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-wide text-amber-100 shadow-sm">
-                <Sparkles size={14} className="text-amber-300" />
-                Crafted by Bipul Singh
-              </span>
             </div>
           </div>
         </div>

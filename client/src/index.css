@@ -530,6 +530,20 @@ p { text-wrap: pretty; }
   color: #b45309;
 }
 
+.book-unavailable-action {
+  display: inline-flex;
+  min-height: 2.8rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #fdba74;
+  border-radius: .85rem;
+  background: #fff7ed;
+  padding: .65rem .8rem;
+  color: #9a3412;
+  font-size: .84rem;
+  font-weight: 800;
+}
+
 .home-reveal {
   opacity: 0;
   transform: translateY(22px);

@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import api from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { BOOK_COVER_FALLBACK, useFallbackImage } from "../utils/imageFallback.js";
+import { isBookPdfAvailable, ownerUploadMessage } from "../utils/bookAvailability.js";
 
 const initialDetails = {
   fullName: "",
@@ -76,7 +77,7 @@ export default function OrderBook() {
     }));
   }, [user]);
 
-  const selectedBooks = useMemo(() => books.filter((book) => selectedIds.includes(book._id)), [books, selectedIds]);
+  const selectedBooks = useMemo(() => books.filter((book) => selectedIds.includes(book._id) && isBookPdfAvailable(book)), [books, selectedIds]);
   const visibleBooks = useMemo(() => {
     const query = bookQuery.trim().toLowerCase();
     return query
@@ -92,7 +93,13 @@ export default function OrderBook() {
     setDetails({ ...details, [event.target.name]: event.target.value });
   }
 
-  function toggleBook(id) {
+  function toggleBook(bookOrId) {
+    const book = typeof bookOrId === "string" ? books.find((item) => item._id === bookOrId) : bookOrId;
+    if (!isBookPdfAvailable(book)) {
+      toast.error(ownerUploadMessage);
+      return;
+    }
+    const id = book._id;
     const selected = selectedIds.includes(id);
     setSelectedIds((current) => selected ? current.filter((item) => item !== id) : [...current, id]);
     setQuantities((current) => {
@@ -152,7 +159,7 @@ export default function OrderBook() {
       navigate("/login?redirect=%2Forder-book");
       return;
     }
-    if (!selectedIds.length) {
+    if (!selectedBooks.length) {
       toast.error("Select at least one book");
       return;
     }
@@ -212,7 +219,7 @@ export default function OrderBook() {
       <div className="mb-6 max-w-3xl">
         <span className="badge mb-3"><ShoppingBag size={14} /> Direct book order</span>
         <h1 className="text-2xl font-black sm:text-4xl">Order Book</h1>
-        <p className="mt-2 leading-7 text-gray-600">Choose one or more books, complete your delivery details and pay securely by Razorpay or Manual UPI.</p>
+        <p className="mt-2 leading-7 text-gray-600">Choose an available PDF book, complete your details and pay securely by Razorpay or Manual UPI.</p>
       </div>
 
       <form className="grid gap-5 lg:grid-cols-[1fr_360px]" onSubmit={submit}>
@@ -246,17 +253,18 @@ export default function OrderBook() {
             ) : visibleBooks.length ? (
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {visibleBooks.map((book) => {
+                  const pdfAvailable = isBookPdfAvailable(book);
                   const selected = selectedIds.includes(book._id);
                   const quantity = quantities[book._id] || 1;
                   return (
                     <article className={`flex min-h-44 flex-col rounded-2xl border p-3 transition ${selected ? "border-[#d97706] bg-amber-50/70 ring-2 ring-[#d97706]/15" : "border-amber-100 bg-white hover:border-amber-300 hover:shadow-sm"}`} key={book._id}>
-                      <button aria-pressed={selected} className="flex flex-1 gap-3 text-left" onClick={() => toggleBook(book._id)} type="button">
+                      <button aria-pressed={selected} className="flex flex-1 gap-3 text-left" onClick={() => toggleBook(book)} type="button">
                         <img className="h-32 w-24 shrink-0 rounded-xl bg-orange-50 object-contain p-1" src={book.coverImage} onError={(event) => useFallbackImage(event, BOOK_COVER_FALLBACK)} alt={book.title} loading="lazy" />
                         <span className="flex min-w-0 flex-1 flex-col">
-                          <span className={`mb-2 w-fit rounded-full px-2 py-1 text-[11px] font-black ${selected ? "bg-[#d97706] text-white" : "bg-amber-50 text-amber-700"}`}>{selected ? "Selected" : "Select"}</span>
+                          <span className={`mb-2 w-fit rounded-full px-2 py-1 text-[11px] font-black ${selected ? "bg-[#d97706] text-white" : pdfAvailable ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-600"}`}>{selected ? "Selected" : pdfAvailable ? "Select" : "Coming soon"}</span>
                           <strong className="line-clamp-3 text-sm leading-5">{book.title}</strong>
                           <span className="mt-1 line-clamp-1 text-xs font-semibold text-gray-500">{book.author}</span>
-                          <span className="mt-auto block pt-2 font-black text-orange-700">Rs. {money(book.price)}</span>
+                          <span className="mt-auto block pt-2 font-black text-orange-700">{pdfAvailable ? `Rs. ${money(book.price)}` : ownerUploadMessage}</span>
                         </span>
                       </button>
                       {selected && (
@@ -330,7 +338,7 @@ export default function OrderBook() {
             {!isAuthenticated && (
               <p className="mt-4 rounded-xl border border-orange-100 bg-orange-50 p-3 text-sm font-semibold text-orange-800">Please log in before submitting so your order appears in your dashboard.</p>
             )}
-            <button className="btn-primary mt-4 w-full" disabled={submitting || !selectedIds.length || (paymentMethod === "upi_manual" && !settings.upiId)}>
+            <button className="btn-primary mt-4 w-full" disabled={submitting || !selectedBooks.length || (paymentMethod === "upi_manual" && !settings.upiId)}>
               <ShieldCheck size={17} /> {submitting ? "Preparing..." : isAuthenticated ? paymentMethod === "razorpay" ? `Pay Rs. ${money(finalAmount)} Online` : "Submit Manual Order" : "Login to Submit"}
             </button>
           </section>

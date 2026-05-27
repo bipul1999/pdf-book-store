@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import api from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
+import { isBookPdfAvailable, ownerUploadMessage } from "../utils/bookAvailability.js";
 
 function loadRazorpayScript() {
   if (window.Razorpay) return Promise.resolve(true);
@@ -35,6 +36,7 @@ export default function Checkout() {
   const [payment, setPayment] = useState(null);
   const [proof, setProof] = useState(null);
   const [paymentNote, setPaymentNote] = useState("");
+  const hasUnavailableItem = items.some((item) => !isBookPdfAvailable(item));
 
   function upiLink(upi) {
     if (!upi) return "#";
@@ -42,6 +44,10 @@ export default function Checkout() {
   }
 
   async function startPayment() {
+    if (hasUnavailableItem) {
+      toast.error(ownerUploadMessage);
+      return;
+    }
     setLoading(true);
     try {
       const { data } = await api.post("/payments/create-order", { bookIds: items.map((item) => item._id), paymentMethod: method });
@@ -133,12 +139,13 @@ export default function Checkout() {
               <div className="min-w-0">
                 <Link className="font-bold hover:text-orange-600" to={`/books/${item._id}`}>{item.title}</Link>
                 <p className="text-sm text-gray-600">{item.author}</p>
+                {!isBookPdfAvailable(item) && <p className="text-xs font-black text-orange-700">{ownerUploadMessage}</p>}
               </div>
-              <strong className="price-text col-start-2 sm:col-auto">Rs. {item.price}</strong>
+              {isBookPdfAvailable(item) && <strong className="price-text col-start-2 sm:col-auto">Rs. {item.price}</strong>}
             </div>
           ))}
         </div>
-        <p className="mt-5 text-sm font-bold text-gray-600">{items.length} books selected</p>
+        <p className="mt-5 text-sm font-bold text-gray-600">{hasUnavailableItem ? "Available PDF total" : `${items.length} books selected`}</p>
         <strong className="price-text mt-2 block text-3xl">Rs. {total}</strong>
 
         {!payment ? (
@@ -155,8 +162,9 @@ export default function Checkout() {
                 <p className="mt-1 text-sm text-gray-600">Pay by UPI and upload screenshot for admin review.</p>
               </button>
             </div>
-            <button disabled={!items.length || loading} onClick={startPayment} className="btn-primary w-full">
-              {loading ? "Preparing payment..." : "Continue to payment"}
+            {hasUnavailableItem && <p className="rounded-xl bg-orange-50 p-3 text-sm font-bold text-orange-800">This cart contains a book that is not uploaded by owner.</p>}
+            <button disabled={!items.length || loading || hasUnavailableItem} onClick={startPayment} className="btn-primary w-full">
+              {loading ? "Preparing payment..." : hasUnavailableItem ? ownerUploadMessage : "Continue to payment"}
             </button>
           </div>
         ) : (

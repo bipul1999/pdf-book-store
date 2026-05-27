@@ -1,9 +1,9 @@
-import fs from "fs";
 import mongoose from "mongoose";
 import path from "path";
 import Book from "../models/Book.js";
 import Order from "../models/Order.js";
 import { clearPublicResponseCache } from "../middleware/publicResponseCache.js";
+import { hasOwnerUploadedPdf } from "../utils/bookAvailability.js";
 
 const DEFAULT_DIGITAL_ACCESS_DAYS = 30;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -16,7 +16,10 @@ function coverUrl(req, filePath) {
 
 function serializeBook(req, book) {
   const plain = book.toObject ? book.toObject() : book;
-  return { ...plain, coverImage: coverUrl(req, plain.coverImage) };
+  const pdfAvailable = hasOwnerUploadedPdf(plain.pdfPath);
+  const publicBook = { ...plain };
+  delete publicBook.pdfPath;
+  return { ...publicBook, coverImage: coverUrl(req, plain.coverImage), pdfAvailable };
 }
 
 export async function listBooks(req, res) {
@@ -26,14 +29,14 @@ export async function listBooks(req, res) {
   if (category) filter.category = category;
   if (featured) filter.featured = featured === "true";
   if (min || max) filter.price = { ...(min ? { $gte: Number(min) } : {}), ...(max ? { $lte: Number(max) } : {}) };
-  const books = await Book.find(filter).populate("category").sort("-createdAt").lean();
+  const books = await Book.find(filter).select("+pdfPath").populate("category").sort("-createdAt").lean();
   res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
   res.json({ books: books.map((book) => serializeBook(req, book)) });
 }
 
 export async function getBook(req, res) {
   if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: "Book not found" });
-  const book = await Book.findOne({ _id: req.params.id, isActive: true }).populate("category").lean();
+  const book = await Book.findOne({ _id: req.params.id, isActive: true }).select("+pdfPath").populate("category").lean();
   if (!book) return res.status(404).json({ message: "Book not found" });
   res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
   res.json({ book: serializeBook(req, book) });
@@ -83,6 +86,9 @@ export async function downloadBook(req, res) {
   if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: "Book not found" });
   const book = await Book.findById(req.params.id).select("+pdfPath");
   if (!book) return res.status(404).json({ message: "Book not found" });
+  if (!hasOwnerUploadedPdf(book.pdfPath)) {
+    return res.status(404).json({ message: "Not uploaded by owner" });
+  }
   let owns = req.user.role === "admin";
   if (!owns) {
     const successfulOrders = await Order.find({
@@ -98,11 +104,7 @@ export async function downloadBook(req, res) {
     });
   }
   if (!owns) return res.status(403).json({ message: "Purchase required or access expired for this PDF" });
-  const uploadRoot = path.resolve(process.env.UPLOAD_DIR || "uploads");
   const absolute = path.resolve(book.pdfPath);
-  if (!absolute.startsWith(`${uploadRoot}${path.sep}`) || !fs.existsSync(absolute)) {
-    return res.status(404).json({ message: "PDF file missing" });
-  }
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader("Content-Disposition", `inline; filename="${encodeURIComponent(book.title)}.pdf"`);
   res.setHeader("Cache-Control", "private, no-store, max-age=0");

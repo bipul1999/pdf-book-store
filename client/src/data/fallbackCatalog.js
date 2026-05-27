@@ -10,6 +10,7 @@ export const fallbackBooks = [
     description: "कावर झील और उसके पर्यावरण पर आधारित विशेष पुस्तक।",
     price: 99,
     coverImage: `${rawBase}/covers/1778925632060-933065848.png`,
+    pdfAvailable: true,
     featured: true
   },
   {
@@ -19,6 +20,7 @@ export const fallbackBooks = [
     description: "होली और क्षेत्रीय संस्कृति से जुड़ी विशेष पत्रिका।",
     price: 49,
     coverImage: `${rawBase}/covers/1778943636937-749831974.jpeg`,
+    pdfAvailable: false,
     featured: true
   },
   {
@@ -28,6 +30,7 @@ export const fallbackBooks = [
     description: "रामजीवन सिंह जी के राजनीतिक सफर पर आधारित प्रेरक जीवनी।",
     price: 99,
     coverImage: `${rawBase}/covers/1778943629236-671708159.png`,
+    pdfAvailable: false,
     featured: true
   },
   {
@@ -37,6 +40,7 @@ export const fallbackBooks = [
     description: "नील की खेती और किसानों के संघर्ष की ऐतिहासिक गाथा।",
     price: 99,
     coverImage: `${rawBase}/covers/1778943620415-419698569.png`,
+    pdfAvailable: false,
     featured: true
   },
   {
@@ -46,6 +50,7 @@ export const fallbackBooks = [
     description: "जयमंगला गढ़ के इतिहास और आध्यात्मिक महत्व पर आधारित पुस्तक।",
     price: 99,
     coverImage: `${rawBase}/covers/1778943612193-686229670.png`,
+    pdfAvailable: false,
     featured: true
   }
 ];
