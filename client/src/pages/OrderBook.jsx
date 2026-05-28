@@ -5,7 +5,6 @@ import { Link, useNavigate } from "react-router-dom";
 import api from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { BOOK_COVER_FALLBACK, useFallbackImage } from "../utils/imageFallback.js";
-import { isBookPdfAvailable, ownerUploadMessage } from "../utils/bookAvailability.js";
 
 const initialDetails = {
   fullName: "",
@@ -77,7 +76,7 @@ export default function OrderBook() {
     }));
   }, [user]);
 
-  const selectedBooks = useMemo(() => books.filter((book) => selectedIds.includes(book._id) && isBookPdfAvailable(book)), [books, selectedIds]);
+  const selectedBooks = useMemo(() => books.filter((book) => selectedIds.includes(book._id)), [books, selectedIds]);
   const visibleBooks = useMemo(() => {
     const query = bookQuery.trim().toLowerCase();
     return query
@@ -95,10 +94,7 @@ export default function OrderBook() {
 
   function toggleBook(bookOrId) {
     const book = typeof bookOrId === "string" ? books.find((item) => item._id === bookOrId) : bookOrId;
-    if (!isBookPdfAvailable(book)) {
-      toast.error(ownerUploadMessage);
-      return;
-    }
+    if (!book) return;
     const id = book._id;
     const selected = selectedIds.includes(id);
     setSelectedIds((current) => selected ? current.filter((item) => item !== id) : [...current, id]);
@@ -219,7 +215,7 @@ export default function OrderBook() {
       <div className="mb-6 max-w-3xl">
         <span className="badge mb-3"><ShoppingBag size={14} /> Direct book order</span>
         <h1 className="text-2xl font-black sm:text-4xl">Order Book</h1>
-        <p className="mt-2 leading-7 text-gray-600">Choose an available PDF book, complete your details and pay securely by Razorpay or Manual UPI.</p>
+        <p className="mt-2 leading-7 text-gray-600">Choose books for physical delivery, complete your address and pay securely by Razorpay or Manual UPI.</p>
       </div>
 
       <form className="grid gap-5 lg:grid-cols-[1fr_360px]" onSubmit={submit}>
@@ -249,11 +245,10 @@ export default function OrderBook() {
               </label>
             </div>
             {loading ? (
-              <p className="rounded-xl bg-orange-50 p-5 text-center font-semibold text-gray-600">Loading available books...</p>
+              <p className="rounded-xl bg-orange-50 p-5 text-center font-semibold text-gray-600">Loading books...</p>
             ) : visibleBooks.length ? (
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {visibleBooks.map((book) => {
-                  const pdfAvailable = isBookPdfAvailable(book);
                   const selected = selectedIds.includes(book._id);
                   const quantity = quantities[book._id] || 1;
                   return (
@@ -261,10 +256,10 @@ export default function OrderBook() {
                       <button aria-pressed={selected} className="flex flex-1 gap-3 text-left" onClick={() => toggleBook(book)} type="button">
                         <img className="h-32 w-24 shrink-0 rounded-xl bg-orange-50 object-contain p-1" src={book.coverImage} onError={(event) => useFallbackImage(event, BOOK_COVER_FALLBACK)} alt={book.title} loading="lazy" />
                         <span className="flex min-w-0 flex-1 flex-col">
-                          <span className={`mb-2 w-fit rounded-full px-2 py-1 text-[11px] font-black ${selected ? "bg-[#d97706] text-white" : pdfAvailable ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-600"}`}>{selected ? "Selected" : pdfAvailable ? "Select" : "Coming soon"}</span>
+                          <span className={`mb-2 w-fit rounded-full px-2 py-1 text-[11px] font-black ${selected ? "bg-[#d97706] text-white" : "bg-amber-50 text-amber-700"}`}>{selected ? "Selected" : "Select"}</span>
                           <strong className="line-clamp-3 text-sm leading-5">{book.title}</strong>
                           <span className="mt-1 line-clamp-1 text-xs font-semibold text-gray-500">{book.author}</span>
-                          <span className="mt-auto block pt-2 font-black text-orange-700">{pdfAvailable ? `Rs. ${money(book.price)}` : ownerUploadMessage}</span>
+                          <span className="mt-auto block pt-2 font-black text-orange-700">Rs. {money(book.price)}</span>
                         </span>
                       </button>
                       {selected && (

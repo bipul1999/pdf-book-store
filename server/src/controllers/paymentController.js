@@ -258,11 +258,8 @@ export async function createManualBookOrder(req, res) {
   if (paymentMethod === "upi_manual" && !transactionId) return res.status(422).json({ message: "Enter transaction ID." });
   if (transactionId.length > 120) return res.status(422).json({ message: "Transaction ID is too long." });
 
-  const books = await Book.find({ _id: { $in: ids }, isActive: true }).select("+pdfPath");
+  const books = await Book.find({ _id: { $in: ids }, isActive: true });
   if (books.length !== ids.length) return res.status(422).json({ message: "One or more selected books are unavailable." });
-  if (books.some((book) => !hasOwnerUploadedPdf(book.pdfPath))) {
-    return res.status(422).json({ message: "Not uploaded by owner" });
-  }
 
   const booksById = new Map(books.map((book) => [String(book._id), book]));
   const settings = await paymentSettings();

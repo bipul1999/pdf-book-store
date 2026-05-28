@@ -14,6 +14,15 @@ export function hasOwnerUploadedPdf(pdfPath) {
   if (DEMO_PDF_FILENAMES.has(path.basename(normalizedPath))) return false;
 
   const uploadRoot = path.resolve(process.env.UPLOAD_DIR || "uploads");
-  const absolutePath = path.resolve(normalizedPath);
-  return absolutePath.startsWith(`${uploadRoot}${path.sep}`) && fs.existsSync(absolutePath);
+  const uploadIndex = normalizedPath.lastIndexOf("uploads/");
+  const uploadRelativePath = uploadIndex >= 0 ? normalizedPath.slice(uploadIndex + "uploads/".length) : "";
+  const candidatePaths = [
+    path.resolve(normalizedPath),
+    uploadRelativePath ? path.resolve(uploadRoot, uploadRelativePath) : "",
+    path.resolve(uploadRoot, "pdfs", path.basename(normalizedPath))
+  ].filter(Boolean);
+
+  return [...new Set(candidatePaths)].some((absolutePath) =>
+    absolutePath.startsWith(`${uploadRoot}${path.sep}`) && fs.existsSync(absolutePath)
+  );
 }
