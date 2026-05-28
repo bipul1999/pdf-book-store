@@ -326,7 +326,7 @@ export async function createOrder(req, res) {
   const ids = [...new Set(submittedIds)];
   const paymentMethod = req.body.paymentMethod || "auto";
   if (!ids.length) return res.status(422).json({ message: "Cart is empty" });
-  const books = await Book.find({ _id: { $in: ids }, isActive: true }).select("+pdfPath +pdfStored");
+  const books = await Book.find({ _id: { $in: ids }, isActive: true }).select("+pdfPath +pdfFileId +pdfStored");
   if (books.length !== ids.length) return res.status(422).json({ message: "One or more books are unavailable" });
   if (books.some((book) => !hasOwnerUploadedPdf(book))) {
     return res.status(422).json({ message: "Not uploaded by owner" });
