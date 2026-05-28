@@ -9,6 +9,9 @@ const bookSchema = new mongoose.Schema(
     price: { type: Number, required: true, min: 0 },
     coverImage: { type: String, required: true },
     pdfPath: { type: String, required: true, select: false },
+    pdfData: { type: Buffer, select: false },
+    pdfMimeType: { type: String, default: "application/pdf", select: false },
+    pdfStored: { type: Boolean, default: false, select: false },
     featured: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true }
   },
