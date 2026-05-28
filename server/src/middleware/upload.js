@@ -29,6 +29,7 @@ const imageExtensions = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
 const imageMimeTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 const pdfMimeTypes = new Set(["application/pdf", "application/x-pdf", "application/octet-stream"]);
 const maxFiles = 3;
+const bookUploadLimit = 150 * 1024 * 1024;
 
 function hasAllowedImageType(file) {
   const ext = path.extname(file.originalname).toLowerCase();
@@ -42,7 +43,7 @@ function hasAllowedPdfType(file) {
 
 export const uploadBookFiles = multer({
   storage,
-  limits: { fileSize: 50 * 1024 * 1024, files: 2, fields: 20, parts: 24 },
+  limits: { fileSize: bookUploadLimit, files: 2, fields: 20, parts: 24 },
   fileFilter: (_req, file, cb) => {
     if (file.fieldname === "pdf" && !hasAllowedPdfType(file)) return cb(new Error("PDF file required"));
     if (file.fieldname === "cover" && !hasAllowedImageType(file)) return cb(new Error("Image cover required"));
