@@ -17,7 +17,9 @@ export default function EditBook() {
   const [form, setForm] = useState({ title: "", author: "", description: "", price: "", featured: false, isActive: true });
   const [cover, setCover] = useState(null);
   const [pdf, setPdf] = useState(null);
+  const [pdfAvailable, setPdfAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     api.get(`/books/${id}`).then((bookRes) => {
@@ -30,6 +32,7 @@ export default function EditBook() {
         featured: Boolean(book.featured),
         isActive: Boolean(book.isActive)
       });
+      setPdfAvailable(Boolean(book.pdfAvailable));
       setLoading(false);
     });
   }, [id]);
@@ -40,12 +43,15 @@ export default function EditBook() {
     Object.entries(form).forEach(([key, value]) => payload.append(key, value));
     if (cover) payload.append("cover", cover);
     if (pdf) payload.append("pdf", pdf);
+    setSaving(true);
     try {
       await api.put(`/books/${id}`, payload);
       toast.success("Book updated");
       navigate("/admin/books");
     } catch (error) {
       toast.error(getErrorMessage(error));
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -60,10 +66,15 @@ export default function EditBook() {
         <input className="input" type="number" min="0" step="0.01" placeholder="Price" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required />
         <textarea className="input min-h-32 md:col-span-2" placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
         <label className="label">Replace cover image<input className="input mt-1" type="file" accept="image/*" onChange={(e) => setCover(e.target.files[0])} /></label>
-        <label className="label">Replace PDF file<input className="input mt-1" type="file" accept="application/pdf" onChange={(e) => setPdf(e.target.files[0])} /></label>
+        <label className="label">Replace PDF file
+          <input className="input mt-1" type="file" accept="application/pdf,.pdf" onChange={(e) => setPdf(e.target.files[0] || null)} />
+          <span className={`mt-1 block text-xs font-bold ${pdf || pdfAvailable ? "text-green-700" : "text-orange-700"}`}>
+            {pdf ? `Selected: ${pdf.name}` : pdfAvailable ? "PDF already uploaded" : "No PDF uploaded yet"}
+          </span>
+        </label>
         <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} /> Featured book</label>
         <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} /> Active</label>
-        <button className="btn-primary w-full md:w-auto md:justify-self-end">Save changes</button>
+        <button className="btn-primary w-full md:w-auto md:justify-self-end" disabled={saving}>{saving ? "Saving..." : "Save changes"}</button>
       </form>
     </section>
   );

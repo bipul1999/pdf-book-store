@@ -30,6 +30,14 @@ function accessKey(order, item) {
   return `${order._id}:${item.book?._id || item.book}`;
 }
 
+function formatOrderDate(value) {
+  if (!value) return "Date not available";
+  return new Date(value).toLocaleString("en-IN", {
+    dateStyle: "medium",
+    timeStyle: "short"
+  });
+}
+
 function CustomerDetails({ order }) {
   if (order.orderType !== "manual_book") {
     return <><strong>{order.user?.name}</strong><p className="break-words text-gray-600">{order.user?.email}</p></>;
@@ -140,6 +148,7 @@ export default function ManageOrders() {
         {orders.map((order) => (
           <article className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm" key={order._id}>
             <div className="text-sm"><CustomerDetails order={order} /></div>
+            <p className="mt-2 text-xs font-bold text-gray-500">Ordered on {formatOrderDate(order.createdAt)}</p>
             <div className="mt-2 space-y-2 text-sm">{order.items.map((item) => (
               <div className="rounded-xl border border-slate-100 p-2" key={item.book?._id || item.title}>
                 <p>{item.title} x {item.quantity || 1}</p>
@@ -159,11 +168,12 @@ export default function ManageOrders() {
       </div>
       <div className="hidden overflow-x-auto sm:block">
         <table className="w-full text-left text-sm">
-          <thead className="bg-gray-50 text-gray-600"><tr><th className="p-3">Customer</th><th className="p-3">Books</th><th className="p-3">Amount</th><th className="p-3">Proof</th><th className="p-3">Status</th></tr></thead>
+          <thead className="bg-gray-50 text-gray-600"><tr><th className="p-3">Customer</th><th className="p-3">Date & Time</th><th className="p-3">Books</th><th className="p-3">Amount</th><th className="p-3">Proof</th><th className="p-3">Status</th></tr></thead>
           <tbody>
             {orders.map((order) => (
               <tr className="border-t border-gray-100" key={order._id}>
                 <td className="p-3 align-top"><CustomerDetails order={order} /></td>
+                <td className="p-3 align-top whitespace-nowrap text-xs font-bold text-gray-600">{formatOrderDate(order.createdAt)}</td>
                 <td className="p-3 align-top">
                   <div className="space-y-3">{order.items.map((item) => (
                     <div key={item.book?._id || item.title}>

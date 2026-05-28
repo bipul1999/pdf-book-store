@@ -139,9 +139,9 @@ export default function PdfReader() {
           <>
             <div className="pdf-reader-toolbar flex flex-wrap items-center justify-between gap-2 border-b border-orange-100 bg-white px-3 py-3 sm:px-4">
               <div className="flex items-center gap-2">
-                <button className="btn-secondary !min-h-10 !px-3" type="button" disabled={pageNumber === 1 || rendering} onClick={() => setPageNumber((page) => page - 1)} aria-label="Previous page"><ChevronLeft size={18} /></button>
+                <button className="btn-secondary !min-h-10 !px-3" type="button" disabled={pageNumber <= 1} onClick={() => setPageNumber((page) => Math.max(1, page - 1))} aria-label="Previous page"><ChevronLeft size={18} /></button>
                 <p className="min-w-24 text-center text-sm font-bold text-gray-700">{pageNumber} / {pageCount}</p>
-                <button className="btn-secondary !min-h-10 !px-3" type="button" disabled={pageNumber === pageCount || rendering} onClick={() => setPageNumber((page) => page + 1)} aria-label="Next page"><ChevronRight size={18} /></button>
+                <button className="btn-secondary !min-h-10 !px-3" type="button" disabled={!pageCount || pageNumber >= pageCount} onClick={() => setPageNumber((page) => Math.min(pageCount || page + 1, page + 1))} aria-label="Next page"><ChevronRight size={18} /></button>
               </div>
               <div className="flex items-center gap-2">
                 <button className="btn-secondary !min-h-10 !px-3" type="button" disabled={zoom <= 0.8 || rendering} onClick={() => setZoom((value) => Math.max(0.8, value - 0.2))} aria-label="Zoom out"><ZoomOut size={18} /></button>

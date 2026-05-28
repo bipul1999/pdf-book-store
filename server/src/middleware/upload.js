@@ -27,6 +27,7 @@ const storage = multer.diskStorage({
 
 const imageExtensions = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
 const imageMimeTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const pdfMimeTypes = new Set(["application/pdf", "application/x-pdf", "application/octet-stream"]);
 const maxFiles = 3;
 
 function hasAllowedImageType(file) {
@@ -36,7 +37,7 @@ function hasAllowedImageType(file) {
 
 function hasAllowedPdfType(file) {
   const ext = path.extname(file.originalname).toLowerCase();
-  return ext === ".pdf" && file.mimetype === "application/pdf";
+  return ext === ".pdf" && pdfMimeTypes.has(file.mimetype);
 }
 
 export const uploadBookFiles = multer({

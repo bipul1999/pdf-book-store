@@ -1,5 +1,5 @@
 import { CheckCircle2, Clock3, FileText, XCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/client.js";
 
@@ -55,9 +55,22 @@ const manualPendingStatus = {
   Icon: Clock3
 };
 
+function formatOrderDate(value) {
+  if (!value) return "Date not available";
+  return new Date(value).toLocaleString("en-IN", {
+    dateStyle: "medium",
+    timeStyle: "short"
+  });
+}
+
+function orderTitle(order) {
+  return order.items?.[0]?.title || "";
+}
+
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [notice, setNotice] = useState(null);
+  const [sortBy, setSortBy] = useState("newest");
 
   useEffect(() => {
     api.get("/users/orders").then(({ data }) => {
@@ -80,6 +93,15 @@ export default function Orders() {
     return () => clearTimeout(timer);
   }, [notice]);
 
+  const visibleOrders = useMemo(() => {
+    const sorted = [...orders];
+    if (sortBy === "az") sorted.sort((a, b) => orderTitle(a).localeCompare(orderTitle(b), "hi"));
+    else if (sortBy === "za") sorted.sort((a, b) => orderTitle(b).localeCompare(orderTitle(a), "hi"));
+    else if (sortBy === "oldest") sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    else sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    return sorted;
+  }, [orders, sortBy]);
+
   return (
     <main className="store-page mx-auto max-w-6xl px-4 py-5 sm:py-9">
       {notice && (
@@ -89,9 +111,22 @@ export default function Orders() {
         </div>
       )}
       <span className="badge mb-3">Order history</span>
-      <h1 className="mb-5 text-2xl font-black sm:text-3xl">My Orders</h1>
+      <div className="mb-5 grid gap-3 sm:flex sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-black sm:text-3xl">My Orders</h1>
+          <p className="mt-1 text-sm text-gray-600">All digital purchases and physical book orders appear here with date and time.</p>
+        </div>
+        <label className="label sm:w-48">Sort orders
+          <select className="input mt-1" value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="az">A-Z by book</option>
+            <option value="za">Z-A by book</option>
+          </select>
+        </label>
+      </div>
       <div className="space-y-4">
-        {orders.map((order) => {
+        {visibleOrders.map((order) => {
           const status = order.orderType === "manual_book" && order.status === "pending"
             ? manualPendingStatus
             : statusMap[order.status] || statusMap.pending;
@@ -105,6 +140,7 @@ export default function Orders() {
                     <strong className="break-words">Order #{order._id.slice(-6).toUpperCase()}</strong>
                     {order.orderType === "manual_book" && <span className="badge">Book order</span>}
                   </div>
+                  <p className="mb-3 text-sm font-bold text-gray-600">Ordered on {formatOrderDate(order.createdAt)}</p>
                   <div className="space-y-2">
                     {order.items.map((item) => (
                       <div className="rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2" key={`${order._id}-${item.book?._id || item.title}`}>

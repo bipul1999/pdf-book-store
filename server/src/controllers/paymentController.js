@@ -524,13 +524,7 @@ export async function razorpayWebhook(req, res) {
 }
 
 export async function myOrders(req, res) {
-  const orders = await Order.find({
-    user: req.user._id,
-    $or: [
-      { orderType: "manual_book" },
-      { orderType: { $ne: "manual_book" }, status: { $in: ["success", "failed"] } }
-    ]
-  }).populate("items.book").sort("-updatedAt");
+  const orders = await Order.find({ user: req.user._id }).populate("items.book").sort({ createdAt: -1, _id: -1 });
   res.json({ orders: orders.map((order) => ({ ...order.toObject(), paymentProof: fileUrl(req, order.paymentProof) })) });
 }
 
