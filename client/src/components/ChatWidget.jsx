@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
-const welcomeText = "Namaste, main Neo hoon. Mahesh Bharti Store me aapki help ke liye taiyar hoon.";
+const welcomeText = "Namaste, main Mahesh Bharti Store AI Assistant hoon.";
 const quickProblems = [
   { label: "Author Mahesh Bharti ji ke baare me batao" },
   { label: "Books section par le chalo", path: "/books" },
@@ -383,7 +383,7 @@ export default function ChatWidget() {
             <div className="flex min-w-0 items-center gap-2 pr-10">
               <NeoOrb />
               <div>
-                <p className="font-black">Neo AI Assistant</p>
+                <p className="font-black">Mahesh Bharti AI Assistant</p>
                 <p className="flex items-center gap-1 text-xs text-blue-100"><CheckCircle2 size={12} /> Voice guide + store support</p>
               </div>
             </div>
