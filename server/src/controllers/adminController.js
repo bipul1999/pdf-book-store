@@ -35,7 +35,7 @@ export async function listOrders(_req, res) {
           ? item.accessExpiresAt || new Date(order.updatedAt.getTime() + DEFAULT_DIGITAL_ACCESS_DAYS * DAY_MS)
           : item.accessExpiresAt
       })),
-      paymentProof: order.paymentProof ? `/api/admin/orders/${order._id}/proof` : ""
+      paymentProof: order.paymentProof ? `/admin/orders/${order._id}/proof` : ""
     }))
   });
 }
