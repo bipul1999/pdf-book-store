@@ -4,9 +4,8 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import api from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
-import assistantAvatar from "../assets/ai-assistant-sari-small.jpg";
 
-const welcomeText = "Namaste, main Mahesh Bharti Store AI Assistant hoon.";
+const welcomeText = "Namaste, main Neo hoon. Mahesh Bharti Store me aapki help ke liye taiyar hoon.";
 const quickProblems = [
   { label: "Author Mahesh Bharti ji ke baare me batao" },
   { label: "Books section par le chalo", path: "/books" },
@@ -56,18 +55,13 @@ const guideActions = [
   { label: "Orders", words: ["orders", "order history", "payment history"], path: "/dashboard/orders" }
 ];
 
-function GirlAssistantAvatar({ size = "md" }) {
-  const boxSize = size === "lg" ? "h-12 w-12" : size === "sm" ? "h-8 w-8" : "h-9 w-9";
-
+function NeoOrb({ size = "md" }) {
   return (
-    <span className={`grid ${boxSize} shrink-0 place-items-center overflow-hidden rounded-full bg-orange-50 ring-2 ring-white/80`} aria-hidden="true">
-      <img
-        alt=""
-        className="h-full w-full object-cover object-top"
-        decoding="async"
-        loading="lazy"
-        src={assistantAvatar}
-      />
+    <span className={`neo-orb neo-orb-${size}`} aria-hidden="true">
+      <span className="neo-orb-glow" />
+      <span className="neo-orb-wave neo-orb-wave-one" />
+      <span className="neo-orb-wave neo-orb-wave-two" />
+      <span className="neo-orb-shine" />
     </span>
   );
 }
@@ -376,37 +370,35 @@ export default function ChatWidget() {
   return (
     <>
       {open && (
-        <section className="mobile-chat-panel fixed bottom-24 right-3 z-50 flex max-h-[calc(100vh-7rem)] w-[calc(100vw-1.5rem)] max-w-sm flex-col overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-[0_20px_60px_rgba(15,23,42,.25)] md:bottom-6 md:right-6 md:max-h-[calc(100vh-3rem)]">
+        <section className="neo-chat-panel mobile-chat-panel fixed bottom-24 right-3 z-50 flex max-h-[calc(100vh-7rem)] w-[calc(100vw-1.5rem)] max-w-sm flex-col overflow-hidden rounded-3xl border border-blue-100/80 bg-white shadow-[0_24px_70px_rgba(30,64,175,.22)] md:bottom-6 md:right-6 md:max-h-[calc(100vh-3rem)]">
           <button
-            className="absolute right-2 top-2 z-10 grid h-9 w-9 place-items-center rounded-full bg-white/95 text-slate-700 shadow-md ring-1 ring-orange-100 transition hover:bg-orange-50 hover:text-orange-700"
+            className="absolute right-3 top-3 z-10 grid h-9 w-9 place-items-center rounded-full bg-white/85 text-blue-700 shadow-md ring-1 ring-blue-100 transition hover:bg-blue-50 hover:text-blue-900"
             onClick={closeAssistant}
             aria-label="Close AI chat"
             type="button"
           >
             <X size={18} />
           </button>
-          <div className="flex items-center justify-between bg-gradient-to-r from-[#d97706] to-[#f59e0b] px-4 py-3 text-white">
+          <div className="neo-chat-header flex items-center justify-between px-4 py-4 text-white">
             <div className="flex min-w-0 items-center gap-2 pr-10">
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-white/15">
-                <GirlAssistantAvatar />
-              </span>
+              <NeoOrb />
               <div>
-                <p className="font-black">AI Support Assistant</p>
-                <p className="flex items-center gap-1 text-xs text-orange-100"><CheckCircle2 size={12} /> Voice guide + support ticket</p>
+                <p className="font-black">Neo AI Assistant</p>
+                <p className="flex items-center gap-1 text-xs text-blue-100"><CheckCircle2 size={12} /> Voice guide + store support</p>
               </div>
             </div>
           </div>
-          <div className="flex min-h-0 flex-1 flex-col space-y-3 p-4">
-            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto rounded-2xl bg-slate-50 p-3">
+          <div className="flex min-h-0 flex-1 flex-col space-y-3 bg-[linear-gradient(180deg,#f8fbff,#ffffff)] p-4">
+            <div className="neo-chat-messages min-h-0 flex-1 space-y-3 overflow-y-auto rounded-2xl border border-blue-50 bg-blue-50/45 p-3">
               {messages.map((item, index) => (
                 <div className={`flex ${item.role === "user" ? "justify-end" : "justify-start"}`} key={`${item.role}-${index}`}>
                   {item.role === "assistant" && (
-                    <span className="mr-2"><GirlAssistantAvatar size="sm" /></span>
+                    <span className="mr-2"><NeoOrb size="sm" /></span>
                   )}
                   <p className={`max-w-[78%] rounded-2xl px-3 py-2 text-sm font-semibold leading-6 ${
                     item.role === "user"
-                      ? "rounded-br-sm bg-orange-500 text-white"
-                      : "rounded-bl-sm bg-white text-slate-700 shadow-sm"
+                      ? "rounded-br-sm bg-gradient-to-br from-blue-600 to-indigo-600 text-white"
+                      : "rounded-bl-sm border border-blue-50 bg-white text-slate-700 shadow-sm"
                   }`}>
                     {item.text}
                   </p>
@@ -414,7 +406,7 @@ export default function ChatWidget() {
               ))}
               {loading && (
                 <div className="flex justify-start">
-                  <span className="mr-2"><GirlAssistantAvatar size="sm" /></span>
+                  <span className="mr-2"><NeoOrb size="sm" /></span>
                   <p className="rounded-2xl rounded-bl-sm bg-white px-3 py-2 text-sm font-black text-slate-500 shadow-sm">Typing...</p>
                 </div>
               )}
@@ -424,7 +416,7 @@ export default function ChatWidget() {
               <div className="grid gap-2">
                 {quickProblems.map((problem) => (
                   <button
-                    className="rounded-lg border border-orange-100 bg-orange-50 px-3 py-2 text-left text-xs font-bold text-orange-800 transition hover:border-orange-300 hover:bg-orange-100"
+                    className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-left text-xs font-bold text-blue-800 transition hover:border-blue-300 hover:bg-blue-100"
                     key={problem.label}
                     onClick={() => problem.path ? navigateAndClose(problem.path) : setInput(problem.label)}
                     type="button"
@@ -473,11 +465,11 @@ export default function ChatWidget() {
         </section>
       )}
       <button
-        className="mobile-chat-toggle fixed bottom-24 right-4 z-40 grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-[#e24b13] via-[#f97316] to-[#fbbf24] text-white shadow-[0_14px_32px_rgba(234,88,12,.45)] ring-4 ring-orange-100 transition hover:scale-105 hover:from-[#ef5b25] hover:to-[#fde047] md:bottom-6 md:right-6"
+        className="neo-chat-toggle mobile-chat-toggle fixed bottom-24 right-4 z-40 grid h-16 w-16 place-items-center rounded-full text-white transition hover:scale-105 md:bottom-6 md:right-6"
         onClick={open ? closeAssistant : openAssistant}
         aria-label="Open AI help chat"
       >
-        {open ? <X size={24} /> : <GirlAssistantAvatar size="lg" />}
+        {open ? <X size={24} /> : <NeoOrb size="lg" />}
       </button>
     </>
   );
