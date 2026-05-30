@@ -1,4 +1,4 @@
-import { BookOpen, ClipboardList, Facebook, Home, LayoutDashboard, Library, LogOut, Mail, Menu, MessageCircle, Phone, Search, ShoppingCart, User, X } from "lucide-react";
+import { BookOpen, ClipboardList, Facebook, Home, LayoutDashboard, Library, LogOut, Mail, Menu, MessageCircle, Phone, Search, ShoppingCart, Star, User, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -188,6 +188,7 @@ export default function Layout() {
               <Link className="font-semibold text-stone-200 transition hover:text-amber-300" to="/books">पुस्तकें देखें</Link>
               <Link className="font-semibold text-stone-200 transition hover:text-amber-300" to="/order-book">Order Book</Link>
               <Link className="font-semibold text-stone-200 transition hover:text-amber-300" to="/dashboard/library">My Library</Link>
+              <Link className="inline-flex items-center gap-2 font-semibold text-amber-300 transition hover:text-white" to="/feedback"><Star size={15} /> Give Feedback</Link>
             </div>
             <div className="grid gap-2">
               <p className="text-xs font-black uppercase tracking-wide text-amber-300">Contact Us</p>

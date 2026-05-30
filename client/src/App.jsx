@@ -20,6 +20,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard.jsx"));
 const Library = lazy(() => import("./pages/Library.jsx"));
 const PdfReader = lazy(() => import("./pages/PdfReader.jsx"));
 const Orders = lazy(() => import("./pages/Orders.jsx"));
+const Feedback = lazy(() => import("./pages/Feedback.jsx"));
 const AdminLogin = lazy(() => import("./pages/admin/AdminLogin.jsx"));
 const AdminVerifyOtp = lazy(() => import("./pages/admin/AdminVerifyOtp.jsx"));
 const AdminForgotPassword = lazy(() => import("./pages/admin/AdminForgotPassword.jsx"));
@@ -34,6 +35,7 @@ const ManageUsers = lazy(() => import("./pages/admin/ManageUsers.jsx"));
 const PaymentSettings = lazy(() => import("./pages/admin/PaymentSettings.jsx"));
 const QuoteSettings = lazy(() => import("./pages/admin/QuoteSettings.jsx"));
 const SupportTickets = lazy(() => import("./pages/admin/SupportTickets.jsx"));
+const ManageFeedback = lazy(() => import("./pages/admin/ManageFeedback.jsx"));
 
 function PageLoader() {
   return <main className="mx-auto flex min-h-[45vh] max-w-7xl items-center justify-center px-4 py-8 text-center text-sm font-semibold text-gray-600"><span className="panel px-5 py-3">Loading...</span></main>;
@@ -59,6 +61,7 @@ export default function App() {
             <Route path="payment" element={<PaymentSettings />} />
             <Route path="quote" element={<QuoteSettings />} />
             <Route path="support" element={<SupportTickets />} />
+            <Route path="feedback" element={<ManageFeedback />} />
             <Route path="users" element={<ManageUsers />} />
           </Route>
           <Route element={<Layout />}>
@@ -74,6 +77,7 @@ export default function App() {
             <Route path="/verify-otp" element={<VerifyOtp />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/feedback" element={<Feedback />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/dashboard/library" element={<ProtectedRoute><Library /></ProtectedRoute>} />
             <Route path="/dashboard/library/:id/read" element={<ProtectedRoute><PdfReader /></ProtectedRoute>} />

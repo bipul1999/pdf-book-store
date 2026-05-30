@@ -15,6 +15,7 @@ import userRoutes from "./routes/userRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import siteRoutes from "./routes/siteRoutes.js";
 import supportRoutes from "./routes/supportRoutes.js";
+import feedbackRoutes from "./routes/feedbackRoutes.js";
 import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
 import { apiLimiter } from "./middleware/rateLimiters.js";
 import { getLastDatabaseError } from "./config/db.js";
@@ -104,6 +105,7 @@ app.use("/api/categories", requireDatabase, categoryRoutes);
 app.use("/api/payments", requireDatabase, paymentRoutes);
 app.use("/api/users", requireDatabase, userRoutes);
 app.use("/api/support", requireDatabase, supportRoutes);
+app.use("/api/feedback", requireDatabase, feedbackRoutes);
 app.use("/api/admin", requireDatabase, adminRoutes);
 
 app.use(notFound);
