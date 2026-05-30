@@ -11,7 +11,7 @@ export function isEmailConfigured() {
 export async function sendEmail({ to, subject, html }) {
   if (!isEmailConfigured()) {
     console.log(`Email skipped for ${to}: ${subject}`);
-    console.log(html);
+    if (process.env.NODE_ENV !== "production") console.log(html);
     return false;
   }
 

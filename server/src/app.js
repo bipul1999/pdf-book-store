@@ -15,10 +15,8 @@ import userRoutes from "./routes/userRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import siteRoutes from "./routes/siteRoutes.js";
 import supportRoutes from "./routes/supportRoutes.js";
-import { createRazorpayOrder, verifyRazorpaySignature } from "./controllers/paymentController.js";
-import { protect } from "./middleware/authMiddleware.js";
 import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
-import { apiLimiter, paymentLimiter } from "./middleware/rateLimiters.js";
+import { apiLimiter } from "./middleware/rateLimiters.js";
 import { getLastDatabaseError } from "./config/db.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -68,7 +66,7 @@ app.use(compression({
 }));
 app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
 app.use(express.json({ limit: "2mb" }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: "100kb", parameterLimit: 100 }));
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use("/api", apiLimiter);
 
@@ -97,12 +95,13 @@ app.use("/uploads/covers", express.static(path.join(__dirname, "..", "uploads", 
 app.use("/uploads/payment-qrs", express.static(path.join(__dirname, "..", "uploads", "payment-qrs"), { ...staticOptions, index: false }));
 app.use("/uploads/quotes", express.static(path.join(__dirname, "..", "uploads", "quotes"), { ...staticOptions, index: false }));
 app.use("/api/site", siteRoutes);
-app.use("/api/auth", requireDatabase, authRoutes);
+app.use("/api/auth", (_req, res, next) => {
+  res.setHeader("Cache-Control", "private, no-store, max-age=0");
+  next();
+}, requireDatabase, authRoutes);
 app.use("/api/books", requireDatabase, bookRoutes);
 app.use("/api/categories", requireDatabase, categoryRoutes);
 app.use("/api/payments", requireDatabase, paymentRoutes);
-app.post("/api/create-order", requireDatabase, paymentLimiter, protect, createRazorpayOrder);
-app.post("/api/verify-payment", requireDatabase, paymentLimiter, protect, verifyRazorpaySignature);
 app.use("/api/users", requireDatabase, userRoutes);
 app.use("/api/support", requireDatabase, supportRoutes);
 app.use("/api/admin", requireDatabase, adminRoutes);

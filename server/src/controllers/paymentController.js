@@ -149,6 +149,7 @@ function fileUrl(req, filePath) {
 function withoutPaymentProofData(order) {
   const safeOrder = order.toObject ? order.toObject() : { ...order };
   delete safeOrder.paymentProofData;
+  delete safeOrder.razorpaySignature;
   return safeOrder;
 }
 
@@ -591,49 +592,7 @@ export async function verifyPayment(req, res) {
     await unlockBooks(order);
     await sendPaymentStatusEmail(order);
   }
-  res.json({ message: order.orderType === "manual_book" ? "Payment verified. Your book order is confirmed." : "Payment verified", order });
-}
-
-export async function createRazorpayOrder(req, res) {
-  const amount = Number(req.body.amount);
-  const currency = req.body.currency || process.env.RAZORPAY_CURRENCY || "INR";
-  const receipt = String(req.body.receipt || `receipt_${Date.now()}`).slice(0, 40);
-  const razorpay = getRazorpay();
-
-  if (!Number.isInteger(amount) || amount < MIN_RAZORPAY_AMOUNT) {
-    return res.status(400).json({ message: "Amount must be at least 100 paise" });
-  }
-  if (!razorpay) return res.status(401).json({ message: "Razorpay is not configured" });
-
-  try {
-    const order = await razorpay.orders.create({ amount, currency, receipt });
-    res.status(201).json({
-      order_id: order.id,
-      amount: order.amount,
-      currency: order.currency
-    });
-  } catch (error) {
-    return razorpayErrorResponse(error, res);
-  }
-}
-
-export async function verifyRazorpaySignature(req, res) {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-    return res.status(400).json({ message: "Missing Razorpay verification fields" });
-  }
-  if (!process.env.RAZORPAY_KEY_SECRET) return res.status(401).json({ message: "Razorpay is not configured" });
-
-  const expected = crypto
-    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-    .digest("hex");
-
-  if (!signaturesMatch(expected, razorpay_signature)) {
-    return res.status(400).json({ success: false, message: "Payment verification failed" });
-  }
-
-  res.json({ success: true, message: "Payment verified" });
+  res.json({ message: order.orderType === "manual_book" ? "Payment verified. Your book order is confirmed." : "Payment verified", order: withoutPaymentProofData(order) });
 }
 
 export async function razorpayWebhook(req, res) {
@@ -667,7 +626,7 @@ export async function razorpayWebhook(req, res) {
 
 export async function myOrders(req, res) {
   const orders = await Order.find({ user: req.user._id }).populate("items.book").sort({ createdAt: -1, _id: -1 });
-  res.json({ orders: orders.map((order) => ({ ...order.toObject(), paymentProof: fileUrl(req, order.paymentProof) })) });
+  res.json({ orders: orders.map((order) => ({ ...withoutPaymentProofData(order), paymentProof: fileUrl(req, order.paymentProof) })) });
 }
 
 export async function myLibrary(req, res) {

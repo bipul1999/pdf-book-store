@@ -1,7 +1,8 @@
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import Otp from "../models/Otp.js";
-import { isEmailConfigured, sendEmail } from "./email.js";
-import { isSmsConfigured, sendOtpSms } from "./sms.js";
+import { sendEmail } from "./email.js";
+import { sendOtpSms } from "./sms.js";
 
 function otpError(message, statusCode = 422) {
   const error = new Error(message);
@@ -10,7 +11,7 @@ function otpError(message, statusCode = 422) {
 }
 
 export async function createAndSendOtp({ email, phone, purpose }) {
-  const code = String(Math.floor(100000 + Math.random() * 900000));
+  const code = String(crypto.randomInt(100000, 1000000));
   await Otp.updateMany({ email, purpose, consumed: false }, { consumed: true });
   await Otp.create({
     email,
@@ -28,12 +29,11 @@ export async function createAndSendOtp({ email, phone, purpose }) {
   }
 
   try {
-    await sendEmail({
+    delivered = await sendEmail({
       to: email,
       subject: "Your PDF Book Store OTP",
       html: `<p>Your OTP is <strong>${code}</strong>. It expires in 10 minutes.</p>`
-    });
-    delivered = true;
+    }) || delivered;
   } catch (error) {
     console.error(`OTP email failed for ${email}:`, error.message);
   }

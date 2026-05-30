@@ -4,7 +4,7 @@ import { createAndSendOtp, verifyOtp } from "../utils/otp.js";
 import { issueSessionToken, publicUser } from "../utils/tokens.js";
 
 const otpMeta = { otpExpiresInSeconds: 10 * 60, resendAfterSeconds: 60 };
-const ownerAdminEmail = normalizeEmailForLookup(process.env.OWNER_ADMIN_EMAIL || "bipulkumarvats154@gmail.com");
+const ownerAdminEmail = normalizeEmailForLookup(process.env.OWNER_ADMIN_EMAIL);
 
 function normalizeEmailForLookup(email) {
   const value = String(email || "").trim().toLowerCase();
@@ -30,20 +30,20 @@ function loginIdentifierCandidates(identifier) {
 }
 
 export const signupRules = [
-  body("name").trim().notEmpty(),
+  body("name").trim().isLength({ min: 1, max: 120 }),
   body("email").isEmail().normalizeEmail(),
-  body("phone").trim().isLength({ min: 8 }),
-  body("password").isLength({ min: 8 })
+  body("phone").trim().isLength({ min: 8, max: 16 }),
+  body("password").isLength({ min: 8, max: 128 })
 ];
 
 export const adminSignupRules = [
-  body("name").trim().notEmpty(),
+  body("name").trim().isLength({ min: 1, max: 120 }),
   body("email").isEmail().normalizeEmail().custom((value) => {
     if (!value.endsWith("@gmail.com")) throw new Error("Admin email must be a Gmail address");
     return true;
   }),
-  body("phone").trim().isLength({ min: 8 }),
-  body("password").isLength({ min: 8 })
+  body("phone").trim().isLength({ min: 8, max: 16 }),
+  body("password").isLength({ min: 8, max: 128 })
 ];
 
 export async function signup(req, res) {
@@ -91,12 +91,14 @@ export async function adminStatus(_req, res) {
 
 export async function adminSignup(req, res) {
   const { name, email, phone, password } = req.body;
-  let verifiedAdmin = await User.findOne({ role: "admin", isVerified: true }).select("+password");
+  const verifiedAdmin = await User.findOne({ role: "admin", isVerified: true });
+  if (verifiedAdmin) {
+    return res.status(409).json({ message: "Admin account already exists. Use forgot password if you need to recover access." });
+  }
   const requestedAdminEmail = normalizeEmailForLookup(email);
-  const existingAdminEmail = normalizeEmailForLookup(verifiedAdmin?.email);
+  if (!ownerAdminEmail) return res.status(503).json({ message: "Admin registration is disabled." });
   const isOwnerEmail = requestedAdminEmail === ownerAdminEmail;
-  const isExistingAdminEmail = Boolean(verifiedAdmin && requestedAdminEmail === existingAdminEmail);
-  if (!isOwnerEmail && !isExistingAdminEmail) {
+  if (!isOwnerEmail) {
     return res.status(403).json({ message: "Admin registration is restricted to the authorized email." });
   }
 
@@ -128,6 +130,9 @@ export async function adminSignup(req, res) {
 
 export async function resendAdminSignupOtp(req, res) {
   const { email } = req.body;
+  if (!ownerAdminEmail || normalizeEmailForLookup(email) !== ownerAdminEmail) {
+    return res.status(403).json({ message: "Admin registration is restricted to the authorized email." });
+  }
   const admin = await User.findOne({ email, role: "admin", isVerified: false });
   if (!admin) return res.status(404).json({ message: "Pending admin profile not found" });
   const devOtp = await createAndSendOtp({ email: admin.email, phone: admin.phone, purpose: "admin-signup" });
@@ -202,6 +207,7 @@ export async function resetPassword(req, res) {
   const user = await User.findOne({ email }).select("+password");
   if (!user) return res.status(404).json({ message: "User not found" });
   user.password = password;
+  user.activeSessionId = "";
   await user.save();
   res.json({ message: "Password reset successful" });
 }

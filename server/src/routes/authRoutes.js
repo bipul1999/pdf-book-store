@@ -14,11 +14,11 @@ router.get("/admin/status", adminStatus);
 router.post("/admin/signup", otpLimiter, adminSignupRules, validate, adminSignup);
 router.post("/admin/resend-otp", otpLimiter, [body("email").isEmail().normalizeEmail()], validate, resendAdminSignupOtp);
 router.post("/admin/verify-otp", otpLimiter, [body("email").isEmail().normalizeEmail(), body("code").isLength({ min: 6, max: 6 })], validate, verifyAdminSignupOtp);
-router.post("/login", authLimiter, [body("identifier").notEmpty(), body("password").notEmpty()], validate, login);
-router.post("/login/request-otp", otpLimiter, [body("identifier").notEmpty()], validate, requestLoginOtp);
+router.post("/login", authLimiter, [body("identifier").trim().isLength({ min: 1, max: 180 }), body("password").isLength({ min: 1, max: 128 })], validate, login);
+router.post("/login/request-otp", otpLimiter, [body("identifier").trim().isLength({ min: 1, max: 180 })], validate, requestLoginOtp);
 router.post("/login/verify-otp", otpLimiter, [body("email").isEmail().normalizeEmail(), body("code").isLength({ min: 6, max: 6 })], validate, verifyLoginOtp);
 router.post("/forgot-password", otpLimiter, [body("email").isEmail().normalizeEmail()], validate, forgotPassword);
-router.post("/reset-password", otpLimiter, [body("email").isEmail().normalizeEmail(), body("code").isLength({ min: 6, max: 6 }), body("password").isLength({ min: 8 })], validate, resetPassword);
+router.post("/reset-password", otpLimiter, [body("email").isEmail().normalizeEmail(), body("code").isLength({ min: 6, max: 6 }), body("password").isLength({ min: 8, max: 128 })], validate, resetPassword);
 router.get("/me", protect, me);
 
 export default router;

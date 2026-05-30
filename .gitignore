@@ -4,3 +4,6 @@ dist/
 *.log
 logs/
 server/uploads/payments/
+server/uploads/payment-proofs/
+uploads/payments/
+uploads/payment-proofs/

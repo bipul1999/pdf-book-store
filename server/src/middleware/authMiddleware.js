@@ -9,6 +9,7 @@ function hasSecureJwtSecret() {
 
 export async function protect(req, res, next) {
   try {
+    res.setHeader("Cache-Control", "private, no-store, max-age=0");
     if (!hasSecureJwtSecret()) {
       return res.status(500).json({ message: "Server authentication is not configured securely" });
     }

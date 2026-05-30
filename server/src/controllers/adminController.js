@@ -20,7 +20,7 @@ export async function dashboardStats(_req, res) {
 }
 
 export async function listUsers(_req, res) {
-  const users = await User.find().select("-password").sort("-createdAt");
+  const users = await User.find().select("-password -activeSessionId").sort("-createdAt");
   res.json({ users });
 }
 
@@ -28,7 +28,7 @@ export async function listOrders(_req, res) {
   const orders = await Order.find().populate("user", "name email phone").populate("items.book").sort("-createdAt");
   res.json({
     orders: orders.map((order) => ({
-      ...order.toObject(),
+      ...withoutRazorpaySignature(order),
       items: order.items.map((item) => ({
         ...item.toObject(),
         accessExpiresAt: order.orderType !== "manual_book" && order.status === "success"
@@ -38,6 +38,12 @@ export async function listOrders(_req, res) {
       paymentProof: order.paymentProof ? `/admin/orders/${order._id}/proof` : ""
     }))
   });
+}
+
+function withoutRazorpaySignature(order) {
+  const safeOrder = order.toObject();
+  delete safeOrder.razorpaySignature;
+  return safeOrder;
 }
 
 export async function viewOrderProof(req, res) {
