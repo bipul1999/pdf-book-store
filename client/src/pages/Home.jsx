@@ -192,11 +192,18 @@ export default function Home() {
     const section = promoSectionRef.current;
     const video = promoVideoRef.current;
     if (!section || !video) return undefined;
+    let isVisible = false;
+    const playWithSound = () => {
+      if (!isVisible) return;
+      video.muted = false;
+      video.volume = 1;
+      video.play().catch(() => {});
+    };
     const observer = new IntersectionObserver(
       ([entry]) => {
+        isVisible = entry.isIntersecting;
         if (entry.isIntersecting) {
-          video.muted = true;
-          video.play().catch(() => {});
+          playWithSound();
         } else {
           video.pause();
         }
@@ -204,8 +211,12 @@ export default function Home() {
       { threshold: 0.42 }
     );
     observer.observe(section);
+    window.addEventListener("pointerdown", playWithSound);
+    window.addEventListener("keydown", playWithSound);
     return () => {
       observer.disconnect();
+      window.removeEventListener("pointerdown", playWithSound);
+      window.removeEventListener("keydown", playWithSound);
       video.pause();
     };
   }, []);
@@ -413,7 +424,6 @@ export default function Home() {
               className="promo-video aspect-video w-full bg-black object-cover"
               controls
               loop
-              muted
               playsInline
               poster="/images/promo-video-poster.svg"
               preload="metadata"
@@ -421,7 +431,6 @@ export default function Home() {
             >
               Your browser does not support the video tag.
             </video>
-            <span className="pointer-events-none absolute left-3 top-3 rounded-full border border-white/20 bg-black/60 px-3 py-1 text-xs font-bold text-white shadow-sm backdrop-blur">Video preview - tap sound for audio</span>
           </div>
           <div className="home-glass promo-copy-panel panel space-y-3 p-5 text-center sm:p-7 lg:text-left">
             <span className="badge mx-auto lg:mx-0">लेखक का आमंत्रण</span>
