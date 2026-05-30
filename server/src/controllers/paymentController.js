@@ -238,6 +238,29 @@ function manualCustomerDetails(body) {
   };
 }
 
+function validateManualCustomerDetails(customerDetails) {
+  if (Object.values(customerDetails).some((value) => !value)) return "Please enter all delivery details.";
+  if (customerDetails.fullName.length > 120 || customerDetails.email.length > 180 || customerDetails.address.length > 500 || customerDetails.city.length > 100 || customerDetails.state.length > 100) {
+    return "One or more delivery details are too long.";
+  }
+  if (!/^\d{10}$/.test(customerDetails.mobileNumber)) return "Enter a valid 10 digit mobile number.";
+  if (!/^\d{6}$/.test(customerDetails.pincode)) return "Enter a valid 6 digit pincode.";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerDetails.email)) return "Enter a valid email address.";
+  return "";
+}
+
+function manualOrderPaymentSummary(order, settings, paymentMethod) {
+  const deliveryCharge = normalizedExtraCharge(settings.orderBookExtraCharge);
+  const paymentCharge = paymentMethodExtraCharge(settings, paymentMethod);
+  return {
+    bookTotal: order.bookTotal,
+    deliveryCharge,
+    paymentCharge,
+    extraCharge: deliveryCharge + paymentCharge,
+    amount: order.bookTotal + deliveryCharge + paymentCharge
+  };
+}
+
 export async function getOrderBookSettings(req, res) {
   const settings = await paymentSettings();
   res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
@@ -254,20 +277,117 @@ export async function getOrderBookSettings(req, res) {
   });
 }
 
+export async function createManualBookOrderDraft(req, res) {
+  const selections = parseBookSelections(req.body.items, req.body.bookIds);
+  if (!selections) return res.status(422).json({ message: `Select valid books and quantities up to ${MAX_BOOK_QUANTITY} copies.` });
+  if (!selections.length) return res.status(422).json({ message: "Select at least one book." });
+  const customerDetails = manualCustomerDetails(req.body);
+  const customerDetailsError = validateManualCustomerDetails(customerDetails);
+  if (customerDetailsError) return res.status(422).json({ message: customerDetailsError });
+  const ids = selections.map((selection) => selection.bookId);
+  const books = await Book.find({ _id: { $in: ids }, isActive: true });
+  if (books.length !== ids.length) return res.status(422).json({ message: "One or more selected books are unavailable." });
+
+  const booksById = new Map(books.map((book) => [String(book._id), book]));
+  const items = selections.map(({ bookId, quantity }) => {
+    const book = booksById.get(bookId);
+    return { book: book._id, title: book.title, price: orderBookPrice(book), quantity };
+  });
+  const bookTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const order = await Order.create({
+    user: req.user._id,
+    items,
+    amount: bookTotal,
+    bookTotal,
+    extraCharge: 0,
+    currency: "INR",
+    orderType: "manual_book",
+    customerDetails,
+    provider: "upi_manual",
+    status: "pending"
+  });
+  res.status(201).json({ order: withoutPaymentProofData(order) });
+}
+
+export async function getManualBookOrderPayment(req, res) {
+  const order = await Order.findOne({ _id: req.params.id, user: req.user._id, orderType: "manual_book" }).populate("items.book");
+  if (!order) return res.status(404).json({ message: "Book order not found" });
+  if (!["pending", "rejected"].includes(order.status) || order.paymentProof || order.razorpayPaymentId) {
+    return res.status(409).json({ message: "Payment has already been submitted for this book order" });
+  }
+  const settings = await paymentSettings();
+  res.json({
+    order: withoutPaymentProofData(order),
+    settings: {
+      upiId: settings.upiId,
+      payeeName: settings.payeeName,
+      qrImage: fileUrl(req, settings.qrImage),
+      instructions: settings.instructions,
+      deliveryCharge: settings.orderBookExtraCharge,
+      manualPaymentExtraCharge: settings.manualPaymentExtraCharge,
+      razorpayPaymentExtraCharge: settings.razorpayPaymentExtraCharge
+    }
+  });
+}
+
+export async function startManualBookOrderPayment(req, res) {
+  const order = await Order.findOne({ _id: req.params.id, user: req.user._id, orderType: "manual_book" });
+  if (!order) return res.status(404).json({ message: "Book order not found" });
+  if (!["pending", "rejected"].includes(order.status) || order.paymentProof || order.razorpayPaymentId) {
+    return res.status(409).json({ message: "Payment has already been submitted for this book order" });
+  }
+  const paymentMethod = req.body.paymentMethod === "razorpay" ? "razorpay" : "upi_manual";
+  const transactionId = String(req.body.transactionId || "").trim();
+  if (paymentMethod === "upi_manual" && !req.file) return res.status(422).json({ message: "Upload payment screenshot for verification." });
+  if (paymentMethod === "upi_manual" && !transactionId) return res.status(422).json({ message: "Enter transaction ID." });
+  if (transactionId.length > 120) return res.status(422).json({ message: "Transaction ID is too long." });
+
+  const settings = await paymentSettings();
+  const summary = manualOrderPaymentSummary(order, settings, paymentMethod);
+  let razorpayOrder = null;
+  if (paymentMethod === "razorpay") {
+    const razorpay = getRazorpay();
+    if (!razorpay) return res.status(422).json({ message: "Razorpay is not configured yet. Please use Manual UPI." });
+    try {
+      razorpayOrder = await razorpay.orders.create({
+        amount: Math.round(summary.amount * 100),
+        currency: process.env.RAZORPAY_CURRENCY || "INR",
+        receipt: `book_${Date.now()}`
+      });
+    } catch (error) {
+      return razorpayErrorResponse(error, res);
+    }
+  }
+
+  Object.assign(order, summary, {
+    provider: paymentMethod,
+    paymentProof: req.file?.path,
+    paymentProofData: req.file ? await fs.promises.readFile(req.file.path) : undefined,
+    paymentProofMimeType: req.file?.mimetype,
+    paymentNote: transactionId || undefined,
+    transactionId: transactionId || undefined,
+    razorpayOrderId: razorpayOrder?.id,
+    status: "pending"
+  });
+  await order.save();
+  if (paymentMethod === "upi_manual") await sendAdminPaymentProofEmail(req, order);
+  res.json({
+    message: paymentMethod === "upi_manual" ? "Your order has been submitted successfully and is pending verification." : "",
+    order: withoutPaymentProofData(order),
+    razorpay: razorpayOrder
+      ? { keyId: process.env.RAZORPAY_KEY_ID, orderId: razorpayOrder.id, amount: razorpayOrder.amount, currency: razorpayOrder.currency }
+      : null
+  });
+}
+
 export async function createManualBookOrder(req, res) {
   const selections = parseBookSelections(req.body.items, req.body.bookIds);
   if (!selections) return res.status(422).json({ message: `Select valid books and quantities up to ${MAX_BOOK_QUANTITY} copies.` });
   const ids = selections.map((selection) => selection.bookId);
   const paymentMethod = req.body.paymentMethod === "razorpay" ? "razorpay" : "upi_manual";
   const customerDetails = manualCustomerDetails(req.body);
-  const missingDetail = Object.values(customerDetails).some((value) => !value);
-  if (missingDetail) return res.status(422).json({ message: "Please enter all delivery details." });
-  if (customerDetails.fullName.length > 120 || customerDetails.email.length > 180 || customerDetails.address.length > 500 || customerDetails.city.length > 100 || customerDetails.state.length > 100) {
-    return res.status(422).json({ message: "One or more delivery details are too long." });
-  }
-  if (!/^\d{10}$/.test(customerDetails.mobileNumber)) return res.status(422).json({ message: "Enter a valid 10 digit mobile number." });
-  if (!/^\d{6}$/.test(customerDetails.pincode)) return res.status(422).json({ message: "Enter a valid 6 digit pincode." });
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerDetails.email)) return res.status(422).json({ message: "Enter a valid email address." });
+  const customerDetailsError = validateManualCustomerDetails(customerDetails);
+  if (customerDetailsError) return res.status(422).json({ message: customerDetailsError });
   if (!ids.length) return res.status(422).json({ message: "Select at least one book." });
   const transactionId = String(req.body.transactionId || "").trim();
   if (paymentMethod === "upi_manual" && !req.file) return res.status(422).json({ message: "Upload payment screenshot for verification." });

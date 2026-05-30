@@ -1,7 +1,7 @@
-import { CheckCircle2, CreditCard, MapPin, Minus, Plus, ReceiptIndianRupee, Search, ShieldCheck, ShoppingBag, Smartphone } from "lucide-react";
+import { MapPin, Minus, Plus, ReceiptIndianRupee, Search, ShieldCheck, ShoppingBag } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import api from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { BOOK_COVER_FALLBACK, useFallbackImage } from "../utils/imageFallback.js";
@@ -22,47 +22,20 @@ function money(value) {
   return Number(value || 0).toLocaleString("en-IN");
 }
 
-function loadRazorpayScript() {
-  if (window.Razorpay) return Promise.resolve(true);
-  const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
-  if (existing) {
-    return new Promise((resolve) => {
-      existing.addEventListener("load", () => resolve(true), { once: true });
-      existing.addEventListener("error", () => resolve(false), { once: true });
-    });
-  }
-  return new Promise((resolve) => {
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-}
-
 export default function OrderBook() {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [books, setBooks] = useState([]);
-  const [settings, setSettings] = useState({ upiId: "", payeeName: "", qrImage: "", orderBookExtraCharge: 0, manualPaymentExtraCharge: 10, razorpayPaymentExtraCharge: 20, instructions: "" });
   const [details, setDetails] = useState(initialDetails);
   const [bookQuery, setBookQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
   const [quantities, setQuantities] = useState({});
-  const [paymentMethod, setPaymentMethod] = useState("razorpay");
-  const [transactionId, setTransactionId] = useState("");
-  const [proof, setProof] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState("");
 
   useEffect(() => {
-    Promise.all([api.get("/books"), api.get("/payments/order-book-settings")])
-      .then(([booksResponse, settingsResponse]) => {
-        setBooks(booksResponse.data.books || []);
-        setSettings(settingsResponse.data.settings || {});
-      })
+    api.get("/books")
+      .then(({ data }) => setBooks(data.books || []))
       .catch(() => toast.error("Order details could not be loaded. Please refresh."))
       .finally(() => setLoading(false));
   }, []);
@@ -86,10 +59,6 @@ export default function OrderBook() {
   }, [bookQuery, books]);
   const totalCopies = selectedBooks.reduce((total, book) => total + (quantities[book._id] || 1), 0);
   const bookTotal = selectedBooks.reduce((total, book) => total + orderBookPrice(book) * (quantities[book._id] || 1), 0);
-  const methodExtraCharge = Number(paymentMethod === "razorpay" ? settings.razorpayPaymentExtraCharge : settings.manualPaymentExtraCharge) || 0;
-  const orderBookExtraCharge = Number(settings.orderBookExtraCharge || 0);
-  const extraCharge = methodExtraCharge + orderBookExtraCharge;
-  const finalAmount = bookTotal + extraCharge;
 
   function updateDetails(event) {
     setDetails({ ...details, [event.target.name]: event.target.value });
@@ -118,40 +87,6 @@ export default function OrderBook() {
     setQuantities((current) => ({ ...current, [id]: Math.min(MAX_BOOK_QUANTITY, nextQuantity) }));
   }
 
-  async function openRazorpayPayment(data) {
-    const scriptReady = await loadRazorpayScript();
-    if (!scriptReady) {
-      toast.error("Razorpay could not load. Please choose Manual UPI.");
-      return;
-    }
-    const razorpay = new window.Razorpay({
-      key: data.razorpay.keyId,
-      amount: data.razorpay.amount,
-      currency: data.razorpay.currency,
-      name: "Mahesh Bharti E-book Store",
-      description: `${totalCopies} book order`,
-      order_id: data.razorpay.orderId,
-      prefill: {
-        name: details.fullName,
-        email: details.email,
-        contact: `+91${details.mobileNumber}`
-      },
-      theme: { color: "#d97706" },
-      modal: { ondismiss: () => toast.error("Payment cancelled") },
-      handler: async (response) => {
-        try {
-          await api.post("/payments/verify", { orderId: data.order._id, ...response });
-          setSuccess("confirmed");
-          toast.success("Payment verified. Your book order is confirmed.");
-        } catch (error) {
-          toast.error(error.response?.data?.message || "Payment verification failed");
-        }
-      }
-    });
-    razorpay.on("payment.failed", (response) => toast.error(response.error?.description || "Payment failed. Please try again."));
-    razorpay.open();
-  }
-
   async function submit(event) {
     event.preventDefault();
     if (!isAuthenticated) {
@@ -162,30 +97,11 @@ export default function OrderBook() {
       toast.error("Select at least one book");
       return;
     }
-    if (paymentMethod === "upi_manual" && !proof) {
-      toast.error("Upload payment screenshot");
-      return;
-    }
     setSubmitting(true);
     try {
-      let payload;
-      if (paymentMethod === "upi_manual") {
-        payload = new FormData();
-        Object.entries(details).forEach(([key, value]) => payload.append(key, value));
-        payload.append("items", JSON.stringify(selectedBooks.map((book) => ({ bookId: book._id, quantity: quantities[book._id] || 1 }))));
-        payload.append("paymentMethod", paymentMethod);
-        payload.append("transactionId", transactionId);
-        payload.append("proof", proof);
-      } else {
-        payload = { ...details, items: JSON.stringify(selectedBooks.map((book) => ({ bookId: book._id, quantity: quantities[book._id] || 1 }))), paymentMethod };
-      }
-      const { data } = await api.post("/payments/manual-book-order", payload);
-      if (data.razorpay) {
-        await openRazorpayPayment(data);
-      } else {
-        setSuccess("pending");
-        toast.success(data.message);
-      }
+      const payload = { ...details, items: JSON.stringify(selectedBooks.map((book) => ({ bookId: book._id, quantity: quantities[book._id] || 1 }))) };
+      const { data } = await api.post("/payments/manual-book-order/draft", payload);
+      navigate(`/order-book/payment/${data.order._id}`);
     } catch (error) {
       toast.error(error.response?.data?.message || "Order could not be submitted");
     } finally {
@@ -193,32 +109,12 @@ export default function OrderBook() {
     }
   }
 
-  if (success) {
-    return (
-      <main className="mobile-page store-page flex min-h-[60vh] items-center justify-center">
-        <section className="panel max-w-xl p-6 text-center sm:p-9">
-          <CheckCircle2 className="mx-auto mb-4 text-green-600" size={52} />
-          <h1 className="text-2xl font-black">Order submitted</h1>
-          <p className="mt-3 leading-7 text-gray-600">
-            {success === "confirmed"
-              ? "Payment verified successfully. Your book order is confirmed."
-              : "Your order has been submitted successfully and is pending verification."}
-          </p>
-          <div className="mt-6 grid gap-3 sm:flex sm:justify-center">
-            <Link className="btn-primary" to="/dashboard/orders">View order history</Link>
-            <Link className="btn-secondary" to="/books">Browse books</Link>
-          </div>
-        </section>
-      </main>
-    );
-  }
-
   return (
     <main className="mobile-page store-page">
       <div className="mb-6 max-w-3xl">
         <span className="badge mb-3"><ShoppingBag size={14} /> Direct book order</span>
         <h1 className="text-2xl font-black sm:text-4xl">Order Book</h1>
-        <p className="mt-2 leading-7 text-gray-600">Choose books for physical delivery, complete your address and pay securely by Razorpay or Manual UPI.</p>
+        <p className="mt-2 leading-7 text-gray-600">Choose books for physical delivery and complete your address. Charges and payment options will appear on the next page.</p>
       </div>
 
       <form className="grid gap-5 lg:grid-cols-[1fr_360px]" onSubmit={submit}>
@@ -304,47 +200,12 @@ export default function OrderBook() {
           </section>
 
           <section className="panel p-4 sm:p-5">
-            <h2 className="mb-3 flex items-center gap-2 text-lg font-black"><CreditCard className="text-orange-700" size={20} /> Payment method</h2>
-            <div className="grid gap-2">
-              <button type="button" className={`rounded-xl border p-3 text-left transition ${paymentMethod === "razorpay" ? "border-[#d97706] bg-amber-50/70 ring-1 ring-[#d97706]/20" : "border-amber-100 bg-white"}`} onClick={() => setPaymentMethod("razorpay")}>
-                <span className="flex items-center gap-2 font-black"><CreditCard size={17} className="text-orange-700" /> Razorpay Online Payment</span>
-                <span className="mt-1 block text-xs leading-5 text-gray-600">Pay securely online and confirm your order instantly.</span>
-              </button>
-              <button type="button" className={`rounded-xl border p-3 text-left transition ${paymentMethod === "upi_manual" ? "border-[#d97706] bg-amber-50/70 ring-1 ring-[#d97706]/20" : "border-amber-100 bg-white"}`} onClick={() => setPaymentMethod("upi_manual")}>
-                <span className="flex items-center gap-2 font-black"><Smartphone size={17} className="text-orange-700" /> Manual UPI</span>
-                <span className="mt-1 block text-xs leading-5 text-gray-600">Pay by UPI and upload screenshot for verification.</span>
-              </button>
-            </div>
-            {selectedBooks.length > 0 && (
-              <div className="mt-4 space-y-2 rounded-xl border border-orange-100 bg-orange-50/60 p-3 text-sm">
-                <p className="font-black text-[#a94707]">Final payment details</p>
-                <div className="flex justify-between"><span>Book Total</span><strong>Rs. {money(bookTotal)}</strong></div>
-                {orderBookExtraCharge > 0 && <div className="flex justify-between"><span>Delivery charge</span><strong>Rs. {money(orderBookExtraCharge)}</strong></div>}
-                <div className="flex justify-between"><span>{paymentMethod === "razorpay" ? "Razorpay" : "Manual UPI"} charge</span><strong>Rs. {money(methodExtraCharge)}</strong></div>
-                <div className="flex justify-between border-t border-dashed border-orange-200 pt-2 text-base font-black text-[#a94707]"><span>Final Amount</span><span>Rs. {money(finalAmount)}</span></div>
-              </div>
-            )}
-            {paymentMethod === "upi_manual" && (
-              <>
-                <div className="mt-4 rounded-xl border border-orange-100 bg-[#fffaf5] p-3 text-sm">
-                  <p className="font-semibold text-gray-600">UPI ID</p>
-                  <p className="break-all font-black text-[#b45309]">{settings.upiId || "Not configured"}</p>
-                  {settings.payeeName && <p className="mt-1 text-gray-600">{settings.payeeName}</p>}
-                  {settings.qrImage && <img className="mx-auto mt-3 h-44 w-44 rounded-xl bg-white object-contain p-2 shadow-sm" src={settings.qrImage} alt="UPI payment QR" />}
-                  {settings.instructions && <p className="mt-3 leading-6 text-gray-600">{settings.instructions}</p>}
-                </div>
-                <div className="mt-4 space-y-3">
-                  <label className="label">Transaction ID<input className="input mt-1" maxLength={120} value={transactionId} onChange={(event) => setTransactionId(event.target.value)} required /></label>
-                  <label className="label">Payment Screenshot<input className="input mt-1" type="file" accept="image/*" onChange={(event) => setProof(event.target.files[0] || null)} required /></label>
-                </div>
-              </>
-            )}
-            {paymentMethod === "razorpay" && <p className="mt-4 rounded-xl border border-amber-100 bg-amber-50/60 p-3 text-sm leading-6 text-gray-700">Razorpay checkout opens after you submit. Successful payment changes this order to <strong>Confirmed</strong>.</p>}
+            <p className="text-sm leading-6 text-gray-600">Delivery and payment charges will be shown before the final payment.</p>
             {!isAuthenticated && (
-              <p className="mt-4 rounded-xl border border-orange-100 bg-orange-50 p-3 text-sm font-semibold text-orange-800">Please log in before submitting so your order appears in your dashboard.</p>
+              <p className="mt-3 rounded-xl border border-orange-100 bg-orange-50 p-3 text-sm font-semibold text-orange-800">Please log in before continuing so your order appears in your dashboard.</p>
             )}
-            <button className="btn-primary mt-4 w-full" disabled={submitting || !selectedBooks.length || (paymentMethod === "upi_manual" && !settings.upiId)}>
-              <ShieldCheck size={17} /> {submitting ? "Preparing..." : isAuthenticated ? paymentMethod === "razorpay" ? `Pay Rs. ${money(finalAmount)} Online` : "Submit Manual Order" : "Login to Submit"}
+            <button className="btn-primary mt-4 w-full" disabled={submitting || !selectedBooks.length}>
+              <ShieldCheck size={17} /> {submitting ? "Preparing..." : isAuthenticated ? "Submit and Pay" : "Login to Continue"}
             </button>
           </section>
         </aside>
