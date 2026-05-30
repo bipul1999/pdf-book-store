@@ -4,10 +4,14 @@ import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../api/client.js";
 
+const BOOK_UPLOAD_TIMEOUT_MS = 10 * 60 * 1000;
+
 function getErrorMessage(error) {
   const data = error.response?.data;
   const firstError = data?.errors?.[0];
   if (firstError?.path && firstError?.msg) return `${firstError.path}: ${firstError.msg}`;
+  if (error.code === "ECONNABORTED") return "PDF upload is taking too long. Please wait a moment and try again.";
+  if (!error.response) return "Could not reach the server. Please check your connection and try again.";
   return data?.message || "Could not update book";
 }
 
@@ -45,7 +49,7 @@ export default function EditBook() {
     if (pdf) payload.append("pdf", pdf);
     setSaving(true);
     try {
-      await api.put(`/books/${id}`, payload);
+      await api.put(`/books/${id}`, payload, { timeout: BOOK_UPLOAD_TIMEOUT_MS });
       toast.success("Book updated");
       navigate("/admin/books");
     } catch (error) {

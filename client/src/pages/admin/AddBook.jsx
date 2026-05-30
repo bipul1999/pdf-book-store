@@ -5,11 +5,14 @@ import { useNavigate } from "react-router-dom";
 import api from "../../api/client.js";
 
 const initial = { title: "", author: "", description: "", price: "", featured: false };
+const BOOK_UPLOAD_TIMEOUT_MS = 10 * 60 * 1000;
 
 function getErrorMessage(error) {
   const data = error.response?.data;
   const firstError = data?.errors?.[0];
   if (firstError?.path && firstError?.msg) return `${firstError.path}: ${firstError.msg}`;
+  if (error.code === "ECONNABORTED") return "PDF upload is taking too long. Please wait a moment and try again.";
+  if (!error.response) return "Could not reach the server. Please check your connection and try again.";
   return data?.message || "Could not add book";
 }
 
@@ -28,7 +31,7 @@ export default function AddBook() {
     payload.append("pdf", pdf);
     setLoading(true);
     try {
-      await api.post("/books", payload);
+      await api.post("/books", payload, { timeout: BOOK_UPLOAD_TIMEOUT_MS });
       toast.success("Book added");
       navigate("/admin/books");
     } catch (error) {

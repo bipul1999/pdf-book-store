@@ -131,7 +131,15 @@ export async function downloadBook(req, res) {
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader("Content-Disposition", `inline; filename="${encodeURIComponent(book.title)}.pdf"`);
   res.setHeader("Cache-Control", "private, no-store, max-age=0");
-  if (book.pdfFileId) return openStoredPdf(book.pdfFileId).pipe(res);
+  if (book.pdfFileId) {
+    const stream = openStoredPdf(book.pdfFileId);
+    stream.on("error", (error) => {
+      console.error(`PDF GridFS read failed for book ${book._id}:`, error.message);
+      if (!res.headersSent) res.status(404).json({ message: "PDF file missing. Please ask the admin to upload it again." });
+      else res.destroy(error);
+    });
+    return stream.pipe(res);
+  }
   if (book.pdfData?.length) return res.send(Buffer.from(book.pdfData));
   res.sendFile(absolute);
 }

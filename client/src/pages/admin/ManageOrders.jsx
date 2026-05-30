@@ -38,6 +38,18 @@ function formatOrderDate(value) {
   });
 }
 
+async function blobErrorMessage(error) {
+  const data = error.response?.data;
+  if (data instanceof Blob) {
+    try {
+      return JSON.parse(await data.text()).message;
+    } catch {
+      return "";
+    }
+  }
+  return data?.message || "";
+}
+
 function CustomerDetails({ order }) {
   if (order.orderType !== "manual_book") {
     return <><strong>{order.user?.name}</strong><p className="break-words text-gray-600">{order.user?.email}</p></>;
@@ -137,7 +149,7 @@ export default function ManageOrders() {
       setTimeout(() => URL.revokeObjectURL(proofUrl), 60 * 1000);
     } catch (error) {
       proofWindow?.close();
-      toast.error(error.response?.data?.message || "Payment proof could not be opened");
+      toast.error(await blobErrorMessage(error) || "Payment proof could not be opened");
     }
   }
 
