@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import api from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { BOOK_COVER_FALLBACK, useFallbackImage } from "../utils/imageFallback.js";
+import { orderBookPrice } from "../utils/pricing.js";
 
 const initialDetails = {
   fullName: "",
@@ -44,7 +45,7 @@ export default function OrderBook() {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [books, setBooks] = useState([]);
-  const [settings, setSettings] = useState({ upiId: "", payeeName: "", qrImage: "", orderBookExtraCharge: 0, instructions: "" });
+  const [settings, setSettings] = useState({ upiId: "", payeeName: "", qrImage: "", orderBookExtraCharge: 0, manualPaymentExtraCharge: 10, razorpayPaymentExtraCharge: 20, instructions: "" });
   const [details, setDetails] = useState(initialDetails);
   const [bookQuery, setBookQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
@@ -84,8 +85,10 @@ export default function OrderBook() {
       : books;
   }, [bookQuery, books]);
   const totalCopies = selectedBooks.reduce((total, book) => total + (quantities[book._id] || 1), 0);
-  const bookTotal = selectedBooks.reduce((total, book) => total + Number(book.price || 0) * (quantities[book._id] || 1), 0);
-  const extraCharge = Number(settings.orderBookExtraCharge || 0);
+  const bookTotal = selectedBooks.reduce((total, book) => total + orderBookPrice(book) * (quantities[book._id] || 1), 0);
+  const methodExtraCharge = Number(paymentMethod === "razorpay" ? settings.razorpayPaymentExtraCharge : settings.manualPaymentExtraCharge) || 0;
+  const orderBookExtraCharge = Number(settings.orderBookExtraCharge || 0);
+  const extraCharge = methodExtraCharge + orderBookExtraCharge;
   const finalAmount = bookTotal + extraCharge;
 
   function updateDetails(event) {
@@ -259,7 +262,7 @@ export default function OrderBook() {
                           <span className={`mb-2 w-fit rounded-full px-2 py-1 text-[11px] font-black ${selected ? "bg-[#d97706] text-white" : "bg-amber-50 text-amber-700"}`}>{selected ? "Selected" : "Select"}</span>
                           <strong className="line-clamp-3 text-sm leading-5">{book.title}</strong>
                           <span className="mt-1 line-clamp-1 text-xs font-semibold text-gray-500">{book.author}</span>
-                          <span className="mt-auto block pt-2 font-black text-orange-700">Rs. {money(book.price)}</span>
+                          <span className="mt-auto block pt-2 font-black text-orange-700">Rs. {money(orderBookPrice(book))}</span>
                         </span>
                       </button>
                       {selected && (
@@ -290,14 +293,15 @@ export default function OrderBook() {
                 {selectedBooks.map((book) => (
                   <div className="flex justify-between gap-3 text-sm" key={book._id}>
                     <span className="line-clamp-2 text-gray-600">{book.title} <strong className="text-gray-800">x {quantities[book._id] || 1}</strong></span>
-                    <strong className="shrink-0">Rs. {money(Number(book.price || 0) * (quantities[book._id] || 1))}</strong>
+                    <strong className="shrink-0">Rs. {money(orderBookPrice(book) * (quantities[book._id] || 1))}</strong>
                   </div>
                 ))}
               </div>
             ) : <p className="mb-4 text-sm text-gray-500">No books selected yet.</p>}
             <div className="space-y-2 border-t border-orange-100 pt-3 text-sm">
               <div className="flex justify-between"><span>Book Total ({totalCopies} copies)</span><strong>Rs. {money(bookTotal)}</strong></div>
-              <div className="flex justify-between"><span>Extra Charge</span><strong>Rs. {money(extraCharge)}</strong></div>
+              {orderBookExtraCharge > 0 && <div className="flex justify-between"><span>Order Book charge</span><strong>Rs. {money(orderBookExtraCharge)}</strong></div>}
+              <div className="flex justify-between"><span>{paymentMethod === "razorpay" ? "Razorpay" : "Manual UPI"} charge</span><strong>Rs. {money(methodExtraCharge)}</strong></div>
               <div className="flex justify-between border-t border-dashed border-orange-200 pt-3 text-lg font-black text-[#a94707]"><span>Final Amount</span><span>Rs. {money(finalAmount)}</span></div>
             </div>
           </section>

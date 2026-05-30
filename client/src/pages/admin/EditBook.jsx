@@ -18,7 +18,7 @@ function getErrorMessage(error) {
 export default function EditBook() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ title: "", author: "", description: "", price: "", featured: false, isActive: true });
+  const [form, setForm] = useState({ title: "", author: "", description: "", orderBookPrice: "", featured: false, isActive: true });
   const [cover, setCover] = useState(null);
   const [pdf, setPdf] = useState(null);
   const [pdfAvailable, setPdfAvailable] = useState(false);
@@ -32,7 +32,7 @@ export default function EditBook() {
         title: book.title,
         author: book.author,
         description: book.description,
-        price: book.price,
+        orderBookPrice: book.orderBookPrice ?? book.price,
         featured: Boolean(book.featured),
         isActive: Boolean(book.isActive)
       });
@@ -67,7 +67,7 @@ export default function EditBook() {
       <form onSubmit={submit} className="grid gap-4 md:grid-cols-2">
         <input className="input" placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
         <input className="input" placeholder="Author" value={form.author} onChange={(e) => setForm({ ...form, author: e.target.value })} required />
-        <input className="input" type="number" min="0" step="0.01" placeholder="Price" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required />
+        <input className="input" type="number" min="0" step="0.01" placeholder="Physical Order Book price" value={form.orderBookPrice} onChange={(e) => setForm({ ...form, orderBookPrice: e.target.value })} required />
         <textarea className="input min-h-32 md:col-span-2" placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
         <label className="label">Replace cover image<input className="input mt-1" type="file" accept="image/*" onChange={(e) => setCover(e.target.files[0])} /></label>
         <label className="label">Replace PDF file

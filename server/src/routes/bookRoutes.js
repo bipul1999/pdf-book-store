@@ -12,7 +12,7 @@ const router = Router();
 router.get("/", cachePublicResponse(60 * 1000), listBooks);
 router.get("/:id", cachePublicResponse(60 * 1000), getBook);
 router.get("/:id/download", protect, downloadBook);
-router.post("/", protect, requireRole("admin"), adminWriteLimiter, uploadBookFiles, [body("title").notEmpty(), body("author").notEmpty(), body("description").notEmpty(), body("price").isFloat({ min: 0 })], validate, createBook);
+router.post("/", protect, requireRole("admin"), adminWriteLimiter, uploadBookFiles, [body("title").notEmpty(), body("author").notEmpty(), body("description").notEmpty(), body("orderBookPrice").isFloat({ min: 0 })], validate, createBook);
 router.put("/:id", protect, requireRole("admin"), adminWriteLimiter, uploadBookFiles, updateBook);
 router.delete("/:id", protect, requireRole("admin"), adminWriteLimiter, deleteBook);
 

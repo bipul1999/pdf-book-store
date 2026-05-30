@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import { useAuth } from "./AuthContext.jsx";
 import { getStoredToken } from "../utils/authStorage.js";
 import { isBookPdfAvailable, ownerUploadMessage } from "../utils/bookAvailability.js";
+import { PDF_SALE_PRICE } from "../utils/pricing.js";
 
 const CartContext = createContext(null);
 
@@ -56,7 +57,7 @@ export function CartProvider({ children }) {
     persist([]);
   }
 
-  const total = items.filter((item) => isBookPdfAvailable(item)).reduce((sum, item) => sum + Number(item.price || 0), 0);
+  const total = items.filter((item) => isBookPdfAvailable(item)).length * PDF_SALE_PRICE;
   const value = useMemo(() => ({ items, add, buyNow, remove, clear, total }), [items, total]);
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

@@ -6,6 +6,7 @@ import { useCart } from "../context/CartContext.jsx";
 import { getStoredToken } from "../utils/authStorage.js";
 import { isBookPdfAvailable, ownerUploadMessage } from "../utils/bookAvailability.js";
 import { BOOK_COVER_FALLBACK, useFallbackImage } from "../utils/imageFallback.js";
+import BookPrice from "./BookPrice.jsx";
 
 export default function BookCard({ book, compact = false }) {
   const navigate = useNavigate();
@@ -72,7 +73,7 @@ export default function BookCard({ book, compact = false }) {
             <>
               <div className={`book-price-box flex items-center justify-between gap-2 ${compact ? "mb-3" : "mb-4"}`}>
                 <span className="text-xs font-bold uppercase tracking-wide text-gray-500">PDF Price</span>
-                <strong className={`price-text ${compact ? "text-xl" : "text-2xl"}`}>Rs. {book.price}</strong>
+                <BookPrice book={book} compact={compact} />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <Link className={`btn-secondary w-full ${compact ? "!min-h-10 !px-2 !py-2 text-xs" : ""}`} to={`/books/${book._id}`} title="Preview book"><Eye size={17} /> Preview</Link>

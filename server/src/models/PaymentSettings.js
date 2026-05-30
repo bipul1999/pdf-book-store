@@ -6,6 +6,8 @@ const paymentSettingsSchema = new mongoose.Schema(
     payeeName: { type: String, default: "PDF Book Store" },
     qrImage: { type: String, default: "" },
     orderBookExtraCharge: { type: Number, min: 0, default: 0 },
+    manualPaymentExtraCharge: { type: Number, min: 0, default: 10 },
+    razorpayPaymentExtraCharge: { type: Number, min: 0, default: 20 },
     instructions: { type: String, default: "Pay the exact amount and upload the payment screenshot for admin verification." }
   },
   { timestamps: true }

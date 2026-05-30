@@ -8,6 +8,8 @@ import { deleteStoredPdf, openStoredPdf, storePdfFile } from "../utils/pdfStorag
 
 const DEFAULT_DIGITAL_ACCESS_DAYS = 30;
 const DAY_MS = 24 * 60 * 60 * 1000;
+const PDF_LIST_PRICE = 149;
+const PDF_SALE_PRICE = 99;
 
 function coverUrl(req, filePath) {
   if (!filePath?.startsWith("uploads")) return filePath;
@@ -24,7 +26,14 @@ function serializeBook(req, book) {
   delete publicBook.pdfData;
   delete publicBook.pdfMimeType;
   delete publicBook.pdfStored;
-  return { ...publicBook, coverImage: coverUrl(req, plain.coverImage), pdfAvailable };
+  return {
+    ...publicBook,
+    price: PDF_SALE_PRICE,
+    listPrice: PDF_LIST_PRICE,
+    orderBookPrice: plain.orderBookPrice ?? plain.price,
+    coverImage: coverUrl(req, plain.coverImage),
+    pdfAvailable
+  };
 }
 
 async function pdfFields(file) {
@@ -66,7 +75,9 @@ export async function createBook(req, res) {
     title: req.body.title,
     author: req.body.author,
     description: req.body.description,
-    price: Number(req.body.price),
+    price: PDF_SALE_PRICE,
+    listPrice: PDF_LIST_PRICE,
+    orderBookPrice: Number(req.body.orderBookPrice),
     featured: req.body.featured === "true" || req.body.featured === true,
     coverImage: cover.path,
     ...(await pdfFields(pdf))
@@ -81,7 +92,7 @@ export async function updateBook(req, res) {
   ["title", "author", "description"].forEach((field) => {
     if (req.body[field] !== undefined) book[field] = req.body[field];
   });
-  if (req.body.price !== undefined) book.price = Number(req.body.price);
+  if (req.body.orderBookPrice !== undefined) book.orderBookPrice = Number(req.body.orderBookPrice);
   if (req.body.featured !== undefined) book.featured = req.body.featured === "true" || req.body.featured === true;
   if (req.body.isActive !== undefined) book.isActive = req.body.isActive === "true" || req.body.isActive === true;
   if (req.files?.cover?.[0]) book.coverImage = req.files.cover[0].path;

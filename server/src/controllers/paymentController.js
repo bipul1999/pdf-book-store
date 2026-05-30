@@ -15,6 +15,7 @@ const MIN_RAZORPAY_AMOUNT = 100;
 const MAX_BOOK_QUANTITY = 20;
 const DEFAULT_DIGITAL_ACCESS_DAYS = 30;
 const DAY_MS = 24 * 60 * 60 * 1000;
+const PDF_SALE_PRICE = 99;
 const DIGITAL_ORDER_STATUSES = new Set(["pending", "submitted", "success", "failed"]);
 const MANUAL_BOOK_ORDER_STATUSES = new Set(["pending", "confirmed", "completed", "rejected"]);
 
@@ -156,6 +157,17 @@ function normalizedExtraCharge(value) {
   return Number.isFinite(charge) && charge >= 0 ? charge : 0;
 }
 
+function orderBookPrice(book) {
+  const price = Number(book.orderBookPrice);
+  return Number.isFinite(price) && price >= 0 ? price : book.price;
+}
+
+function paymentMethodExtraCharge(settings, paymentMethod) {
+  return paymentMethod === "razorpay"
+    ? settings.razorpayPaymentExtraCharge
+    : settings.manualPaymentExtraCharge;
+}
+
 async function paymentSettings() {
   const settings = await PaymentSettings.findOne().sort("-updatedAt");
   return {
@@ -163,6 +175,8 @@ async function paymentSettings() {
     payeeName: settings?.payeeName || process.env.UPI_PAYEE_NAME || "PDF Book Store",
     qrImage: settings?.qrImage || "",
     orderBookExtraCharge: normalizedExtraCharge(settings?.orderBookExtraCharge),
+    manualPaymentExtraCharge: normalizedExtraCharge(settings?.manualPaymentExtraCharge ?? 10),
+    razorpayPaymentExtraCharge: normalizedExtraCharge(settings?.razorpayPaymentExtraCharge ?? 20),
     instructions: settings?.instructions || "Pay the exact amount and upload the payment screenshot for admin verification."
   };
 }
@@ -233,6 +247,8 @@ export async function getOrderBookSettings(req, res) {
       payeeName: settings.payeeName,
       qrImage: fileUrl(req, settings.qrImage),
       orderBookExtraCharge: settings.orderBookExtraCharge,
+      manualPaymentExtraCharge: settings.manualPaymentExtraCharge,
+      razorpayPaymentExtraCharge: settings.razorpayPaymentExtraCharge,
       instructions: settings.instructions
     }
   });
@@ -263,8 +279,8 @@ export async function createManualBookOrder(req, res) {
 
   const booksById = new Map(books.map((book) => [String(book._id), book]));
   const settings = await paymentSettings();
-  const bookTotal = selections.reduce((sum, selection) => sum + booksById.get(selection.bookId).price * selection.quantity, 0);
-  const extraCharge = normalizedExtraCharge(settings.orderBookExtraCharge);
+  const bookTotal = selections.reduce((sum, selection) => sum + orderBookPrice(booksById.get(selection.bookId)) * selection.quantity, 0);
+  const extraCharge = normalizedExtraCharge(settings.orderBookExtraCharge) + paymentMethodExtraCharge(settings, paymentMethod);
   const amount = bookTotal + extraCharge;
   let razorpayOrder = null;
   if (paymentMethod === "razorpay") {
@@ -286,7 +302,7 @@ export async function createManualBookOrder(req, res) {
     user: req.user._id,
     items: selections.map(({ bookId, quantity }) => {
       const book = booksById.get(bookId);
-      return { book: book._id, title: book.title, price: book.price, quantity };
+      return { book: book._id, title: book.title, price: orderBookPrice(book), quantity };
     }),
     amount,
     bookTotal,
@@ -332,13 +348,15 @@ export async function createOrder(req, res) {
     return res.status(422).json({ message: "Not uploaded by owner" });
   }
 
-  const amount = books.reduce((sum, book) => sum + book.price, 0);
+  const bookTotal = books.length * PDF_SALE_PRICE;
   const currency = process.env.RAZORPAY_CURRENCY || "INR";
   const settings = await paymentSettings();
   const razorpay = getRazorpay();
   let razorpayOrder = null;
-  let provider = "upi_manual";
+  let provider = razorpay && paymentMethod !== "upi_manual" ? "razorpay" : "upi_manual";
   let paymentWarning = "";
+  let extraCharge = paymentMethodExtraCharge(settings, provider);
+  let amount = bookTotal + extraCharge;
 
   if (paymentMethod === "razorpay" && !razorpay) {
     return res.status(422).json({ message: "Online card/payment gateway is not configured yet. Please use UPI." });
@@ -359,13 +377,17 @@ export async function createOrder(req, res) {
       console.error("Razorpay authentication failed. Falling back to manual UPI payment.");
       paymentWarning = "Razorpay authentication failed. Please use manual UPI for this order.";
       provider = "upi_manual";
+      extraCharge = paymentMethodExtraCharge(settings, provider);
+      amount = bookTotal + extraCharge;
     }
   }
 
   const order = await Order.create({
     user: req.user._id,
-    items: books.map((book) => ({ book: book._id, title: book.title, price: book.price })),
+    items: books.map((book) => ({ book: book._id, title: book.title, price: PDF_SALE_PRICE })),
     amount,
+    bookTotal,
+    extraCharge,
     currency,
     provider,
     razorpayOrderId: razorpayOrder?.id
@@ -612,6 +634,8 @@ export async function updatePaymentSettings(req, res) {
       upiId: req.body.upiId || "",
       payeeName: req.body.payeeName || "PDF Book Store",
       orderBookExtraCharge: normalizedExtraCharge(req.body.orderBookExtraCharge),
+      manualPaymentExtraCharge: normalizedExtraCharge(req.body.manualPaymentExtraCharge),
+      razorpayPaymentExtraCharge: normalizedExtraCharge(req.body.razorpayPaymentExtraCharge),
       instructions: req.body.instructions || "",
       ...(req.file ? { qrImage: req.file.path } : {})
     },

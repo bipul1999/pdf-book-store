@@ -1,11 +1,12 @@
 import { ArrowLeft, CheckCircle2, CreditCard, Smartphone } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
 import { isBookPdfAvailable, ownerUploadMessage } from "../utils/bookAvailability.js";
+import BookPrice from "../components/BookPrice.jsx";
 
 function loadRazorpayScript() {
   if (window.Razorpay) return Promise.resolve(true);
@@ -36,7 +37,16 @@ export default function Checkout() {
   const [payment, setPayment] = useState(null);
   const [proof, setProof] = useState(null);
   const [paymentNote, setPaymentNote] = useState("");
+  const [settings, setSettings] = useState({ manualPaymentExtraCharge: 10, razorpayPaymentExtraCharge: 20 });
   const hasUnavailableItem = items.some((item) => !isBookPdfAvailable(item));
+  const extraCharge = Number(method === "razorpay" ? settings.razorpayPaymentExtraCharge : settings.manualPaymentExtraCharge) || 0;
+  const finalAmount = total + extraCharge;
+
+  useEffect(() => {
+    api.get("/payments/order-book-settings")
+      .then(({ data }) => setSettings(data.settings || {}))
+      .catch(() => {});
+  }, []);
 
   function upiLink(upi) {
     if (!upi) return "#";
@@ -141,12 +151,16 @@ export default function Checkout() {
                 <p className="text-sm text-gray-600">{item.author}</p>
                 {!isBookPdfAvailable(item) && <p className="text-xs font-black text-orange-700">{ownerUploadMessage}</p>}
               </div>
-              {isBookPdfAvailable(item) && <strong className="price-text col-start-2 sm:col-auto">Rs. {item.price}</strong>}
+              {isBookPdfAvailable(item) && <BookPrice book={item} compact className="col-start-2 sm:col-auto" />}
             </div>
           ))}
         </div>
         <p className="mt-5 text-sm font-bold text-gray-600">{hasUnavailableItem ? "Available PDF total" : `${items.length} books selected`}</p>
-        <strong className="price-text mt-2 block text-3xl">Rs. {total}</strong>
+        <div className="mt-2 space-y-1 text-sm">
+          <p className="flex justify-between gap-3"><span>PDF subtotal</span><strong>Rs. {total}</strong></p>
+          <p className="flex justify-between gap-3"><span>{method === "razorpay" ? "Razorpay" : "Manual UPI"} charge</span><strong>Rs. {extraCharge}</strong></p>
+          <p className="flex justify-between gap-3 border-t border-dashed border-orange-200 pt-2 text-lg font-black text-[#a94707]"><span>Final amount</span><span>Rs. {finalAmount}</span></p>
+        </div>
 
         {!payment ? (
           <div className="mt-6 space-y-4">
@@ -164,7 +178,7 @@ export default function Checkout() {
             </div>
             {hasUnavailableItem && <p className="rounded-xl bg-orange-50 p-3 text-sm font-bold text-orange-800">This cart contains a book that is not uploaded by owner.</p>}
             <button disabled={!items.length || loading || hasUnavailableItem} onClick={startPayment} className="btn-primary w-full">
-              {loading ? "Preparing payment..." : hasUnavailableItem ? ownerUploadMessage : "Continue to payment"}
+              {loading ? "Preparing payment..." : hasUnavailableItem ? ownerUploadMessage : `Continue to pay Rs. ${finalAmount}`}
             </button>
           </div>
         ) : (

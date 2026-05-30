@@ -7,6 +7,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
 import { getStoredToken } from "../utils/authStorage.js";
 import { isBookPdfAvailable, ownerUploadMessage } from "../utils/bookAvailability.js";
+import BookPrice from "../components/BookPrice.jsx";
 
 export default function BookDetails() {
   const { id } = useParams();
@@ -60,7 +61,7 @@ export default function BookDetails() {
         <p className="text-[15px] leading-7 text-gray-700 sm:text-base">{book.description}</p>
         {pdfAvailable ? <div className="panel warm-summary p-5 sm:p-6">
           <p className="text-sm font-semibold text-gray-600">PDF price</p>
-          <strong className="price-text mt-1 block text-2xl sm:text-3xl">Rs. {book.price}</strong>
+          <BookPrice book={book} className="mt-2" />
           <div className="mt-4 grid gap-3 sm:flex sm:flex-wrap">
             <button className="btn-primary w-full sm:w-auto" onClick={goToCheckout}><CreditCard size={18} /> Buy and pay</button>
             <button className="btn-secondary w-full sm:w-auto" onClick={addToCart}><ShoppingCart size={18} /> Add to cart</button>
