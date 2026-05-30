@@ -74,7 +74,7 @@ export const uploadOrderBookProof = multer({
 
 export const uploadPaymentQr = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 5, parts: maxFiles + 5 },
+  limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 10, parts: 12 },
   fileFilter: (_req, file, cb) => {
     if (!hasAllowedImageType(file)) return cb(new Error("QR image required"));
     cb(null, true);
