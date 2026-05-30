@@ -195,8 +195,7 @@ export default function Home() {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          video.muted = false;
-          video.volume = 1;
+          video.muted = true;
           video.play().catch(() => {});
         } else {
           video.pause();
@@ -353,7 +352,8 @@ export default function Home() {
               className="aspect-video w-full bg-black object-cover"
               controls
               playsInline
-              preload="none"
+              poster="/images/promo-video-poster.svg"
+              preload="metadata"
               src="/videos/about-author.mp4"
             >
               Your browser does not support the video tag.
@@ -413,12 +413,15 @@ export default function Home() {
               className="promo-video aspect-video w-full bg-black object-cover"
               controls
               loop
+              muted
               playsInline
-              preload="none"
+              poster="/images/promo-video-poster.svg"
+              preload="metadata"
               src="/videos/author-intro.mp4"
             >
               Your browser does not support the video tag.
             </video>
+            <span className="pointer-events-none absolute left-3 top-3 rounded-full border border-white/20 bg-black/60 px-3 py-1 text-xs font-bold text-white shadow-sm backdrop-blur">Video preview - tap sound for audio</span>
           </div>
           <div className="home-glass promo-copy-panel panel space-y-3 p-5 text-center sm:p-7 lg:text-left">
             <span className="badge mx-auto lg:mx-0">लेखक का आमंत्रण</span>
