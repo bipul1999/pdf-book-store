@@ -29,9 +29,9 @@ button, input, select, textarea {
 img, video { max-width: 100%; }
 
 .neo-chat-toggle {
-  border: 1px solid rgba(30, 64, 175, .78);
-  background: linear-gradient(145deg, rgba(15, 23, 42, .98), rgba(30, 64, 175, .94));
-  box-shadow: 0 16px 38px rgba(30, 64, 175, .38), inset 0 1px 0 rgba(96, 165, 250, .42);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .neo-chat-toggle > svg {
@@ -47,45 +47,55 @@ img, video { max-width: 100%; }
   display: inline-block;
   flex: 0 0 auto;
   overflow: hidden;
-  border: 1px solid rgba(30, 64, 175, .88);
+  border: 1px solid rgba(147, 197, 253, .7);
   border-radius: 999px;
-  background: radial-gradient(circle at 30% 24%, #dbeafe 0 8%, #60a5fa 20%, #1d4ed8 57%, #312e81 100%);
-  box-shadow: 0 5px 18px rgba(30, 64, 175, .5), inset 0 0 14px rgba(147, 197, 253, .5);
+  background:
+    radial-gradient(circle at 28% 20%, rgba(255, 255, 255, .96) 0 5%, rgba(191, 219, 254, .72) 16%, transparent 38%),
+    radial-gradient(circle at 70% 72%, rgba(244, 114, 182, .88), transparent 38%),
+    linear-gradient(145deg, #38bdf8, #2563eb 47%, #7c3aed 76%, #ec4899);
+  box-shadow: 0 10px 26px rgba(37, 99, 235, .42), inset 0 0 18px rgba(255, 255, 255, .58);
 }
 
 .neo-orb-sm { height: 2rem; width: 2rem; }
 .neo-orb-md { height: 2.7rem; width: 2.7rem; }
-.neo-orb-lg { height: 3.25rem; width: 3.25rem; }
+.neo-orb-lg { height: 3.65rem; width: 3.65rem; }
+
+.neo-chat-toggle .neo-orb-lg {
+  height: 100%;
+  width: 100%;
+  border-color: rgba(96, 165, 250, .88);
+  box-shadow: 0 14px 34px rgba(37, 99, 235, .4), 0 0 0 3px rgba(59, 130, 246, .24), inset 0 0 20px rgba(255, 255, 255, .62);
+}
 
 .neo-orb-glow {
   position: absolute;
   inset: 12%;
   border-radius: inherit;
-  background: radial-gradient(circle at 64% 65%, rgba(244, 114, 182, .8), transparent 45%);
-  filter: blur(4px);
+  background: radial-gradient(circle at 64% 65%, rgba(244, 114, 182, .96), transparent 48%);
+  filter: blur(5px);
   animation: neo-orb-glow-pulse 2.7s ease-in-out infinite alternate;
 }
 
 .neo-orb-wave {
   position: absolute;
-  left: -18%;
-  width: 138%;
+  left: -30%;
+  width: 160%;
   border-radius: 50%;
   transform: rotate(-14deg);
   transform-origin: center;
 }
 
 .neo-orb-wave-one {
-  bottom: 5%;
-  height: 58%;
-  background: linear-gradient(140deg, rgba(14, 165, 233, .12), rgba(37, 99, 235, .94) 52%, rgba(192, 132, 252, .84));
+  bottom: 0;
+  height: 64%;
+  background: linear-gradient(140deg, rgba(125, 211, 252, .35), rgba(37, 99, 235, .94) 46%, rgba(217, 70, 239, .86));
   animation: neo-wave-one 3.8s ease-in-out infinite alternate;
 }
 
 .neo-orb-wave-two {
-  bottom: -16%;
-  height: 55%;
-  background: linear-gradient(135deg, rgba(255, 255, 255, .34), rgba(96, 165, 250, .78), rgba(236, 72, 153, .68));
+  bottom: -22%;
+  height: 66%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, .38), rgba(56, 189, 248, .78), rgba(236, 72, 153, .9));
   animation: neo-wave-two 4.6s ease-in-out infinite alternate;
 }
 
