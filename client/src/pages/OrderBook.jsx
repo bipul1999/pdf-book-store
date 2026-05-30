@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { BOOK_COVER_FALLBACK, useFallbackImage } from "../utils/imageFallback.js";
-import { orderBookPrice } from "../utils/pricing.js";
+import { orderBookDiscount, orderBookListPrice, orderBookPrice } from "../utils/pricing.js";
 
 const initialDetails = {
   fullName: "",
@@ -20,6 +20,21 @@ const MAX_BOOK_QUANTITY = 20;
 
 function money(value) {
   return Number(value || 0).toLocaleString("en-IN");
+}
+
+function PhysicalPrice({ book }) {
+  const discount = orderBookDiscount(book);
+  return (
+    <span className="mt-auto block pt-2">
+      <span className="font-black text-orange-700">Rs. {money(orderBookPrice(book))}</span>
+      {discount > 0 && (
+        <span className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
+          <span className="font-bold text-gray-400 line-through">Rs. {money(orderBookListPrice(book))}</span>
+          <span className="rounded-full bg-green-100 px-1.5 py-0.5 font-black text-green-700">{discount}% OFF</span>
+        </span>
+      )}
+    </span>
+  );
 }
 
 export default function OrderBook() {
@@ -158,7 +173,7 @@ export default function OrderBook() {
                           <span className={`mb-2 w-fit rounded-full px-2 py-1 text-[11px] font-black ${selected ? "bg-[#d97706] text-white" : "bg-amber-50 text-amber-700"}`}>{selected ? "Selected" : "Select"}</span>
                           <strong className="line-clamp-3 text-sm leading-5">{book.title}</strong>
                           <span className="mt-1 line-clamp-1 text-xs font-semibold text-gray-500">{book.author}</span>
-                          <span className="mt-auto block pt-2 font-black text-orange-700">Rs. {money(orderBookPrice(book))}</span>
+                          <PhysicalPrice book={book} />
                         </span>
                       </button>
                       {selected && (

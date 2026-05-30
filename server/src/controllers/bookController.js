@@ -31,6 +31,7 @@ function serializeBook(req, book) {
     price: PDF_SALE_PRICE,
     listPrice: PDF_LIST_PRICE,
     orderBookPrice: plain.orderBookPrice ?? plain.price,
+    orderBookListPrice: plain.orderBookListPrice ?? plain.orderBookPrice ?? plain.price,
     coverImage: coverUrl(req, plain.coverImage),
     pdfAvailable
   };
@@ -71,6 +72,9 @@ export async function createBook(req, res) {
   const cover = req.files?.cover?.[0];
   const pdf = req.files?.pdf?.[0];
   if (!cover || !pdf) return res.status(422).json({ message: "Cover image and PDF are required" });
+  if (Number(req.body.orderBookListPrice ?? req.body.orderBookPrice) < Number(req.body.orderBookPrice)) {
+    return res.status(422).json({ message: "Physical book MRP cannot be lower than the sale price" });
+  }
   const book = await Book.create({
     title: req.body.title,
     author: req.body.author,
@@ -78,6 +82,7 @@ export async function createBook(req, res) {
     price: PDF_SALE_PRICE,
     listPrice: PDF_LIST_PRICE,
     orderBookPrice: Number(req.body.orderBookPrice),
+    orderBookListPrice: Number(req.body.orderBookListPrice ?? req.body.orderBookPrice),
     featured: req.body.featured === "true" || req.body.featured === true,
     coverImage: cover.path,
     ...(await pdfFields(pdf))
@@ -107,6 +112,22 @@ export async function updateBook(req, res) {
   }
   clearPublicResponseCache("/api/books");
   res.json({ book: serializeBook(req, await book.populate("category")) });
+}
+
+export async function updateOrderBookPrice(req, res) {
+  const orderBookPrice = Number(req.body.orderBookPrice);
+  const orderBookListPrice = Number(req.body.orderBookListPrice);
+  if (orderBookListPrice < orderBookPrice) {
+    return res.status(422).json({ message: "Physical book MRP cannot be lower than the sale price" });
+  }
+  const book = await Book.findByIdAndUpdate(
+    req.params.id,
+    { orderBookPrice, orderBookListPrice },
+    { new: true, runValidators: true }
+  ).populate("category");
+  if (!book) return res.status(404).json({ message: "Book not found" });
+  clearPublicResponseCache("/api/books");
+  res.json({ book: serializeBook(req, book) });
 }
 
 export async function deleteBook(req, res) {

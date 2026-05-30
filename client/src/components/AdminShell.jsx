@@ -20,6 +20,7 @@ export default function AdminShell() {
             ["/admin", "Dashboard"],
             ["/admin/books/new", "Add Book"],
             ["/admin/books", "Manage Books"],
+            ["/admin/order-book-prices", "Order Book Prices"],
             ["/admin/orders", "Manage Orders"],
             ["/admin/support", "Support Chats"],
             ["/admin/payment", "Payment Options"],

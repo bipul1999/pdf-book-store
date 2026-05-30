@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/client.js";
 
-const initial = { title: "", author: "", description: "", orderBookPrice: "", featured: false };
+const initial = { title: "", author: "", description: "", orderBookListPrice: "", orderBookPrice: "", featured: false };
 const BOOK_UPLOAD_TIMEOUT_MS = 10 * 60 * 1000;
 
 function getErrorMessage(error) {
@@ -47,7 +47,8 @@ export default function AddBook() {
       <form onSubmit={submit} className="grid gap-4 md:grid-cols-2">
         <input className="input" placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
         <input className="input" placeholder="Author" value={form.author} onChange={(e) => setForm({ ...form, author: e.target.value })} required />
-        <input className="input" type="number" min="0" step="0.01" placeholder="Physical Order Book price" value={form.orderBookPrice} onChange={(e) => setForm({ ...form, orderBookPrice: e.target.value })} required />
+        <input className="input" type="number" min="0" step="0.01" placeholder="Physical book MRP" value={form.orderBookListPrice} onChange={(e) => setForm({ ...form, orderBookListPrice: e.target.value })} required />
+        <input className="input" type="number" min="0" step="0.01" placeholder="Physical book sale price" value={form.orderBookPrice} onChange={(e) => setForm({ ...form, orderBookPrice: e.target.value })} required />
         <textarea className="input min-h-32 md:col-span-2" placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
         <label className="label">Cover image<input className="input mt-1" type="file" accept="image/*" onChange={(e) => setCover(e.target.files[0])} required /></label>
         <label className="label">PDF file<input className="input mt-1" type="file" accept="application/pdf" onChange={(e) => setPdf(e.target.files[0])} required /></label>

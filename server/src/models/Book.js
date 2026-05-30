@@ -9,6 +9,7 @@ const bookSchema = new mongoose.Schema(
     price: { type: Number, required: true, min: 0 },
     listPrice: { type: Number, min: 0, default: 149 },
     orderBookPrice: { type: Number, min: 0 },
+    orderBookListPrice: { type: Number, min: 0 },
     coverImage: { type: String, required: true },
     pdfPath: { type: String, required: true, select: false },
     pdfFileId: { type: mongoose.Schema.Types.ObjectId, select: false },
