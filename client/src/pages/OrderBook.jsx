@@ -300,9 +300,6 @@ export default function OrderBook() {
             ) : <p className="mb-4 text-sm text-gray-500">No books selected yet.</p>}
             <div className="space-y-2 border-t border-orange-100 pt-3 text-sm">
               <div className="flex justify-between"><span>Book Total ({totalCopies} copies)</span><strong>Rs. {money(bookTotal)}</strong></div>
-              {orderBookExtraCharge > 0 && <div className="flex justify-between"><span>Delivery charge</span><strong>Rs. {money(orderBookExtraCharge)}</strong></div>}
-              <div className="flex justify-between"><span>{paymentMethod === "razorpay" ? "Razorpay" : "Manual UPI"} charge</span><strong>Rs. {money(methodExtraCharge)}</strong></div>
-              <div className="flex justify-between border-t border-dashed border-orange-200 pt-3 text-lg font-black text-[#a94707]"><span>Final Amount</span><span>Rs. {money(finalAmount)}</span></div>
             </div>
           </section>
 
@@ -318,6 +315,15 @@ export default function OrderBook() {
                 <span className="mt-1 block text-xs leading-5 text-gray-600">Pay by UPI and upload screenshot for verification.</span>
               </button>
             </div>
+            {selectedBooks.length > 0 && (
+              <div className="mt-4 space-y-2 rounded-xl border border-orange-100 bg-orange-50/60 p-3 text-sm">
+                <p className="font-black text-[#a94707]">Final payment details</p>
+                <div className="flex justify-between"><span>Book Total</span><strong>Rs. {money(bookTotal)}</strong></div>
+                {orderBookExtraCharge > 0 && <div className="flex justify-between"><span>Delivery charge</span><strong>Rs. {money(orderBookExtraCharge)}</strong></div>}
+                <div className="flex justify-between"><span>{paymentMethod === "razorpay" ? "Razorpay" : "Manual UPI"} charge</span><strong>Rs. {money(methodExtraCharge)}</strong></div>
+                <div className="flex justify-between border-t border-dashed border-orange-200 pt-2 text-base font-black text-[#a94707]"><span>Final Amount</span><span>Rs. {money(finalAmount)}</span></div>
+              </div>
+            )}
             {paymentMethod === "upi_manual" && (
               <>
                 <div className="mt-4 rounded-xl border border-orange-100 bg-[#fffaf5] p-3 text-sm">
