@@ -50,6 +50,10 @@ async function blobErrorMessage(error) {
   return data?.message || "";
 }
 
+function proofRequestUrl(paymentProof) {
+  return paymentProof?.startsWith("/api/") ? paymentProof.slice(4) : paymentProof;
+}
+
 function CustomerDetails({ order }) {
   if (order.orderType !== "manual_book") {
     return <><strong>{order.user?.name}</strong><p className="break-words text-gray-600">{order.user?.email}</p></>;
@@ -135,7 +139,7 @@ export default function ManageOrders() {
       proofWindow.document.body.textContent = "Loading payment proof...";
     }
     try {
-      const { data } = await api.get(order.paymentProof, { responseType: "blob" });
+      const { data } = await api.get(proofRequestUrl(order.paymentProof), { responseType: "blob" });
       const proofUrl = URL.createObjectURL(data);
       if (proofWindow) {
         proofWindow.location.assign(proofUrl);
