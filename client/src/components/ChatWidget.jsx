@@ -55,13 +55,18 @@ const guideActions = [
   { label: "Orders", words: ["orders", "order history", "payment history"], path: "/dashboard/orders" }
 ];
 
-function NeoOrb({ size = "md" }) {
+function AiBook({ size = "md" }) {
   return (
-    <span className={`neo-orb neo-orb-${size}`} aria-hidden="true">
-      <span className="neo-orb-glow" />
-      <span className="neo-orb-wave neo-orb-wave-one" />
-      <span className="neo-orb-wave neo-orb-wave-two" />
-      <span className="neo-orb-shine" />
+    <span className={`ai-book ai-book-${size}`} aria-hidden="true">
+      <span className="ai-book-aura" />
+      <span className="ai-book-cover" />
+      <span className="ai-book-page ai-book-page-left" />
+      <span className="ai-book-page ai-book-page-right" />
+      <span className="ai-book-page ai-book-page-flip" />
+      <span className="ai-book-spine" />
+      <span className="ai-book-spark ai-book-spark-one" />
+      <span className="ai-book-spark ai-book-spark-two" />
+      <span className="ai-book-spark ai-book-spark-three" />
     </span>
   );
 }
@@ -381,7 +386,7 @@ export default function ChatWidget() {
           </button>
           <div className="neo-chat-header flex items-center justify-between px-4 py-4 text-white">
             <div className="flex min-w-0 items-center gap-2 pr-10">
-              <NeoOrb />
+              <AiBook />
               <div>
                 <p className="font-black">Mahesh Bharti AI Assistant</p>
                 <p className="flex items-center gap-1 text-xs text-blue-100"><CheckCircle2 size={12} /> Voice guide + store support</p>
@@ -393,7 +398,7 @@ export default function ChatWidget() {
               {messages.map((item, index) => (
                 <div className={`flex ${item.role === "user" ? "justify-end" : "justify-start"}`} key={`${item.role}-${index}`}>
                   {item.role === "assistant" && (
-                    <span className="mr-2"><NeoOrb size="sm" /></span>
+                    <span className="mr-2"><AiBook size="sm" /></span>
                   )}
                   <p className={`max-w-[78%] rounded-2xl px-3 py-2 text-sm font-semibold leading-6 ${
                     item.role === "user"
@@ -406,7 +411,7 @@ export default function ChatWidget() {
               ))}
               {loading && (
                 <div className="flex justify-start">
-                  <span className="mr-2"><NeoOrb size="sm" /></span>
+                  <span className="mr-2"><AiBook size="sm" /></span>
                   <p className="rounded-2xl rounded-bl-sm bg-white px-3 py-2 text-sm font-black text-slate-500 shadow-sm">Typing...</p>
                 </div>
               )}
@@ -469,7 +474,7 @@ export default function ChatWidget() {
         onClick={open ? closeAssistant : openAssistant}
         aria-label="Open AI help chat"
       >
-        {open ? <X size={24} /> : <NeoOrb size="lg" />}
+        {open ? <X size={24} /> : <AiBook size="lg" />}
       </button>
     </>
   );
