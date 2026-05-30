@@ -29,9 +29,14 @@ button, input, select, textarea {
 img, video { max-width: 100%; }
 
 .neo-chat-toggle {
-  border: 0;
-  background: transparent;
-  box-shadow: none;
+  border: 2px solid rgba(191, 219, 254, .92);
+  background: rgba(30, 64, 175, .14);
+  box-shadow:
+    0 0 0 3px rgba(59, 130, 246, .16),
+    0 12px 28px rgba(30, 64, 175, .32),
+    inset 0 0 12px rgba(255, 255, 255, .3);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
 }
 
 .neo-chat-toggle > svg {
