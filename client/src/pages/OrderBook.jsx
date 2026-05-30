@@ -300,7 +300,7 @@ export default function OrderBook() {
             ) : <p className="mb-4 text-sm text-gray-500">No books selected yet.</p>}
             <div className="space-y-2 border-t border-orange-100 pt-3 text-sm">
               <div className="flex justify-between"><span>Book Total ({totalCopies} copies)</span><strong>Rs. {money(bookTotal)}</strong></div>
-              {orderBookExtraCharge > 0 && <div className="flex justify-between"><span>Order Book charge</span><strong>Rs. {money(orderBookExtraCharge)}</strong></div>}
+              {orderBookExtraCharge > 0 && <div className="flex justify-between"><span>Delivery charge</span><strong>Rs. {money(orderBookExtraCharge)}</strong></div>}
               <div className="flex justify-between"><span>{paymentMethod === "razorpay" ? "Razorpay" : "Manual UPI"} charge</span><strong>Rs. {money(methodExtraCharge)}</strong></div>
               <div className="flex justify-between border-t border-dashed border-orange-200 pt-3 text-lg font-black text-[#a94707]"><span>Final Amount</span><span>Rs. {money(finalAmount)}</span></div>
             </div>

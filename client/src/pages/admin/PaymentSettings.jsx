@@ -48,7 +48,7 @@ export default function PaymentSettings() {
         <input className="input" placeholder="Payee name" value={form.payeeName} onChange={(e) => setForm({ ...form, payeeName: e.target.value })} required />
         <label className="label">Manual UPI extra charge (Rs.)<input className="input mt-1" type="number" min="0" step="0.01" value={form.manualPaymentExtraCharge} onChange={(e) => setForm({ ...form, manualPaymentExtraCharge: e.target.value })} required /></label>
         <label className="label">Razorpay extra charge (Rs.)<input className="input mt-1" type="number" min="0" step="0.01" value={form.razorpayPaymentExtraCharge} onChange={(e) => setForm({ ...form, razorpayPaymentExtraCharge: e.target.value })} required /></label>
-        <label className="label md:col-span-2">Order Book additional margin / delivery charge (Rs.)<input className="input mt-1" type="number" min="0" step="0.01" value={form.orderBookExtraCharge} onChange={(e) => setForm({ ...form, orderBookExtraCharge: e.target.value })} required /></label>
+        <label className="label md:col-span-2">Delivery charge for Order Book (Rs.)<input className="input mt-1" type="number" min="0" step="0.01" value={form.orderBookExtraCharge} onChange={(e) => setForm({ ...form, orderBookExtraCharge: e.target.value })} required /></label>
         <textarea className="input min-h-28 md:col-span-2" placeholder="Payment instructions" value={form.instructions} onChange={(e) => setForm({ ...form, instructions: e.target.value })} />
         <label className="label">UPI QR image<input className="input mt-1" type="file" accept="image/*" onChange={(e) => setQr(e.target.files[0])} /></label>
         {qrImage && <img className="h-36 w-36 rounded border object-contain" src={qrImage} alt="Current UPI QR" />}

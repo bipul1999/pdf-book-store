@@ -155,7 +155,7 @@ export default function Orders() {
                   {order.orderType === "manual_book" && (
                     <div className="space-y-1 rounded-xl border border-orange-100 bg-orange-50/50 p-3 text-sm">
                       <p className="flex justify-between gap-4"><span>Book Total</span><strong>Rs. {order.bookTotal || 0}</strong></p>
-                      <p className="flex justify-between gap-4"><span>Extra Charge</span><strong>Rs. {order.extraCharge || 0}</strong></p>
+                      <p className="flex justify-between gap-4"><span>Delivery / payment charges</span><strong>Rs. {order.extraCharge || 0}</strong></p>
                     </div>
                   )}
                   <div className={`flex items-start gap-2 rounded-xl border p-3 ${status.className}`}>
