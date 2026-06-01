@@ -1,4 +1,4 @@
-import { CreditCard, Download, ShoppingCart } from "lucide-react";
+import { CreditCard, Download, ShoppingCart, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -57,8 +57,15 @@ export default function BookDetails() {
         <div>
           <h1 className="text-2xl font-black leading-tight sm:text-4xl">{book.title}</h1>
           <p className="mt-1 text-sm font-semibold text-gray-600 sm:text-base">By {book.author}</p>
+          {book.rating && <div className="mt-3 flex items-center gap-2" aria-label={`${book.rating} out of 5 stars`}>
+            <span className="flex gap-0.5 text-amber-500">{[1, 2, 3, 4, 5].map((rating) => <Star fill={rating <= Math.round(book.rating) ? "currentColor" : "none"} key={rating} size={18} />)}</span>
+            <span className="text-sm font-black text-gray-700">{Number(book.rating).toFixed(1)} / 5</span>
+          </div>}
         </div>
-        <p className="text-[15px] leading-7 text-gray-700 sm:text-base">{book.description}</p>
+        <div className="panel p-5 sm:p-6">
+          <h2 className="text-xl font-black text-[#7c2d12]">About Book</h2>
+          <p className="mt-3 whitespace-pre-line text-[15px] leading-7 text-gray-700 sm:text-base">{book.description}</p>
+        </div>
         {pdfAvailable ? <div className="panel warm-summary p-5 sm:p-6">
           <p className="text-sm font-semibold text-gray-600">PDF price</p>
           <BookPrice book={book} className="mt-2" />

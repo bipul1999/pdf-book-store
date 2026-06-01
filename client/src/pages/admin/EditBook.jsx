@@ -18,7 +18,7 @@ function getErrorMessage(error) {
 export default function EditBook() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ title: "", author: "", description: "", featured: false, isActive: true });
+  const [form, setForm] = useState({ title: "", author: "", description: "", rating: "", featured: false, isActive: true });
   const [cover, setCover] = useState(null);
   const [pdf, setPdf] = useState(null);
   const [pdfAvailable, setPdfAvailable] = useState(false);
@@ -32,6 +32,7 @@ export default function EditBook() {
         title: book.title,
         author: book.author,
         description: book.description,
+        rating: book.rating || "",
         featured: Boolean(book.featured),
         isActive: Boolean(book.isActive)
       });
@@ -66,6 +67,7 @@ export default function EditBook() {
       <form onSubmit={submit} className="grid gap-4 md:grid-cols-2">
         <input className="input" placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
         <input className="input" placeholder="Author" value={form.author} onChange={(e) => setForm({ ...form, author: e.target.value })} required />
+        <input className="input" type="number" min="1" max="5" step="0.1" placeholder="Book rating (1-5)" value={form.rating} onChange={(e) => setForm({ ...form, rating: e.target.value })} />
         <p className="rounded-xl bg-orange-50 p-3 text-sm font-semibold text-orange-800">Physical book offer pricing can be changed from Order Book Prices.</p>
         <textarea className="input min-h-32 md:col-span-2" placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
         <label className="label">Replace cover image<input className="input mt-1" type="file" accept="image/*" onChange={(e) => setCover(e.target.files[0])} /></label>

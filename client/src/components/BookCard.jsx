@@ -1,4 +1,4 @@
-import { CreditCard, Eye, ShoppingCart } from "lucide-react";
+import { CreditCard, Eye, ShoppingCart, Star } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -66,6 +66,10 @@ export default function BookCard({ book, compact = false }) {
             <button type="button" onClick={showUnavailable} className={`block w-full line-clamp-2 text-left font-black leading-snug transition hover:text-orange-700 ${compact ? "min-h-[2.7rem] text-base" : "min-h-[3.2rem] text-lg"}`}>{book.title}</button>
           )}
           <p className="book-card-author mt-1 text-sm font-semibold text-gray-600">{book.author}</p>
+          {book.rating && <div className="mt-2 flex items-center gap-1.5" aria-label={`${book.rating} out of 5 stars`}>
+            <span className="flex gap-0.5 text-amber-500">{[1, 2, 3, 4, 5].map((rating) => <Star fill={rating <= Math.round(book.rating) ? "currentColor" : "none"} key={rating} size={14} />)}</span>
+            <span className="text-xs font-black text-gray-600">{Number(book.rating).toFixed(1)}</span>
+          </div>}
           <p className={`book-card-description ${compact ? "mt-2 min-h-[2.5rem] leading-5" : "mt-3 min-h-[3rem] leading-6"} line-clamp-2 text-sm text-gray-600`}>{book.description}</p>
         </div>
         <div className={`mt-auto ${compact ? "pt-3" : "pt-5"}`}>

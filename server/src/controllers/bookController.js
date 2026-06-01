@@ -79,6 +79,7 @@ export async function createBook(req, res) {
     title: req.body.title,
     author: req.body.author,
     description: req.body.description,
+    rating: req.body.rating ? Number(req.body.rating) : undefined,
     price: PDF_SALE_PRICE,
     listPrice: PDF_LIST_PRICE,
     orderBookPrice: Number(req.body.orderBookPrice),
@@ -97,6 +98,7 @@ export async function updateBook(req, res) {
   ["title", "author", "description"].forEach((field) => {
     if (req.body[field] !== undefined) book[field] = req.body[field];
   });
+  if (req.body.rating !== undefined) book.rating = req.body.rating ? Number(req.body.rating) : undefined;
   if (req.body.orderBookPrice !== undefined) book.orderBookPrice = Number(req.body.orderBookPrice);
   if (req.body.featured !== undefined) book.featured = req.body.featured === "true" || req.body.featured === true;
   if (req.body.isActive !== undefined) book.isActive = req.body.isActive === "true" || req.body.isActive === true;
