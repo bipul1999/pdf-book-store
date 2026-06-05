@@ -3,6 +3,7 @@ import Order from "../models/Order.js";
 import Book from "../models/Book.js";
 import Category from "../models/Category.js";
 import Visitor from "../models/Visitor.js";
+import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
 
@@ -26,19 +27,83 @@ export async function listUsers(_req, res) {
   res.json({ users });
 }
 
+function orderAccessExpiry(order, item) {
+  if (order.orderType === "manual_book" || order.status !== "success") return item.accessExpiresAt;
+  return item.accessExpiresAt || new Date(order.updatedAt.getTime() + DEFAULT_DIGITAL_ACCESS_DAYS * DAY_MS);
+}
+
+function transactionLabel(order) {
+  return order.transactionId || order.paymentNote || order.razorpayPaymentId || order.razorpayOrderId || "";
+}
+
+function publicOrder(order) {
+  const safeOrder = withoutRazorpaySignature(order);
+  return {
+    ...safeOrder,
+    transaction: transactionLabel(safeOrder),
+    paymentProof: order.paymentProof ? `/admin/orders/${order._id}/proof` : "",
+    items: order.items.map((item) => ({
+      ...item.toObject(),
+      accessExpiresAt: orderAccessExpiry(order, item)
+    }))
+  };
+}
+
+export async function getUserProfile(req, res) {
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: "User not found" });
+  const user = await User.findById(req.params.id).select("-password -activeSessionId").lean();
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  const orders = await Order.find({ user: user._id }).populate("items.book").sort({ createdAt: -1, _id: -1 });
+  const paidOrderStatuses = new Set(["success", "confirmed", "completed"]);
+  const pdfPurchases = orders.flatMap((order) => {
+    if (order.orderType === "manual_book" || order.status !== "success") return [];
+    return order.items.map((item) => ({
+      orderId: order._id,
+      bookId: item.book?._id || item.book,
+      title: item.title || item.book?.title || "PDF book",
+      amount: item.price,
+      purchasedAt: order.updatedAt,
+      accessExpiresAt: orderAccessExpiry(order, item),
+      transaction: transactionLabel(order)
+    }));
+  });
+
+  const transactions = orders
+    .filter((order) => transactionLabel(order) || paidOrderStatuses.has(order.status))
+    .map((order) => ({
+      orderId: order._id,
+      orderType: order.orderType,
+      provider: order.provider,
+      status: order.status,
+      amount: order.amount,
+      transaction: transactionLabel(order),
+      razorpayPaymentId: order.razorpayPaymentId,
+      razorpayOrderId: order.razorpayOrderId,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt
+    }));
+
+  res.json({
+    user,
+    summary: {
+      totalOrders: orders.length,
+      successfulOrders: orders.filter((order) => paidOrderStatuses.has(order.status)).length,
+      pdfPurchases: pdfPurchases.length,
+      totalPaid: orders
+        .filter((order) => paidOrderStatuses.has(order.status))
+        .reduce((sum, order) => sum + (Number(order.amount) || 0), 0)
+    },
+    orders: orders.map(publicOrder),
+    transactions,
+    pdfPurchases
+  });
+}
+
 export async function listOrders(_req, res) {
   const orders = await Order.find().populate("user", "name email phone").populate("items.book").sort("-createdAt");
   res.json({
-    orders: orders.map((order) => ({
-      ...withoutRazorpaySignature(order),
-      items: order.items.map((item) => ({
-        ...item.toObject(),
-        accessExpiresAt: order.orderType !== "manual_book" && order.status === "success"
-          ? item.accessExpiresAt || new Date(order.updatedAt.getTime() + DEFAULT_DIGITAL_ACCESS_DAYS * DAY_MS)
-          : item.accessExpiresAt
-      })),
-      paymentProof: order.paymentProof ? `/admin/orders/${order._id}/proof` : ""
-    }))
+    orders: orders.map(publicOrder)
   });
 }
 

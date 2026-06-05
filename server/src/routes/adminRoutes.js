@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { dashboardStats, listOrders, listUsers, listVisitors, viewOrderProof } from "../controllers/adminController.js";
+import { dashboardStats, getUserProfile, listOrders, listUsers, listVisitors, viewOrderProof } from "../controllers/adminController.js";
 import { getPaymentSettings, updateDigitalAccess, updateOrderStatus, updatePaymentSettings } from "../controllers/paymentController.js";
 import { getQuoteSetting, updateQuoteSetting } from "../controllers/quoteController.js";
 import { listSupportTickets, updateSupportTicket } from "../controllers/supportController.js";
@@ -15,6 +15,7 @@ router.use(auditAdminActivity);
 
 router.get("/stats", dashboardStats);
 router.get("/users", listUsers);
+router.get("/users/:id", getUserProfile);
 router.get("/support-tickets", listSupportTickets);
 router.patch("/support-tickets/:id", adminWriteLimiter, updateSupportTicket);
 router.get("/feedback", listFeedback);

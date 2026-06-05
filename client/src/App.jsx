@@ -33,6 +33,7 @@ const ManageBooks = lazy(() => import("./pages/admin/ManageBooks.jsx"));
 const OrderBookPrices = lazy(() => import("./pages/admin/OrderBookPrices.jsx"));
 const ManageOrders = lazy(() => import("./pages/admin/ManageOrders.jsx"));
 const ManageUsers = lazy(() => import("./pages/admin/ManageUsers.jsx"));
+const AdminUserProfile = lazy(() => import("./pages/admin/AdminUserProfile.jsx"));
 const Visitors = lazy(() => import("./pages/admin/Visitors.jsx"));
 const PaymentSettings = lazy(() => import("./pages/admin/PaymentSettings.jsx"));
 const QuoteSettings = lazy(() => import("./pages/admin/QuoteSettings.jsx"));
@@ -66,6 +67,7 @@ export default function App() {
             <Route path="support" element={<SupportTickets />} />
             <Route path="feedback" element={<ManageFeedback />} />
             <Route path="users" element={<ManageUsers />} />
+            <Route path="users/:id" element={<AdminUserProfile />} />
             <Route path="visitors" element={<Visitors />} />
           </Route>
           <Route element={<Layout />}>
