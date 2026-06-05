@@ -31,12 +31,28 @@ export function blockPdfDirectAccess(req, res, next) {
 }
 
 export function blockExecutableUploadNames(req, res, next) {
+  if (!["POST", "PUT", "PATCH"].includes(req.method)) return next();
+
   const contentDisposition = String(req.headers["content-disposition"] || "").toLowerCase();
   const contentType = String(req.headers["content-type"] || "").toLowerCase();
-  const suspicious = [...blockedUploadExtensions].some((ext) =>
-    contentDisposition.includes(ext) || contentType.includes(ext.slice(1))
+  const isMultipartUpload = contentType.startsWith("multipart/form-data");
+  const hasTopLevelFilename = /filename\*?=/.test(contentDisposition);
+  if (!isMultipartUpload && !hasTopLevelFilename) return next();
+
+  const suspiciousFilename = [...blockedUploadExtensions].some((ext) =>
+    new RegExp(`filename\\*?=[^;]*\\${ext}(?:"|;|$)`).test(contentDisposition)
   );
-  if (suspicious) {
+  const suspiciousContentType = [
+    "application/x-msdownload",
+    "application/javascript",
+    "application/x-javascript",
+    "application/ecmascript",
+    "application/x-sh",
+    "application/x-csh",
+    "application/x-msdos-program",
+    "application/x-executable"
+  ].some((blockedType) => contentType.startsWith(blockedType));
+  if (suspiciousFilename || suspiciousContentType) {
     logRequestEvent("security", "blocked_executable_upload_hint", req);
     return res.status(422).json({ message: "Executable uploads are not allowed" });
   }

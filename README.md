@@ -89,10 +89,17 @@ Set `ADMIN_NOTIFY_EMAIL` to receive an email when a user uploads UPI payment pro
 
 ## Deployment Notes
 
+Same-domain deployment (recommended):
+
+- Build the React app with `npm run build --prefix client`.
+- Serve the generated `client/dist` folder from the server.
+- Use `VITE_API_URL=/api` for production so the frontend calls the backend on the same origin.
+- Deploy the server and the built client together on one host.
+
 Backend on Render:
 
 - Root directory: `server`
-- Build command: `npm install`
+- Build command: `npm install && npm install --prefix ../client && npm run build --prefix ../client`
 - Start command: `npm start`
 - Add environment variables from `server/.env.example`
 - Persist uploads with a disk or replace local upload storage with Cloudinary/Firebase.

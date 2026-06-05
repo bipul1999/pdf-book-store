@@ -5,6 +5,7 @@ import compression from "compression";
 import helmet from "helmet";
 import morgan from "morgan";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import mongoose from "mongoose";
 import authRoutes from "./routes/authRoutes.js";
@@ -26,6 +27,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 app.set("trust proxy", 1);
+const clientDist = path.join(__dirname, "..", "..", "client", "dist");
 const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:5173")
   .split(",")
   .map((origin) => origin.trim())
@@ -111,6 +113,9 @@ const staticOptions = {
 app.use("/uploads/covers", express.static(path.join(__dirname, "..", "uploads", "covers"), { ...staticOptions, index: false }));
 app.use("/uploads/payment-qrs", express.static(path.join(__dirname, "..", "uploads", "payment-qrs"), { ...staticOptions, index: false }));
 app.use("/uploads/quotes", express.static(path.join(__dirname, "..", "uploads", "quotes"), { ...staticOptions, index: false }));
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist, { index: false }));
+}
 app.use("/api/site", requireDatabase, siteRoutes);
 app.use("/api/auth", (_req, res, next) => {
   res.setHeader("Cache-Control", "private, no-store, max-age=0");
@@ -123,7 +128,11 @@ app.use("/api/users", requireDatabase, userRoutes);
 app.use("/api/support", requireDatabase, supportRoutes);
 app.use("/api/feedback", requireDatabase, feedbackRoutes);
 app.use("/api/admin", requireDatabase, adminRoutes);
-
+if (fs.existsSync(clientDist)) {
+  app.get(/^(?!\/api\/|\/uploads\/).*$/, (_req, res) => {
+    res.sendFile(path.join(clientDist, "index.html"));
+  });
+}
 app.use(notFound);
 app.use(errorHandler);
 
