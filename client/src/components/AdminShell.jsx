@@ -26,7 +26,8 @@ export default function AdminShell() {
             ["/admin/feedback", "User Feedback"],
             ["/admin/payment", "Payment Options"],
             ["/admin/quote", "Quote Section"],
-            ["/admin/users", "Manage Users"]
+            ["/admin/users", "Manage Users"],
+            ["/admin/visitors", "Visitors"]
           ].map(([to, label]) => <NavLink key={to} end={to === "/admin"} className={({ isActive }) => `block shrink-0 rounded-xl px-3 py-2 text-sm font-bold transition md:shrink ${isActive ? "bg-orange-50 text-orange-800" : "hover:bg-orange-50 hover:text-orange-700"}`} to={to}>{label}</NavLink>)}
         </div>
         <button className="btn-secondary mt-3 w-full" onClick={handleLogout}><LogOut size={16} /> Logout</button>

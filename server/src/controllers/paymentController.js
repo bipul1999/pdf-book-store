@@ -625,7 +625,8 @@ export async function razorpayWebhook(req, res) {
 }
 
 export async function myOrders(req, res) {
-  const orders = await Order.find({ user: req.user._id }).populate("items.book").sort({ createdAt: -1, _id: -1 });
+  const paidStatuses = ["success", "confirmed", "completed"];
+  const orders = await Order.find({ user: req.user._id, status: { $in: paidStatuses } }).populate("items.book").sort({ createdAt: -1, _id: -1 });
   res.json({ orders: orders.map((order) => ({ ...withoutPaymentProofData(order), paymentProof: fileUrl(req, order.paymentProof) })) });
 }
 

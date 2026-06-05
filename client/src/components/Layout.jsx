@@ -182,6 +182,18 @@ export default function Layout() {
               <p className="footer-description mt-2 max-w-xl text-sm leading-7 text-stone-300">
                 {footerDescription}
               </p>
+              <div className="mt-5 inline-flex items-center gap-3 rounded-2xl border border-amber-300/20 bg-white/5 px-3 py-2 shadow-sm">
+                <span className="relative grid h-12 w-12 place-items-center overflow-hidden rounded-2xl border border-amber-300/30 bg-[#0f172a] text-sm font-black text-amber-100 shadow-[0_12px_28px_rgba(0,0,0,.22)]">
+                  <span className="absolute -left-3 top-1 h-8 w-8 rounded-full bg-orange-400/45 blur-md" />
+                  <span className="absolute -bottom-4 right-0 h-10 w-10 rounded-full bg-amber-200/35 blur-md" />
+                  <span className="absolute inset-x-2 top-2 h-px bg-amber-200/60" />
+                  <span className="relative tracking-[.12em]">BS</span>
+                </span>
+                <span className="leading-tight">
+                  <span className="block text-[11px] font-black uppercase tracking-wide text-amber-300">Built-by</span>
+                  <span className="block text-base font-black text-amber-50">Bipul Singh</span>
+                </span>
+              </div>
             </div>
             <div className="grid gap-2">
               <p className="text-xs font-black uppercase tracking-wide text-amber-300">Quick Links</p>

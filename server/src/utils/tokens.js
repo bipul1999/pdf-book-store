@@ -14,8 +14,13 @@ export function signToken(user) {
   });
 }
 
-export async function issueSessionToken(user) {
+export async function issueSessionToken(user, loginAudit = {}) {
   user.activeSessionId = crypto.randomUUID();
+  if (!user.firstLoginAt) user.firstLoginAt = loginAudit.at || new Date();
+  user.lastLoginAt = loginAudit.at || new Date();
+  user.loginCount = (user.loginCount || 0) + 1;
+  user.lastLoginIp = loginAudit.ip || "";
+  user.lastLoginUserAgent = loginAudit.userAgent || "";
   await user.save({ validateBeforeSave: false });
   return signToken(user);
 }

@@ -95,7 +95,7 @@ const staticOptions = {
 app.use("/uploads/covers", express.static(path.join(__dirname, "..", "uploads", "covers"), { ...staticOptions, index: false }));
 app.use("/uploads/payment-qrs", express.static(path.join(__dirname, "..", "uploads", "payment-qrs"), { ...staticOptions, index: false }));
 app.use("/uploads/quotes", express.static(path.join(__dirname, "..", "uploads", "quotes"), { ...staticOptions, index: false }));
-app.use("/api/site", siteRoutes);
+app.use("/api/site", requireDatabase, siteRoutes);
 app.use("/api/auth", (_req, res, next) => {
   res.setHeader("Cache-Control", "private, no-store, max-age=0");
   next();

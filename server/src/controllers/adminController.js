@@ -2,6 +2,7 @@ import User from "../models/User.js";
 import Order from "../models/Order.js";
 import Book from "../models/Book.js";
 import Category from "../models/Category.js";
+import Visitor from "../models/Visitor.js";
 import fs from "fs";
 import path from "path";
 
@@ -9,14 +10,15 @@ const DEFAULT_DIGITAL_ACCESS_DAYS = 30;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export async function dashboardStats(_req, res) {
-  const [users, books, orders, categories, revenue] = await Promise.all([
+  const [users, books, orders, categories, visitors, revenue] = await Promise.all([
     User.countDocuments({ role: "user" }),
     Book.countDocuments({ isActive: true }),
     Order.countDocuments(),
     Category.countDocuments(),
+    Visitor.distinct("visitorId").then((ids) => ids.length),
     Order.aggregate([{ $match: { status: "success" } }, { $group: { _id: null, total: { $sum: "$amount" } } }])
   ]);
-  res.json({ users, books, orders, categories, revenue: revenue[0]?.total || 0 });
+  res.json({ users, books, orders, categories, visitors, revenue: revenue[0]?.total || 0 });
 }
 
 export async function listUsers(_req, res) {
@@ -37,6 +39,23 @@ export async function listOrders(_req, res) {
       })),
       paymentProof: order.paymentProof ? `/admin/orders/${order._id}/proof` : ""
     }))
+  });
+}
+
+export async function listVisitors(_req, res) {
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const [visits, totalVisits, uniqueVisitors, todayVisits, todayUnique] = await Promise.all([
+    Visitor.find().populate("user", "name email phone").sort("-createdAt").limit(300),
+    Visitor.countDocuments(),
+    Visitor.distinct("visitorId").then((ids) => ids.length),
+    Visitor.countDocuments({ createdAt: { $gte: startOfToday } }),
+    Visitor.distinct("visitorId", { createdAt: { $gte: startOfToday } }).then((ids) => ids.length)
+  ]);
+
+  res.json({
+    summary: { totalVisits, uniqueVisitors, todayVisits, todayUnique },
+    visits
   });
 }
 

@@ -37,6 +37,8 @@ img, video { max-width: 100%; }
     inset 0 0 12px rgba(255, 255, 255, .72);
   backdrop-filter: blur(7px);
   -webkit-backdrop-filter: blur(7px);
+  isolation: isolate;
+  overflow: hidden;
 }
 
 .neo-chat-toggle > svg {
@@ -138,6 +140,11 @@ img, video { max-width: 100%; }
 .neo-chat-header .ai-book,
 .neo-chat-messages .ai-book {
   animation: ai-book-float 3s ease-in-out infinite;
+}
+
+.neo-chat-toggle .ai-book-lg {
+  height: 2.35rem;
+  width: 3rem;
 }
 
 @keyframes ai-book-float {
@@ -1289,6 +1296,20 @@ table tbody tr {
     height: 3.25rem;
     width: 3.25rem;
   }
+
+  .mobile-chat-toggle .ai-book-lg {
+    height: 1.95rem;
+    width: 2.5rem;
+  }
+
+  .mobile-chat-toggle .ai-book-aura {
+    inset: -8%;
+    filter: blur(5px);
+  }
+
+  .mobile-chat-toggle .ai-book-spark-one { left: 8%; top: 16%; }
+  .mobile-chat-toggle .ai-book-spark-two { right: 6%; top: 27%; }
+  .mobile-chat-toggle .ai-book-spark-three { right: 22%; top: 4%; }
 
   .mobile-chat-panel {
     bottom: calc(4.8rem + env(safe-area-inset-bottom));

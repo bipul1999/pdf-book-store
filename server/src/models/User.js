@@ -10,6 +10,11 @@ const userSchema = new mongoose.Schema(
     role: { type: String, enum: ["user", "admin"], default: "user" },
     isVerified: { type: Boolean, default: false },
     activeSessionId: { type: String, default: "" },
+    firstLoginAt: Date,
+    lastLoginAt: Date,
+    loginCount: { type: Number, default: 0 },
+    lastLoginIp: { type: String, default: "" },
+    lastLoginUserAgent: { type: String, default: "" },
     purchasedBooks: [{ type: mongoose.Schema.Types.ObjectId, ref: "Book" }]
   },
   { timestamps: true }

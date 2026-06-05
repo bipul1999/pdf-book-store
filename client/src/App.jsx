@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import VisitTracker from "./components/VisitTracker.jsx";
 
 const AdminShell = lazy(() => import("./components/AdminShell.jsx"));
 const Home = lazy(() => import("./pages/Home.jsx"));
@@ -32,6 +33,7 @@ const ManageBooks = lazy(() => import("./pages/admin/ManageBooks.jsx"));
 const OrderBookPrices = lazy(() => import("./pages/admin/OrderBookPrices.jsx"));
 const ManageOrders = lazy(() => import("./pages/admin/ManageOrders.jsx"));
 const ManageUsers = lazy(() => import("./pages/admin/ManageUsers.jsx"));
+const Visitors = lazy(() => import("./pages/admin/Visitors.jsx"));
 const PaymentSettings = lazy(() => import("./pages/admin/PaymentSettings.jsx"));
 const QuoteSettings = lazy(() => import("./pages/admin/QuoteSettings.jsx"));
 const SupportTickets = lazy(() => import("./pages/admin/SupportTickets.jsx"));
@@ -44,6 +46,7 @@ function PageLoader() {
 export default function App() {
   return (
     <BrowserRouter>
+      <VisitTracker />
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/admin/login" element={<AdminLogin />} />
@@ -63,6 +66,7 @@ export default function App() {
             <Route path="support" element={<SupportTickets />} />
             <Route path="feedback" element={<ManageFeedback />} />
             <Route path="users" element={<ManageUsers />} />
+            <Route path="visitors" element={<Visitors />} />
           </Route>
           <Route element={<Layout />}>
             <Route path="/" element={<Home />} />

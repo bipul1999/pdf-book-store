@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { dashboardStats, listOrders, listUsers, viewOrderProof } from "../controllers/adminController.js";
+import { dashboardStats, listOrders, listUsers, listVisitors, viewOrderProof } from "../controllers/adminController.js";
 import { getPaymentSettings, updateDigitalAccess, updateOrderStatus, updatePaymentSettings } from "../controllers/paymentController.js";
 import { getQuoteSetting, updateQuoteSetting } from "../controllers/quoteController.js";
 import { listSupportTickets, updateSupportTicket } from "../controllers/supportController.js";
@@ -18,6 +18,7 @@ router.patch("/support-tickets/:id", adminWriteLimiter, updateSupportTicket);
 router.get("/feedback", listFeedback);
 router.patch("/feedback/:id", adminWriteLimiter, updateFeedbackStatus);
 router.get("/orders", listOrders);
+router.get("/visitors", listVisitors);
 router.get("/orders/:id/proof", viewOrderProof);
 router.patch("/orders/:id/status", adminWriteLimiter, updateOrderStatus);
 router.patch("/orders/:id/access", adminWriteLimiter, updateDigitalAccess);

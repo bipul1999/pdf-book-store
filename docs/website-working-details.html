@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PDF Book Store - Website Working Details</title>
+  <style>
+    @page { size: A4; margin: 18mm 15mm; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: #1f2937;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      line-height: 1.55;
+      background: #fff;
+    }
+    h1, h2, h3 { color: #111827; line-height: 1.2; margin: 0 0 8px; }
+    h1 { font-size: 28px; }
+    h2 {
+      margin-top: 24px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #f97316;
+      font-size: 18px;
+    }
+    h3 { margin-top: 14px; font-size: 14px; }
+    p { margin: 6px 0; }
+    ul, ol { margin: 6px 0 10px 18px; padding: 0; }
+    li { margin: 3px 0; }
+    table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; page-break-inside: avoid; }
+    th, td { border: 1px solid #e5e7eb; padding: 7px; vertical-align: top; }
+    th { background: #fff7ed; color: #9a3412; text-align: left; }
+    code {
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      background: #f9fafb;
+      padding: 1px 4px;
+      font-family: Consolas, monospace;
+      font-size: 11px;
+    }
+    .cover {
+      min-height: 230px;
+      padding: 28px;
+      border: 2px solid #fed7aa;
+      border-radius: 12px;
+      background: #fff7ed;
+      page-break-after: always;
+    }
+    .subtitle { margin-top: 8px; color: #4b5563; font-size: 15px; }
+    .meta { margin-top: 22px; display: grid; gap: 8px; }
+    .pill {
+      display: inline-block;
+      margin: 4px 5px 4px 0;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #ffedd5;
+      color: #9a3412;
+      font-weight: 700;
+      font-size: 11px;
+    }
+    .note {
+      margin: 10px 0;
+      padding: 10px 12px;
+      border-left: 4px solid #f97316;
+      background: #fff7ed;
+    }
+    .small { color: #6b7280; font-size: 11px; }
+    .page-break { page-break-before: always; }
+  </style>
+</head>
+<body>
+  <section class="cover">
+    <h1>PDF Book Store</h1>
+    <p class="subtitle">Website Working Details, Feature Flow, Admin System, Payment Flow, User Tracking aur Deployment Notes</p>
+    <div class="meta">
+      <p><strong>Project Type:</strong> Full-stack PDF book selling website</p>
+      <p><strong>Frontend:</strong> React + Vite + Tailwind CSS</p>
+      <p><strong>Backend:</strong> Node.js + Express</p>
+      <p><strong>Database:</strong> MongoDB + Mongoose</p>
+      <p><strong>Auth:</strong> JWT session, password hash, OTP verification</p>
+      <p><strong>Payment:</strong> Razorpay + Manual UPI proof verification</p>
+      <p><strong>Generated On:</strong> 05 June 2026</p>
+    </div>
+    <p>
+      <span class="pill">Users</span>
+      <span class="pill">Books</span>
+      <span class="pill">Orders</span>
+      <span class="pill">Payments</span>
+      <span class="pill">Visitors</span>
+      <span class="pill">Admin Panel</span>
+    </p>
+  </section>
+
+  <h2>1. Website Ka Main Purpose</h2>
+  <p>
+    Ye website PDF books aur physical/manual book orders sell karne ke liye bani hai. User account create karta hai,
+    login karta hai, book browse karta hai, payment karta hai, aur successful payment ke baad PDF library ya order
+    history me uska purchase save hota hai. Admin panel se books, orders, users, feedback, payment settings, quotes,
+    support chats aur visitors manage kiye ja sakte hain.
+  </p>
+
+  <h2>2. Project Structure</h2>
+  <table>
+    <tr><th>Folder/File</th><th>Kaam</th></tr>
+    <tr><td><code>client</code></td><td>React frontend. User pages aur admin pages yahin hain.</td></tr>
+    <tr><td><code>server</code></td><td>Express API, MongoDB models, controllers, routes, auth, payments, uploads.</td></tr>
+    <tr><td><code>server/src/models</code></td><td>Database schemas: User, Book, Order, Visitor, Feedback, SupportTicket, PaymentSettings, etc.</td></tr>
+    <tr><td><code>server/src/controllers</code></td><td>Business logic: auth, payment, admin, books, visitors, feedback.</td></tr>
+    <tr><td><code>server/src/routes</code></td><td>API URL mapping.</td></tr>
+    <tr><td><code>uploads</code></td><td>Book covers, PDFs, quotes, payment proof uploads.</td></tr>
+  </table>
+
+  <h2>3. User Account Flow</h2>
+  <ol>
+    <li>User signup page par name, email, phone aur password enter karta hai.</li>
+    <li>Password plain text me save nahi hota. Backend bcrypt hash banakar database me save karta hai.</li>
+    <li>Signup ke baad OTP email/phone purpose ke saath generate hota hai.</li>
+    <li>OTP verify hone ke baad user verified ho jata hai.</li>
+    <li>Login password ya OTP flow se hota hai.</li>
+    <li>Login success ke baad JWT token issue hota hai aur active session id save hoti hai.</li>
+  </ol>
+
+  <h3>Login Details Admin Me Kaise Save Hote Hain</h3>
+  <p>Login ya OTP verification success hone par user record me ye fields update hoti hain:</p>
+  <ul>
+    <li><code>firstLoginAt</code> - pehli baar login ka time.</li>
+    <li><code>lastLoginAt</code> - latest login ka time.</li>
+    <li><code>loginCount</code> - total successful login count.</li>
+    <li><code>lastLoginIp</code> - latest login IP address.</li>
+    <li><code>lastLoginUserAgent</code> - browser/device user agent.</li>
+  </ul>
+  <p>Admin panel ke <strong>Manage Users</strong> section me ye login details visible hain.</p>
+
+  <h2>4. Book Browsing Aur Purchase Flow</h2>
+  <ol>
+    <li>User home/books page par active books dekhta hai.</li>
+    <li>Book detail page me cover, title, category, price, description aur availability dikhti hai.</li>
+    <li>Digital PDF purchase ke liye user cart/checkout flow use karta hai.</li>
+    <li>Physical/manual book order ke liye delivery details ke saath order book flow use hota hai.</li>
+  </ol>
+
+  <h2>5. Payment Flow</h2>
+  <h3>Razorpay Online Payment</h3>
+  <ol>
+    <li>Checkout par backend Razorpay order create karta hai.</li>
+    <li>User Razorpay checkout me payment karta hai.</li>
+    <li>Payment success ke baad frontend backend ko verification fields bhejta hai.</li>
+    <li>Backend Razorpay signature verify karta hai.</li>
+    <li>Signature valid hone par order status <code>success</code> ya manual book ke liye <code>confirmed</code> hota hai.</li>
+    <li>Digital PDF order success hone par book user ke <code>purchasedBooks</code> me unlock hoti hai.</li>
+  </ol>
+
+  <h3>Manual UPI Payment</h3>
+  <ol>
+    <li>Agar Razorpay configured nahi hai ya user UPI manual choose karta hai, order pending/submitted state me banta hai.</li>
+    <li>User UPI payment karta hai aur payment screenshot/proof upload karta hai.</li>
+    <li>Admin ko proof admin panel me dikhta hai.</li>
+    <li>Admin status <code>success</code> kare to digital PDF unlock hoti hai.</li>
+    <li>Admin physical book order ko <code>confirmed</code>, <code>completed</code> ya <code>rejected</code> kar sakta hai.</li>
+  </ol>
+
+  <div class="note">
+    <strong>Important:</strong> User ki order history me ab sirf payment success/confirmed/completed orders dikhte hain.
+    Failed, pending ya submitted orders user history me paid order ke roop me nahi dikhte.
+  </div>
+
+  <h2>6. User Order History</h2>
+  <p>
+    User dashboard ke <strong>My Orders</strong> page me usi login user ke orders dikhte hain. Backend query user id se filter karti hai,
+    isliye ek user dusre user ka order nahi dekh sakta.
+  </p>
+  <table>
+    <tr><th>Order Type</th><th>User History Me Kab Dikhega</th></tr>
+    <tr><td>Digital PDF</td><td>Payment status <code>success</code> hone ke baad.</td></tr>
+    <tr><td>Physical/manual book</td><td>Status <code>confirmed</code> ya <code>completed</code> hone ke baad.</td></tr>
+  </table>
+
+  <h2>7. PDF Library Aur Secure PDF Access</h2>
+  <p>
+    PDFs public static file ki tarah directly open nahi hote. User jab library se PDF read/download karta hai,
+    backend JWT token check karta hai aur confirm karta hai ki book user ke purchased list ya successful order me hai.
+  </p>
+  <ul>
+    <li>Successful digital payment ke baad PDF unlock hoti hai.</li>
+    <li>Default digital access duration 30 days hai.</li>
+    <li>Admin successful order ke andar PDF access expiry date update kar sakta hai.</li>
+    <li>Admin users kisi bhi book ko manage/download kar sakte hain.</li>
+  </ul>
+
+  <h2 class="page-break">8. Admin Panel</h2>
+  <p>Admin route: <code>/admin/login</code>. Admin login protected hai aur sirf admin role ke users access kar sakte hain.</p>
+  <table>
+    <tr><th>Admin Section</th><th>Kaam</th></tr>
+    <tr><td>Dashboard</td><td>Total users, books, orders, revenue aur visitors summary.</td></tr>
+    <tr><td>Add Book</td><td>New book add karna, cover/PDF upload karna.</td></tr>
+    <tr><td>Manage Books</td><td>Books edit, activate/deactivate, delete/manage.</td></tr>
+    <tr><td>Order Book Prices</td><td>Physical/manual book prices manage karna.</td></tr>
+    <tr><td>Manage Orders</td><td>Digital aur physical orders, payment proof, status update, access expiry manage.</td></tr>
+    <tr><td>Support Chats</td><td>User support tickets dekhna aur update karna.</td></tr>
+    <tr><td>User Feedback</td><td>User feedback manage karna.</td></tr>
+    <tr><td>Payment Options</td><td>UPI id, payee name, QR image, payment extra charges aur instructions update.</td></tr>
+    <tr><td>Quote Section</td><td>Home/site quote section manage.</td></tr>
+    <tr><td>Manage Users</td><td>All users, phone, role, verification, login count, last login, IP details.</td></tr>
+    <tr><td>Visitors</td><td>Total visits, unique visitors, today visits, page/device/IP/user info.</td></tr>
+  </table>
+
+  <h2>9. Visitor Tracking Kaise Kaam Karta Hai</h2>
+  <ol>
+    <li>Frontend me <code>VisitTracker</code> component every non-admin route change par run hota hai.</li>
+    <li>Browser localStorage me ek visitor id save hoti hai, jisse same browser ke repeat visits identify hote hain.</li>
+    <li>Frontend <code>POST /api/site/visit</code> API call karta hai.</li>
+    <li>Backend visitor details MongoDB me <code>Visitor</code> collection me save karta hai.</li>
+    <li>Agar visitor logged-in hai to visitor record me user id bhi attach hoti hai.</li>
+    <li>Admin panel ke Visitors section me latest 300 visit logs aur summary dikhti hai.</li>
+  </ol>
+  <p>Saved visitor data:</p>
+  <ul>
+    <li>Visitor id</li>
+    <li>Logged-in user id, agar available ho</li>
+    <li>IP address</li>
+    <li>Browser/device user agent</li>
+    <li>Visited page</li>
+    <li>Referrer</li>
+    <li>Screen size</li>
+    <li>Language</li>
+    <li>Visit time</li>
+  </ul>
+
+  <h2>10. Database Models Summary</h2>
+  <table>
+    <tr><th>Model</th><th>Main Fields</th><th>Use</th></tr>
+    <tr><td>User</td><td>name, email, phone, password hash, role, verified, login audit, purchasedBooks</td><td>User/admin accounts aur login records.</td></tr>
+    <tr><td>Book</td><td>title, description, price, cover, PDF path, category, active status</td><td>Book catalog.</td></tr>
+    <tr><td>Order</td><td>user, items, amount, provider, proof, transaction id, status</td><td>Payment/order history and unlock logic.</td></tr>
+    <tr><td>Visitor</td><td>visitorId, user, ip, userAgent, page, referrer, screen, language</td><td>Website visitor analytics.</td></tr>
+    <tr><td>PaymentSettings</td><td>UPI id, payee name, QR, extra charges, instructions</td><td>Payment options admin setting.</td></tr>
+    <tr><td>Feedback</td><td>user/customer feedback and status</td><td>Feedback management.</td></tr>
+    <tr><td>SupportTicket</td><td>customer issue/message/status</td><td>Support chat/ticket system.</td></tr>
+  </table>
+
+  <h2>11. Important API Routes</h2>
+  <table>
+    <tr><th>Route</th><th>Purpose</th></tr>
+    <tr><td><code>POST /api/auth/signup</code></td><td>User signup.</td></tr>
+    <tr><td><code>POST /api/auth/verify-otp</code></td><td>Signup OTP verify and login token issue.</td></tr>
+    <tr><td><code>POST /api/auth/login</code></td><td>Password login.</td></tr>
+    <tr><td><code>POST /api/auth/login/request-otp</code></td><td>Login OTP request.</td></tr>
+    <tr><td><code>POST /api/auth/login/verify-otp</code></td><td>OTP login verify.</td></tr>
+    <tr><td><code>GET /api/users/orders</code></td><td>Current user's successful order history.</td></tr>
+    <tr><td><code>GET /api/users/library</code></td><td>Current user's unlocked PDF library.</td></tr>
+    <tr><td><code>POST /api/payments/create-order</code></td><td>Digital checkout order create.</td></tr>
+    <tr><td><code>POST /api/payments/verify</code></td><td>Razorpay payment verify.</td></tr>
+    <tr><td><code>POST /api/payments/confirm-manual</code></td><td>Manual UPI proof submit.</td></tr>
+    <tr><td><code>POST /api/site/visit</code></td><td>Visitor tracking save.</td></tr>
+    <tr><td><code>GET /api/admin/stats</code></td><td>Admin dashboard stats.</td></tr>
+    <tr><td><code>GET /api/admin/users</code></td><td>Admin users list.</td></tr>
+    <tr><td><code>GET /api/admin/orders</code></td><td>Admin orders list.</td></tr>
+    <tr><td><code>GET /api/admin/visitors</code></td><td>Admin visitors analytics.</td></tr>
+  </table>
+
+  <h2>12. Security Points</h2>
+  <ul>
+    <li>Password bcrypt hash ke saath save hota hai.</li>
+    <li>JWT secret minimum length required hai.</li>
+    <li>Admin routes protected hain: token + role check.</li>
+    <li>PDF direct public access nahi hota, backend permission check karta hai.</li>
+    <li>Razorpay signature backend par verify hoti hai.</li>
+    <li>Payment proof upload admin verification ke liye restricted flow me use hota hai.</li>
+    <li>API rate limiters auth/payment/admin write routes par use hote hain.</li>
+    <li>Helmet, CORS, compression aur no-store cache headers sensitive auth/admin flows me use hote hain.</li>
+  </ul>
+
+  <h2>13. Deployment Notes</h2>
+  <table>
+    <tr><th>Part</th><th>Deployment</th></tr>
+    <tr><td>Backend</td><td>Render. Root directory <code>server</code>, build <code>npm install</code>, start <code>npm start</code>.</td></tr>
+    <tr><td>Frontend</td><td>Vercel/Netlify. Root directory <code>client</code>, build <code>npm run build</code>, publish <code>dist</code>.</td></tr>
+    <tr><td>Database</td><td>MongoDB Atlas via <code>MONGO_URI</code>.</td></tr>
+    <tr><td>Frontend API URL</td><td><code>VITE_API_URL</code> should point to deployed backend API URL.</td></tr>
+  </table>
+
+  <h2>14. Environment Variables</h2>
+  <ul>
+    <li><code>MONGO_URI</code> - MongoDB connection string.</li>
+    <li><code>JWT_SECRET</code> - secure JWT secret.</li>
+    <li><code>CLIENT_URL</code> - allowed frontend URLs.</li>
+    <li><code>SMTP_USER</code>, <code>SMTP_PASS</code> - email/OTP sending.</li>
+    <li><code>RAZORPAY_KEY_ID</code>, <code>RAZORPAY_KEY_SECRET</code> - online payment.</li>
+    <li><code>RAZORPAY_WEBHOOK_SECRET</code> - webhook verification.</li>
+    <li><code>UPI_ID</code>, <code>UPI_PAYEE_NAME</code> - manual UPI fallback/defaults.</li>
+    <li><code>ADMIN_NOTIFY_EMAIL</code> - payment proof notification email.</li>
+    <li><code>OWNER_ADMIN_EMAIL</code> - authorized first admin email.</li>
+  </ul>
+
+  <h2>15. Daily Admin Workflow</h2>
+  <ol>
+    <li>Admin login kare.</li>
+    <li>Dashboard me users/orders/revenue/visitors check kare.</li>
+    <li>Manage Orders me new payment proof ya book orders verify kare.</li>
+    <li>Successful digital payment ko <code>success</code> mark kare, PDF unlock ho jayegi.</li>
+    <li>Physical book order ko <code>confirmed</code> ya <code>completed</code> kare.</li>
+    <li>Manage Users me user login activity check kare.</li>
+    <li>Visitors section me traffic aur page visits dekhe.</li>
+    <li>Payment Options me UPI/QR/charges update kare agar zarurat ho.</li>
+  </ol>
+
+  <h2>16. Current Local URLs</h2>
+  <ul>
+    <li>Frontend: <code>http://localhost:5173</code></li>
+    <li>Backend API: <code>http://localhost:5000/api</code></li>
+    <li>Admin Login: <code>http://localhost:5173/admin/login</code></li>
+    <li>API Health: <code>http://localhost:5000/api/health</code></li>
+  </ul>
+
+  <p class="small">
+    Note: Visitor tracking privacy-sensitive hai. Production website par privacy policy me basic analytics/IP/device tracking mention karna recommended hai.
+  </p>
+</body>
+</html>
