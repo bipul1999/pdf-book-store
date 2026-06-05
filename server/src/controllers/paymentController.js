@@ -10,12 +10,11 @@ import { clearPublicResponseCache } from "../middleware/publicResponseCache.js";
 import { getRazorpay } from "../config/razorpay.js";
 import { sendEmail } from "../utils/email.js";
 import { hasOwnerUploadedPdf } from "../utils/bookAvailability.js";
+import { digitalAccessExpiry, initializeDigitalAccess, isVerifiedDigitalOrder, VERIFIED_DIGITAL_ORDER_STATUSES } from "../utils/digitalAccess.js";
 import { logEvent, logRequestEvent } from "../utils/logger.js";
 
 const MIN_RAZORPAY_AMOUNT = 100;
 const MAX_BOOK_QUANTITY = 20;
-const DEFAULT_DIGITAL_ACCESS_DAYS = 30;
-const DAY_MS = 24 * 60 * 60 * 1000;
 const PDF_SALE_PRICE = 99;
 const DIGITAL_ORDER_STATUSES = new Set(["pending", "submitted", "success", "failed"]);
 const MANUAL_BOOK_ORDER_STATUSES = new Set(["pending", "confirmed", "completed", "rejected"]);
@@ -51,19 +50,6 @@ function signaturesMatch(expected, received) {
   const expectedBuffer = Buffer.from(expected);
   const receivedBuffer = Buffer.from(received);
   return expectedBuffer.length === receivedBuffer.length && crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
-}
-
-function digitalAccessExpiry(order, item) {
-  if (item.accessExpiresAt) return new Date(item.accessExpiresAt);
-  return new Date(order.updatedAt.getTime() + DEFAULT_DIGITAL_ACCESS_DAYS * DAY_MS);
-}
-
-function initializeDigitalAccess(order) {
-  if (order.orderType === "manual_book") return;
-  const expiresAt = new Date(Date.now() + DEFAULT_DIGITAL_ACCESS_DAYS * DAY_MS);
-  order.items.forEach((item) => {
-    if (!item.accessExpiresAt) item.accessExpiresAt = expiresAt;
-  });
 }
 
 async function unlockBooks(order) {
@@ -618,7 +604,7 @@ export async function verifyPayment(req, res) {
 
   const order = await Order.findOne({ _id: orderId, user: req.user._id });
   if (!order) return res.status(404).json({ message: "Order not found" });
-  if (["success", "confirmed"].includes(order.status)) {
+  if (isVerifiedDigitalOrder(order) || (order.orderType === "manual_book" && ["confirmed", "completed"].includes(order.status))) {
     if (order.razorpayPaymentId === razorpay_payment_id && order.razorpayOrderId === razorpay_order_id) {
       return res.json({ message: order.orderType === "manual_book" ? "Payment verified. Your book order is confirmed." : "Payment verified", order: withoutPaymentProofData(order) });
     }
@@ -687,7 +673,7 @@ export async function razorpayWebhook(req, res) {
   if (!razorpayOrderId) return res.json({ received: true });
 
   const order = await Order.findOne({ razorpayOrderId });
-  if (!order || ["success", "confirmed"].includes(order.status)) return res.json({ received: true });
+  if (!order || isVerifiedDigitalOrder(order) || (order.orderType === "manual_book" && ["confirmed", "completed"].includes(order.status))) return res.json({ received: true });
   const duplicatePayment = await Order.findOne({ _id: { $ne: order._id }, razorpayPaymentId: payment.id }).select("_id");
   if (duplicatePayment) {
     logEvent("payment", "duplicate_webhook_payment_ignored", { orderId: order._id, duplicateOrderId: duplicatePayment._id, razorpayPaymentId: payment.id });
@@ -717,7 +703,7 @@ export async function myOrders(req, res) {
 }
 
 export async function myLibrary(req, res) {
-  const orders = await Order.find({ user: req.user._id, status: "success", orderType: { $ne: "manual_book" } })
+  const orders = await Order.find({ user: req.user._id, status: { $in: VERIFIED_DIGITAL_ORDER_STATUSES }, orderType: { $ne: "manual_book" } })
     .populate({ path: "items.book", populate: "category" });
   const uniqueBooks = new Map();
   orders.forEach((order) => {
@@ -740,7 +726,7 @@ export async function myLibraryBook(req, res) {
   if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: "Book not found" });
   const orders = await Order.find({
     user: req.user._id,
-    status: "success",
+    status: { $in: VERIFIED_DIGITAL_ORDER_STATUSES },
     orderType: { $ne: "manual_book" },
     "items.book": req.params.id
   });
@@ -762,13 +748,13 @@ export async function updateOrderStatus(req, res) {
   if (!allowedStatuses.has(req.body.status)) return res.status(422).json({ message: "Invalid order status" });
   const previousStatus = order.status;
   order.status = req.body.status;
-  if (!manualBookOrder && order.status === "success") initializeDigitalAccess(order);
+  if (!manualBookOrder && isVerifiedDigitalOrder(order)) initializeDigitalAccess(order);
   await order.save();
   if (manualBookOrder) {
     logRequestEvent("payment", "admin_order_status_updated", req, { orderId: order._id, previousStatus, status: order.status });
     return res.json({ order });
   }
-  if (order.status === "success") await unlockBooks(order);
+  if (isVerifiedDigitalOrder(order)) await unlockBooks(order);
   else await lockBooks(order);
   if (["success", "failed"].includes(order.status) && previousStatus !== order.status) {
     await sendPaymentStatusEmail(order);
@@ -780,7 +766,7 @@ export async function updateOrderStatus(req, res) {
 export async function updateDigitalAccess(req, res) {
   const order = await Order.findById(req.params.id);
   if (!order) return res.status(404).json({ message: "Order not found" });
-  if (order.orderType === "manual_book" || order.status !== "success") {
+  if (!isVerifiedDigitalOrder(order)) {
     return res.status(422).json({ message: "Access duration can only be updated for successful PDF purchases" });
   }
   const item = order.items.find((orderItem) => String(orderItem.book) === String(req.body.bookId));

@@ -3,11 +3,12 @@ import toast from "react-hot-toast";
 import api from "../../api/client.js";
 
 const digitalStatuses = [
-  ["pending", "pending"],
-  ["submitted", "submitted"],
-  ["success", "success"],
-  ["failed", "failed"]
+  ["pending", "Pending"],
+  ["submitted", "Proof submitted"],
+  ["success", "Verified - unlock PDF"],
+  ["failed", "Failed"]
 ];
+const verifiedDigitalStatuses = new Set(["success", "confirmed", "completed"]);
 const manualStatuses = [
   ["pending", "Pending"],
   ["confirmed", "Confirmed"],
@@ -116,7 +117,7 @@ export default function ManageOrders() {
   }
 
   function renderAccessEditor(order, item, mobile = false) {
-    if (order.orderType === "manual_book" || order.status !== "success") return null;
+    if (order.orderType === "manual_book" || !verifiedDigitalStatuses.has(order.status)) return null;
     const key = accessKey(order, item);
     return (
       <div className={`${mobile ? "mt-3" : "mt-3 min-w-56"} rounded-xl border border-amber-100 bg-amber-50/60 p-2`}>

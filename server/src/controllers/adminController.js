@@ -6,9 +6,7 @@ import Visitor from "../models/Visitor.js";
 import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
-
-const DEFAULT_DIGITAL_ACCESS_DAYS = 30;
-const DAY_MS = 24 * 60 * 60 * 1000;
+import { digitalAccessExpiry, isVerifiedDigitalOrder } from "../utils/digitalAccess.js";
 
 export async function dashboardStats(_req, res) {
   const [users, books, orders, categories, visitors, revenue] = await Promise.all([
@@ -28,8 +26,8 @@ export async function listUsers(_req, res) {
 }
 
 function orderAccessExpiry(order, item) {
-  if (order.orderType === "manual_book" || order.status !== "success") return item.accessExpiresAt;
-  return item.accessExpiresAt || new Date(order.updatedAt.getTime() + DEFAULT_DIGITAL_ACCESS_DAYS * DAY_MS);
+  if (!isVerifiedDigitalOrder(order)) return item.accessExpiresAt;
+  return digitalAccessExpiry(order, item);
 }
 
 function transactionLabel(order) {
@@ -57,7 +55,7 @@ export async function getUserProfile(req, res) {
   const orders = await Order.find({ user: user._id }).populate("items.book").sort({ createdAt: -1, _id: -1 });
   const paidOrderStatuses = new Set(["success", "confirmed", "completed"]);
   const pdfPurchases = orders.flatMap((order) => {
-    if (order.orderType === "manual_book" || order.status !== "success") return [];
+    if (!isVerifiedDigitalOrder(order)) return [];
     return order.items.map((item) => ({
       orderId: order._id,
       bookId: item.book?._id || item.book,

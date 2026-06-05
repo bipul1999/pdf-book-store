@@ -5,11 +5,10 @@ import Book from "../models/Book.js";
 import Order from "../models/Order.js";
 import { clearPublicResponseCache } from "../middleware/publicResponseCache.js";
 import { hasOwnerUploadedPdf } from "../utils/bookAvailability.js";
+import { digitalAccessExpiry, VERIFIED_DIGITAL_ORDER_STATUSES } from "../utils/digitalAccess.js";
 import { deleteStoredPdf, openStoredPdf, storePdfFile } from "../utils/pdfStorage.js";
 import { logRequestEvent } from "../utils/logger.js";
 
-const DEFAULT_DIGITAL_ACCESS_DAYS = 30;
-const DAY_MS = 24 * 60 * 60 * 1000;
 const PDF_LIST_PRICE = 149;
 const PDF_SALE_PRICE = 99;
 
@@ -167,14 +166,13 @@ export async function downloadBook(req, res) {
   if (!owns) {
     const successfulOrders = await Order.find({
       user: req.user._id,
-      status: "success",
+      status: { $in: VERIFIED_DIGITAL_ORDER_STATUSES },
       orderType: { $ne: "manual_book" },
       "items.book": book._id
     }).select("items updatedAt");
     owns = successfulOrders.some((order) => {
       const item = order.items.find((orderItem) => String(orderItem.book) === String(book._id));
-      const expiry = item?.accessExpiresAt || new Date(order.updatedAt.getTime() + DEFAULT_DIGITAL_ACCESS_DAYS * DAY_MS);
-      return Boolean(item) && expiry.getTime() > Date.now();
+      return Boolean(item) && digitalAccessExpiry(order, item).getTime() > Date.now();
     });
   }
   if (!owns) return res.status(403).json({ message: "Purchase required or access expired for this PDF" });
