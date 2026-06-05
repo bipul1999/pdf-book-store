@@ -22,6 +22,7 @@ export default function EditBook() {
   const [cover, setCover] = useState(null);
   const [pdf, setPdf] = useState(null);
   const [pdfAvailable, setPdfAvailable] = useState(false);
+  const [removePdf, setRemovePdf] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -47,6 +48,7 @@ export default function EditBook() {
     Object.entries(form).forEach(([key, value]) => payload.append(key, value));
     if (cover) payload.append("cover", cover);
     if (pdf) payload.append("pdf", pdf);
+    if (removePdf && !pdf) payload.append("removePdf", "true");
     setSaving(true);
     try {
       await api.put(`/books/${id}`, payload, { timeout: BOOK_UPLOAD_TIMEOUT_MS });
@@ -72,10 +74,16 @@ export default function EditBook() {
         <textarea className="input min-h-32 md:col-span-2" placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
         <label className="label">Replace cover image<input className="input mt-1" type="file" accept="image/*" onChange={(e) => setCover(e.target.files[0])} /></label>
         <label className="label">Replace PDF file
-          <input className="input mt-1" type="file" accept="application/pdf,.pdf" onChange={(e) => setPdf(e.target.files[0] || null)} />
-          <span className={`mt-1 block text-xs font-bold ${pdf || pdfAvailable ? "text-green-700" : "text-orange-700"}`}>
-            {pdf ? `Selected: ${pdf.name}` : pdfAvailable ? "PDF already uploaded" : "No PDF uploaded yet"}
+          <input className="input mt-1" type="file" accept="application/pdf,.pdf" onChange={(e) => { setPdf(e.target.files[0] || null); setRemovePdf(false); }} />
+          <span className={`mt-1 block text-xs font-bold ${pdf || (pdfAvailable && !removePdf) ? "text-green-700" : "text-orange-700"}`}>
+            {pdf ? `Selected: ${pdf.name}` : removePdf ? "PDF will be removed" : pdfAvailable ? "PDF already uploaded" : "No PDF uploaded yet"}
           </span>
+          {pdfAvailable && !pdf && (
+            <label className="mt-2 flex items-center gap-2 text-sm font-semibold text-red-700">
+              <input type="checkbox" checked={removePdf} onChange={(e) => setRemovePdf(e.target.checked)} />
+              Remove uploaded PDF
+            </label>
+          )}
         </label>
         <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} /> Featured book</label>
         <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} /> Active</label>

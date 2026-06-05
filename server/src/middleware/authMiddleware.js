@@ -7,6 +7,20 @@ function hasSecureJwtSecret() {
   return Boolean(process.env.JWT_SECRET && process.env.JWT_SECRET.length >= MIN_JWT_SECRET_LENGTH);
 }
 
+function verifyToken(token) {
+  const strictOptions = {
+    issuer: process.env.JWT_ISSUER || "pdf-book-store",
+    audience: process.env.JWT_AUDIENCE || "pdf-book-store-users"
+  };
+  try {
+    return jwt.verify(token, process.env.JWT_SECRET, strictOptions);
+  } catch (error) {
+    const decoded = jwt.decode(token);
+    if (decoded?.iss || decoded?.aud) throw error;
+    return jwt.verify(token, process.env.JWT_SECRET);
+  }
+}
+
 export async function protect(req, res, next) {
   try {
     res.setHeader("Cache-Control", "private, no-store, max-age=0");
@@ -16,7 +30,7 @@ export async function protect(req, res, next) {
     const header = req.headers.authorization;
     const token = header?.startsWith("Bearer ") ? header.split(" ")[1] : null;
     if (!token) return res.status(401).json({ message: "Authentication required" });
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = verifyToken(token);
     const user = await User.findById(decoded.id);
     if (!user) return res.status(401).json({ message: "User not found" });
     if (!decoded.sid || decoded.sid !== user.activeSessionId) {
@@ -34,7 +48,7 @@ export async function optionalProtect(req, _res, next) {
     const header = req.headers.authorization;
     const token = header?.startsWith("Bearer ") ? header.split(" ")[1] : null;
     if (!token || !hasSecureJwtSecret()) return next();
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = verifyToken(token);
     const user = await User.findById(decoded.id);
     if (user && decoded.sid && decoded.sid === user.activeSessionId) req.user = user;
     return next();

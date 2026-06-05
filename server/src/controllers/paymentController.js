@@ -10,6 +10,7 @@ import { clearPublicResponseCache } from "../middleware/publicResponseCache.js";
 import { getRazorpay } from "../config/razorpay.js";
 import { sendEmail } from "../utils/email.js";
 import { hasOwnerUploadedPdf } from "../utils/bookAvailability.js";
+import { logEvent, logRequestEvent } from "../utils/logger.js";
 
 const MIN_RAZORPAY_AMOUNT = 100;
 const MAX_BOOK_QUANTITY = 20;
@@ -68,6 +69,12 @@ function initializeDigitalAccess(order) {
 async function unlockBooks(order) {
   const ids = order.items.map((item) => item.book);
   await User.findByIdAndUpdate(order.user, { $addToSet: { purchasedBooks: { $each: ids } } });
+}
+
+async function fetchRazorpayPayment(paymentId) {
+  const razorpay = getRazorpay();
+  if (!razorpay || !paymentId) return null;
+  return razorpay.payments.fetch(paymentId);
 }
 
 async function lockBooks(order) {
@@ -342,6 +349,18 @@ export async function startManualBookOrderPayment(req, res) {
   if (paymentMethod === "upi_manual" && !req.file) return res.status(422).json({ message: "Upload payment screenshot for verification." });
   if (paymentMethod === "upi_manual" && !transactionId) return res.status(422).json({ message: "Enter transaction ID." });
   if (transactionId.length > 120) return res.status(422).json({ message: "Transaction ID is too long." });
+  if (paymentMethod === "upi_manual") {
+    const duplicate = await Order.findOne({
+      _id: { $ne: order._id },
+      provider: "upi_manual",
+      transactionId,
+      status: { $in: ["submitted", "success", "confirmed", "completed"] }
+    }).select("_id");
+    if (duplicate) {
+      logRequestEvent("payment", "duplicate_manual_transaction_blocked", req, { orderId: order._id, duplicateOrderId: duplicate._id });
+      return res.status(409).json({ message: "This transaction ID has already been submitted" });
+    }
+  }
 
   const settings = await paymentSettings();
   const summary = manualOrderPaymentSummary(order, settings, paymentMethod);
@@ -371,6 +390,7 @@ export async function startManualBookOrderPayment(req, res) {
     status: "pending"
   });
   await order.save();
+  logRequestEvent("payment", "manual_book_payment_started", req, { orderId: order._id, provider: paymentMethod, amount: order.amount });
   if (paymentMethod === "upi_manual") await sendAdminPaymentProofEmail(req, order);
   res.json({
     message: paymentMethod === "upi_manual" ? "Your order has been submitted successfully and is pending verification." : "",
@@ -394,6 +414,17 @@ export async function createManualBookOrder(req, res) {
   if (paymentMethod === "upi_manual" && !req.file) return res.status(422).json({ message: "Upload payment screenshot for verification." });
   if (paymentMethod === "upi_manual" && !transactionId) return res.status(422).json({ message: "Enter transaction ID." });
   if (transactionId.length > 120) return res.status(422).json({ message: "Transaction ID is too long." });
+  if (paymentMethod === "upi_manual") {
+    const duplicate = await Order.findOne({
+      provider: "upi_manual",
+      transactionId,
+      status: { $in: ["submitted", "success", "confirmed", "completed"] }
+    }).select("_id");
+    if (duplicate) {
+      logRequestEvent("payment", "duplicate_manual_transaction_blocked", req, { duplicateOrderId: duplicate._id });
+      return res.status(409).json({ message: "This transaction ID has already been submitted" });
+    }
+  }
 
   const books = await Book.find({ _id: { $in: ids }, isActive: true });
   if (books.length !== ids.length) return res.status(422).json({ message: "One or more selected books are unavailable." });
@@ -440,6 +471,7 @@ export async function createManualBookOrder(req, res) {
     razorpayOrderId: razorpayOrder?.id,
     status: "pending"
   });
+  logRequestEvent("payment", "manual_book_order_created", req, { orderId: order._id, provider: paymentMethod, amount });
   if (paymentMethod === "upi_manual") await sendAdminPaymentProofEmail(req, order);
   res.status(201).json({
     message: paymentMethod === "upi_manual" ? "Your order has been submitted successfully and is pending verification." : "",
@@ -513,6 +545,7 @@ export async function createOrder(req, res) {
     provider,
     razorpayOrderId: razorpayOrder?.id
   });
+  logRequestEvent("payment", "digital_order_created", req, { orderId: order._id, provider, amount });
 
   const upiNote = `PDF Book Store order ${order._id}`;
   const upiUri = upiPaymentUri({
@@ -550,12 +583,27 @@ export async function confirmManualPayment(req, res) {
   if (order.provider !== "upi_manual") return res.status(422).json({ message: "This order is not a UPI manual order" });
   if (!["pending", "failed"].includes(order.status)) return res.status(409).json({ message: "This payment proof has already been submitted or verified" });
   if (!req.file) return res.status(422).json({ message: "Upload payment screenshot for verification" });
+  const paymentNote = String(req.body.paymentNote || "").trim();
+  if (paymentNote) {
+    const duplicate = await Order.findOne({
+      _id: { $ne: order._id },
+      provider: "upi_manual",
+      transactionId: paymentNote,
+      status: { $in: ["submitted", "success", "confirmed", "completed"] }
+    }).select("_id");
+    if (duplicate) {
+      logRequestEvent("payment", "duplicate_manual_transaction_blocked", req, { orderId: order._id, duplicateOrderId: duplicate._id });
+      return res.status(409).json({ message: "This transaction ID has already been submitted" });
+    }
+  }
   order.status = "submitted";
   order.paymentProof = req.file.path;
   order.paymentProofData = await fs.promises.readFile(req.file.path);
   order.paymentProofMimeType = req.file.mimetype;
-  order.paymentNote = req.body.paymentNote || "";
+  order.paymentNote = paymentNote;
+  order.transactionId = paymentNote || order.transactionId;
   await order.save();
+  logRequestEvent("payment", "manual_payment_submitted", req, { orderId: order._id });
   await lockBooks(order);
   await sendAdminPaymentProofEmail(req, order);
   res.json({ message: "Payment proof submitted. Admin will verify and unlock your PDFs.", order: withoutPaymentProofData(order) });
@@ -570,6 +618,20 @@ export async function verifyPayment(req, res) {
 
   const order = await Order.findOne({ _id: orderId, user: req.user._id });
   if (!order) return res.status(404).json({ message: "Order not found" });
+  if (["success", "confirmed"].includes(order.status)) {
+    if (order.razorpayPaymentId === razorpay_payment_id && order.razorpayOrderId === razorpay_order_id) {
+      return res.json({ message: order.orderType === "manual_book" ? "Payment verified. Your book order is confirmed." : "Payment verified", order: withoutPaymentProofData(order) });
+    }
+    return res.status(409).json({ message: "This order has already been processed" });
+  }
+  const duplicatePayment = await Order.findOne({
+    _id: { $ne: order._id },
+    razorpayPaymentId: razorpay_payment_id
+  }).select("_id");
+  if (duplicatePayment) {
+    logRequestEvent("payment", "duplicate_razorpay_payment_blocked", req, { orderId: order._id, duplicateOrderId: duplicatePayment._id });
+    return res.status(409).json({ message: "This payment has already been processed" });
+  }
 
   const expected = crypto
     .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
@@ -579,8 +641,21 @@ export async function verifyPayment(req, res) {
   if (!signaturesMatch(expected, razorpay_signature) || order.razorpayOrderId !== razorpay_order_id) {
     order.status = order.orderType === "manual_book" ? "rejected" : "failed";
     await order.save();
+    logRequestEvent("payment", "razorpay_signature_failed", req, { orderId: order._id, razorpayOrderId: razorpay_order_id });
     if (order.orderType !== "manual_book") await sendPaymentStatusEmail(order);
     return res.status(400).json({ message: "Payment verification failed" });
+  }
+  try {
+    const payment = await fetchRazorpayPayment(razorpay_payment_id);
+    if (payment && (payment.order_id !== razorpay_order_id || !["captured", "authorized"].includes(payment.status))) {
+      order.status = order.orderType === "manual_book" ? "rejected" : "failed";
+      await order.save();
+      logRequestEvent("payment", "razorpay_status_failed", req, { orderId: order._id, razorpayPaymentId: razorpay_payment_id, status: payment.status });
+      return res.status(400).json({ message: "Payment verification failed" });
+    }
+  } catch (error) {
+    logRequestEvent("payment", "razorpay_status_fetch_failed", req, { orderId: order._id, error: error.message });
+    return razorpayErrorResponse(error, res);
   }
 
   order.status = order.orderType === "manual_book" ? "confirmed" : "success";
@@ -588,6 +663,7 @@ export async function verifyPayment(req, res) {
   order.razorpaySignature = razorpay_signature;
   initializeDigitalAccess(order);
   await order.save();
+  logRequestEvent("payment", "razorpay_payment_verified", req, { orderId: order._id, razorpayPaymentId: razorpay_payment_id });
   if (order.orderType !== "manual_book") {
     await unlockBooks(order);
     await sendPaymentStatusEmail(order);
@@ -612,11 +688,21 @@ export async function razorpayWebhook(req, res) {
 
   const order = await Order.findOne({ razorpayOrderId });
   if (!order || ["success", "confirmed"].includes(order.status)) return res.json({ received: true });
+  const duplicatePayment = await Order.findOne({ _id: { $ne: order._id }, razorpayPaymentId: payment.id }).select("_id");
+  if (duplicatePayment) {
+    logEvent("payment", "duplicate_webhook_payment_ignored", { orderId: order._id, duplicateOrderId: duplicatePayment._id, razorpayPaymentId: payment.id });
+    return res.json({ received: true });
+  }
+  if (payment.status !== "captured") {
+    logEvent("payment", "webhook_payment_not_captured", { orderId: order._id, razorpayPaymentId: payment.id, status: payment.status });
+    return res.json({ received: true });
+  }
 
   order.status = order.orderType === "manual_book" ? "confirmed" : "success";
   order.razorpayPaymentId = payment.id;
   initializeDigitalAccess(order);
   await order.save();
+  logEvent("payment", "webhook_payment_captured", { orderId: order._id, razorpayPaymentId: payment.id });
   if (order.orderType !== "manual_book") {
     await unlockBooks(order);
     await sendPaymentStatusEmail(order);
@@ -678,12 +764,16 @@ export async function updateOrderStatus(req, res) {
   order.status = req.body.status;
   if (!manualBookOrder && order.status === "success") initializeDigitalAccess(order);
   await order.save();
-  if (manualBookOrder) return res.json({ order });
+  if (manualBookOrder) {
+    logRequestEvent("payment", "admin_order_status_updated", req, { orderId: order._id, previousStatus, status: order.status });
+    return res.json({ order });
+  }
   if (order.status === "success") await unlockBooks(order);
   else await lockBooks(order);
   if (["success", "failed"].includes(order.status) && previousStatus !== order.status) {
     await sendPaymentStatusEmail(order);
   }
+  logRequestEvent("payment", "admin_order_status_updated", req, { orderId: order._id, previousStatus, status: order.status });
   res.json({ order });
 }
 

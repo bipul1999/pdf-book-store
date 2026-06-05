@@ -4,6 +4,9 @@ import Otp from "../models/Otp.js";
 import { sendEmail } from "./email.js";
 import { sendOtpSms } from "./sms.js";
 
+const OTP_EXPIRY_MS = 5 * 60 * 1000;
+const MAX_OTP_ATTEMPTS = 5;
+
 function otpError(message, statusCode = 422) {
   const error = new Error(message);
   error.statusCode = statusCode;
@@ -18,7 +21,7 @@ export async function createAndSendOtp({ email, phone, purpose }) {
     phone,
     purpose,
     codeHash: await bcrypt.hash(code, 10),
-    expiresAt: new Date(Date.now() + 10 * 60 * 1000)
+    expiresAt: new Date(Date.now() + OTP_EXPIRY_MS)
   });
 
   let delivered = false;
@@ -32,7 +35,7 @@ export async function createAndSendOtp({ email, phone, purpose }) {
     delivered = await sendEmail({
       to: email,
       subject: "Your PDF Book Store OTP",
-      html: `<p>Your OTP is <strong>${code}</strong>. It expires in 10 minutes.</p>`
+      html: `<p>Your OTP is <strong>${code}</strong>. It expires in 5 minutes.</p>`
     }) || delivered;
   } catch (error) {
     console.error(`OTP email failed for ${email}:`, error.message);
@@ -53,7 +56,7 @@ export async function verifyOtp({ email, purpose, code }) {
   const otp = await Otp.findOne({ email, purpose, consumed: false }).sort({ createdAt: -1 });
   if (!otp) throw otpError("OTP not found or already used", 404);
   if (otp.expiresAt < new Date()) throw otpError("OTP expired");
-  if (otp.attempts >= 5) throw otpError("Too many OTP attempts", 429);
+  if (otp.attempts >= MAX_OTP_ATTEMPTS) throw otpError("Too many OTP attempts", 429);
 
   otp.attempts += 1;
   const ok = await bcrypt.compare(code, otp.codeHash);

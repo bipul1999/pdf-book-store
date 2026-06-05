@@ -54,6 +54,10 @@ function proofRequestUrl(paymentProof) {
   return paymentProof?.startsWith("/api/") ? paymentProof.slice(4) : paymentProof;
 }
 
+function transactionLabel(order) {
+  return order.transactionId || order.paymentNote || order.razorpayPaymentId || order.razorpayOrderId || "";
+}
+
 function CustomerDetails({ order }) {
   if (order.orderType !== "manual_book") {
     return <><strong>{order.user?.name}</strong><p className="break-words text-gray-600">{order.user?.email}</p></>;
@@ -175,7 +179,7 @@ export default function ManageOrders() {
             {order.orderType === "manual_book" && <p className="text-xs text-gray-600">Books Rs. {order.bookTotal || 0} + Delivery / payment charges Rs. {order.extraCharge || 0}</p>}
             {order.orderType === "manual_book" && <p className="mt-1 text-xs font-bold text-gray-600">Payment: {order.provider === "razorpay" ? "Razorpay" : "Manual UPI"}</p>}
             {order.paymentProof ? <button className="mt-2 inline-block font-bold text-orange-600" onClick={() => viewProof(order)} type="button">View proof</button> : <p className="mt-2 text-sm text-gray-500">No proof</p>}
-            {(order.transactionId || order.paymentNote) && <p className="mt-1 break-all text-xs text-gray-600">Transaction: {order.transactionId || order.paymentNote}</p>}
+            {transactionLabel(order) && <p className="mt-1 break-all text-xs text-gray-600">Transaction: {transactionLabel(order)}</p>}
             <select className="input mt-3" value={order.status} onChange={(e) => setStatus(order._id, e.target.value)}>
               {statusOptions(order).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
             </select>
@@ -209,7 +213,7 @@ export default function ManageOrders() {
                   ) : (
                     <span className="text-gray-500">No proof</span>
                   )}
-                  {(order.transactionId || order.paymentNote) && <p className="mt-1 max-w-32 break-all text-xs text-gray-600">{order.transactionId || order.paymentNote}</p>}
+                  {transactionLabel(order) && <p className="mt-1 max-w-32 break-all text-xs text-gray-600">{transactionLabel(order)}</p>}
                 </td>
                 <td className="p-3">
                   <select className="input min-w-32" value={order.status} onChange={(e) => setStatus(order._id, e.target.value)}>

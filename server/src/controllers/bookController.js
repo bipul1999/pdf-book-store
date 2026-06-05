@@ -1,10 +1,12 @@
 import mongoose from "mongoose";
+import fs from "fs";
 import path from "path";
 import Book from "../models/Book.js";
 import Order from "../models/Order.js";
 import { clearPublicResponseCache } from "../middleware/publicResponseCache.js";
 import { hasOwnerUploadedPdf } from "../utils/bookAvailability.js";
 import { deleteStoredPdf, openStoredPdf, storePdfFile } from "../utils/pdfStorage.js";
+import { logRequestEvent } from "../utils/logger.js";
 
 const DEFAULT_DIGITAL_ACCESS_DAYS = 30;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -105,10 +107,25 @@ export async function updateBook(req, res) {
   if (req.files?.cover?.[0]) book.coverImage = req.files.cover[0].path;
   if (req.files?.pdf?.[0]) {
     const oldPdfFileId = book.pdfFileId;
+    const oldPdfPath = book.pdfPath;
     Object.assign(book, await pdfFields(req.files.pdf[0]));
     book.pdfData = undefined;
     await book.save();
     await deleteStoredPdf(oldPdfFileId);
+    if (oldPdfPath && oldPdfPath !== book.pdfPath) {
+      fs.promises.unlink(oldPdfPath).catch(() => {});
+    }
+  } else if (req.body.removePdf === "true" || req.body.removePdf === true) {
+    const oldPdfFileId = book.pdfFileId;
+    const oldPdfPath = book.pdfPath;
+    book.pdfPath = "";
+    book.pdfFileId = undefined;
+    book.pdfData = undefined;
+    book.pdfMimeType = "application/pdf";
+    book.pdfStored = false;
+    await book.save();
+    await deleteStoredPdf(oldPdfFileId);
+    if (oldPdfPath) fs.promises.unlink(oldPdfPath).catch(() => {});
   } else {
     await book.save();
   }
@@ -161,7 +178,16 @@ export async function downloadBook(req, res) {
     });
   }
   if (!owns) return res.status(403).json({ message: "Purchase required or access expired for this PDF" });
-  const absolute = path.resolve(book.pdfPath);
+  logRequestEvent("security", "pdf_access_granted", req, { bookId: book._id });
+  if (!book.pdfPath && !book.pdfFileId && !book.pdfData?.length) {
+    return res.status(404).json({ message: "PDF file missing. Please ask the admin to upload it again." });
+  }
+  const uploadRoot = path.resolve(process.env.UPLOAD_DIR || "uploads");
+  const absolute = book.pdfPath ? path.resolve(book.pdfPath) : "";
+  if (!book.pdfFileId && !book.pdfData?.length && !absolute.startsWith(`${uploadRoot}${path.sep}`)) {
+    logRequestEvent("security", "blocked_pdf_path_escape", req, { bookId: book._id });
+    return res.status(404).json({ message: "PDF file missing. Please ask the admin to upload it again." });
+  }
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader("Content-Disposition", `inline; filename="${encodeURIComponent(book.title)}.pdf"`);
   res.setHeader("Cache-Control", "private, no-store, max-age=0");

@@ -6,10 +6,12 @@ import { listSupportTickets, updateSupportTicket } from "../controllers/supportC
 import { listFeedback, updateFeedbackStatus } from "../controllers/feedbackController.js";
 import { protect, requireRole } from "../middleware/authMiddleware.js";
 import { adminWriteLimiter } from "../middleware/rateLimiters.js";
+import { auditAdminActivity } from "../middleware/security.js";
 import { uploadPaymentQr, uploadQuoteImage } from "../middleware/upload.js";
 
 const router = Router();
 router.use(protect, requireRole("admin"));
+router.use(auditAdminActivity);
 
 router.get("/stats", dashboardStats);
 router.get("/users", listUsers);

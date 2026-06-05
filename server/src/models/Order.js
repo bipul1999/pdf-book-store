@@ -37,7 +37,7 @@ const orderSchema = new mongoose.Schema(
     provider: { type: String, enum: ["razorpay", "upi_manual"], default: "razorpay" },
     paymentProof: String,
     paymentProofData: { type: Buffer, select: false },
-    paymentProofMimeType: { type: String, enum: ["image/jpeg", "image/png", "image/webp", "image/gif"] },
+    paymentProofMimeType: { type: String, enum: ["image/jpeg", "image/png", "image/webp"] },
     paymentNote: String,
     transactionId: { type: String, trim: true, maxlength: 120 },
     razorpayOrderId: String,
@@ -51,5 +51,7 @@ const orderSchema = new mongoose.Schema(
 orderSchema.index({ user: 1, status: 1, orderType: 1, updatedAt: -1 });
 orderSchema.index({ user: 1, status: 1, orderType: 1, "items.book": 1 });
 orderSchema.index({ razorpayOrderId: 1 }, { sparse: true });
+orderSchema.index({ razorpayPaymentId: 1 }, { sparse: true });
+orderSchema.index({ provider: 1, transactionId: 1 }, { sparse: true });
 
 export default mongoose.model("Order", orderSchema);

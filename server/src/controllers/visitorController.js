@@ -21,5 +21,6 @@ export async function trackVisit(req, res) {
     language: String(req.body.language || "").slice(0, 80)
   });
 
+  res.setHeader("X-Privacy-Policy-Version", process.env.PRIVACY_POLICY_VERSION || "draft");
   res.status(201).json({ ok: true });
 }

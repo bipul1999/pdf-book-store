@@ -18,7 +18,9 @@ import supportRoutes from "./routes/supportRoutes.js";
 import feedbackRoutes from "./routes/feedbackRoutes.js";
 import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
 import { apiLimiter } from "./middleware/rateLimiters.js";
+import { blockExecutableUploadNames, blockPdfDirectAccess, rejectNoSqlOperators } from "./middleware/security.js";
 import { getLastDatabaseError } from "./config/db.js";
+import { logRequestEvent } from "./utils/logger.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,6 +30,9 @@ const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:5173")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
+if (process.env.NODE_ENV === "production" && allowedOrigins.some((origin) => origin === "*")) {
+  throw new Error("CLIENT_URL must list explicit origins in production");
+}
 
 app.disable("x-powered-by");
 app.use(helmet({
@@ -56,7 +61,9 @@ app.use(cors({
     if (process.env.NODE_ENV !== "production" && (origin.endsWith(".loca.lt") || origin.endsWith(".trycloudflare.com"))) return callback(null, true);
     return callback(new Error("Not allowed by CORS"));
   },
-  credentials: true
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
 }));
 app.use(compression({
   threshold: 1024,
@@ -69,6 +76,15 @@ app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "100kb", parameterLimit: 100 }));
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
+app.use(blockPdfDirectAccess);
+app.use(blockExecutableUploadNames);
+app.use(rejectNoSqlOperators);
+app.use((req, res, next) => {
+  res.on("finish", () => {
+    if (res.statusCode >= 500) logRequestEvent("error", "server_error_response", req, { statusCode: res.statusCode });
+  });
+  next();
+});
 app.use("/api", apiLimiter);
 
 app.get("/api/health", (_req, res) => {

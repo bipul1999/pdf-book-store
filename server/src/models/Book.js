@@ -12,7 +12,7 @@ const bookSchema = new mongoose.Schema(
     orderBookPrice: { type: Number, min: 0 },
     orderBookListPrice: { type: Number, min: 0 },
     coverImage: { type: String, required: true },
-    pdfPath: { type: String, required: true, select: false },
+    pdfPath: { type: String, default: "", select: false },
     pdfFileId: { type: mongoose.Schema.Types.ObjectId, select: false },
     pdfData: { type: Buffer, select: false },
     pdfMimeType: { type: String, default: "application/pdf", select: false },

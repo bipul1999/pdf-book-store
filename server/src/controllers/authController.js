@@ -2,9 +2,11 @@ import { body } from "express-validator";
 import User from "../models/User.js";
 import { createAndSendOtp, verifyOtp } from "../utils/otp.js";
 import { issueSessionToken, publicUser } from "../utils/tokens.js";
+import { logRequestEvent } from "../utils/logger.js";
 
-const otpMeta = { otpExpiresInSeconds: 10 * 60, resendAfterSeconds: 60 };
+const otpMeta = { otpExpiresInSeconds: 5 * 60, resendAfterSeconds: 60 };
 const ownerAdminEmail = normalizeEmailForLookup(process.env.OWNER_ADMIN_EMAIL);
+const adminOtpLoginEnabled = process.env.ADMIN_OTP_LOGIN_ENABLED === "true";
 
 function loginAudit(req) {
   const forwarded = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
@@ -169,8 +171,12 @@ export async function login(req, res) {
   const user = await User.findOne({
     $or: [...emails.map((email) => ({ email })), { phone }]
   }).select("+password");
-  if (!user || !(await user.comparePassword(password))) return res.status(401).json({ message: "Invalid credentials" });
+  if (!user || !(await user.comparePassword(password))) {
+    logRequestEvent("security", "login_failed", req, { identifier: String(identifier || "").slice(0, 180) });
+    return res.status(401).json({ message: "Invalid credentials" });
+  }
   if (!user.isVerified) return res.status(403).json({ message: "Please verify your email before login" });
+  if (user.role === "admin") logRequestEvent("admin", "admin_login_success", req, { adminId: user._id });
   res.json({ token: await issueSessionToken(user, loginAudit(req)), user: publicUser(user) });
 }
 
@@ -178,9 +184,12 @@ export async function requestLoginOtp(req, res) {
   const { identifier } = req.body;
   const { emails, phone } = loginIdentifierCandidates(identifier);
   const user = await User.findOne({
-    role: "user",
+    ...(adminOtpLoginEnabled ? {} : { role: "user" }),
     $or: [...emails.map((email) => ({ email })), { phone }]
   });
+  if (user?.role === "admin" && !adminOtpLoginEnabled) {
+    return res.status(404).json({ message: "No account found. Please create an account first." });
+  }
 
   if (!user) return res.status(404).json({ message: "No account found. Please create an account first." });
   if (!user.isVerified) {
@@ -195,8 +204,13 @@ export async function requestLoginOtp(req, res) {
 export async function verifyLoginOtp(req, res) {
   const { email, code } = req.body;
   await verifyOtp({ email, purpose: "login", code });
-  const user = await User.findOne({ email, role: "user", isVerified: true });
+  const user = await User.findOne({
+    email,
+    isVerified: true,
+    ...(adminOtpLoginEnabled ? {} : { role: "user" })
+  });
   if (!user) return res.status(404).json({ message: "User not found" });
+  if (user.role === "admin") logRequestEvent("admin", "admin_otp_login_success", req, { adminId: user._id });
   res.json({ token: await issueSessionToken(user, loginAudit(req)), user: publicUser(user) });
 }
 

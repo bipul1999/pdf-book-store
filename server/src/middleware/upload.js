@@ -28,17 +28,20 @@ const storage = multer.diskStorage({
 const imageExtensions = new Set([".jpg", ".jpeg", ".png", ".webp"]);
 const imageMimeTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const pdfMimeTypes = new Set(["application/pdf", "application/x-pdf", "application/octet-stream"]);
+const executableExtensions = new Set([".bat", ".cmd", ".com", ".dll", ".exe", ".hta", ".jar", ".js", ".jse", ".msi", ".ps1", ".scr", ".sh", ".vbs", ".wsf"]);
 const maxFiles = 3;
-const imageUploadLimit = 5 * 1024 * 1024;
+const imageUploadLimit = 2 * 1024 * 1024;
 const bookUploadLimit = 150 * 1024 * 1024;
 
 function hasAllowedImageType(file) {
   const ext = path.extname(file.originalname).toLowerCase();
+  if (executableExtensions.has(ext)) return false;
   return imageExtensions.has(ext) && imageMimeTypes.has(file.mimetype);
 }
 
 function hasAllowedPdfType(file) {
   const ext = path.extname(file.originalname).toLowerCase();
+  if (executableExtensions.has(ext)) return false;
   return ext === ".pdf" && pdfMimeTypes.has(file.mimetype);
 }
 
@@ -114,7 +117,7 @@ const bookFilesUpload = multer({
 
 const paymentProofUpload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 5, parts: maxFiles + 5 },
+  limits: { fileSize: imageUploadLimit, files: 1, fields: 5, parts: maxFiles + 5 },
   fileFilter: (_req, file, cb) => {
     if (!hasAllowedImageType(file)) return cb(new Error("Payment proof image required"));
     cb(null, true);
@@ -123,7 +126,7 @@ const paymentProofUpload = multer({
 
 const orderBookProofUpload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 12, parts: 14 },
+  limits: { fileSize: imageUploadLimit, files: 1, fields: 12, parts: 14 },
   fileFilter: (_req, file, cb) => {
     if (!hasAllowedImageType(file)) return cb(new Error("Payment proof image required"));
     cb(null, true);
@@ -132,7 +135,7 @@ const orderBookProofUpload = multer({
 
 const paymentQrUpload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 10, parts: 12 },
+  limits: { fileSize: imageUploadLimit, files: 1, fields: 10, parts: 12 },
   fileFilter: (_req, file, cb) => {
     if (!hasAllowedImageType(file)) return cb(new Error("QR image required"));
     cb(null, true);
@@ -141,7 +144,7 @@ const paymentQrUpload = multer({
 
 const quoteImageUpload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 5, parts: maxFiles + 5 },
+  limits: { fileSize: imageUploadLimit, files: 1, fields: 5, parts: maxFiles + 5 },
   fileFilter: (_req, file, cb) => {
     if (!hasAllowedImageType(file)) return cb(new Error("Author image required"));
     cb(null, true);

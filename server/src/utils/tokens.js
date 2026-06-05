@@ -10,7 +10,11 @@ export function signToken(user) {
     throw error;
   }
   return jwt.sign({ id: user._id, role: user.role, sid: user.activeSessionId }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || "7d"
+    expiresIn: user.role === "admin"
+      ? (process.env.ADMIN_JWT_EXPIRES_IN || process.env.JWT_EXPIRES_IN || "12h")
+      : (process.env.JWT_EXPIRES_IN || "7d"),
+    issuer: process.env.JWT_ISSUER || "pdf-book-store",
+    audience: process.env.JWT_AUDIENCE || "pdf-book-store-users"
   });
 }
 
