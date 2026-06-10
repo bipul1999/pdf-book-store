@@ -304,6 +304,7 @@ export async function createManualBookOrderDraft(req, res) {
 }
 
 export async function getManualBookOrderPayment(req, res) {
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: "Book order not found" });
   const order = await Order.findOne({ _id: req.params.id, user: req.user._id, orderType: "manual_book" }).populate("items.book");
   if (!order) return res.status(404).json({ message: "Book order not found" });
   if (!["pending", "rejected"].includes(order.status) || order.paymentProof || order.razorpayPaymentId) {
@@ -325,6 +326,7 @@ export async function getManualBookOrderPayment(req, res) {
 }
 
 export async function startManualBookOrderPayment(req, res) {
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: "Book order not found" });
   const order = await Order.findOne({ _id: req.params.id, user: req.user._id, orderType: "manual_book" });
   if (!order) return res.status(404).json({ message: "Book order not found" });
   if (!["pending", "rejected"].includes(order.status) || order.paymentProof || order.razorpayPaymentId) {
@@ -564,6 +566,7 @@ export async function createOrder(req, res) {
 }
 
 export async function confirmManualPayment(req, res) {
+  if (!mongoose.isValidObjectId(req.body.orderId)) return res.status(404).json({ message: "Order not found" });
   const order = await Order.findOne({ _id: req.body.orderId, user: req.user._id });
   if (!order) return res.status(404).json({ message: "Order not found" });
   if (order.provider !== "upi_manual") return res.status(422).json({ message: "This order is not a UPI manual order" });
