@@ -11,6 +11,7 @@ const digitalStatuses = [
 const verifiedDigitalStatuses = new Set(["success", "confirmed", "completed"]);
 const manualStatuses = [
   ["pending", "Pending"],
+  ["submitted", "Proof submitted"],
   ["confirmed", "Confirmed"],
   ["completed", "Completed"],
   ["rejected", "Rejected"]

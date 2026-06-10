@@ -17,7 +17,7 @@ const MIN_RAZORPAY_AMOUNT = 100;
 const MAX_BOOK_QUANTITY = 20;
 const PDF_SALE_PRICE = 99;
 const DIGITAL_ORDER_STATUSES = new Set(["pending", "submitted", "success", "failed"]);
-const MANUAL_BOOK_ORDER_STATUSES = new Set(["pending", "confirmed", "completed", "rejected"]);
+const MANUAL_BOOK_ORDER_STATUSES = new Set(["pending", "submitted", "confirmed", "completed", "rejected"]);
 
 function escapeHtml(value = "") {
   return String(value)
@@ -375,7 +375,7 @@ export async function startManualBookOrderPayment(req, res) {
     paymentNote: transactionId || undefined,
     transactionId: transactionId || undefined,
     razorpayOrderId: razorpayOrder?.id,
-    status: "pending"
+    status: paymentMethod === "upi_manual" ? "submitted" : "pending"
   });
   await order.save();
   logRequestEvent("payment", "manual_book_payment_started", req, { orderId: order._id, provider: paymentMethod, amount: order.amount });
@@ -457,7 +457,7 @@ export async function createManualBookOrder(req, res) {
     paymentNote: transactionId || undefined,
     transactionId: transactionId || undefined,
     razorpayOrderId: razorpayOrder?.id,
-    status: "pending"
+    status: paymentMethod === "upi_manual" ? "submitted" : "pending"
   });
   logRequestEvent("payment", "manual_book_order_created", req, { orderId: order._id, provider: paymentMethod, amount });
   if (paymentMethod === "upi_manual") await sendAdminPaymentProofEmail(req, order);
@@ -700,8 +700,15 @@ export async function razorpayWebhook(req, res) {
 }
 
 export async function myOrders(req, res) {
-  const paidStatuses = ["success", "confirmed", "completed"];
-  const orders = await Order.find({ user: req.user._id, status: { $in: paidStatuses } }).populate("items.book").sort({ createdAt: -1, _id: -1 });
+  const visibleStatuses = ["submitted", "success", "failed", "confirmed", "completed", "rejected"];
+  const orders = await Order.find({
+    user: req.user._id,
+    $or: [
+      { status: { $in: visibleStatuses } },
+      { paymentProof: { $exists: true, $ne: "" } },
+      { razorpayPaymentId: { $exists: true, $ne: "" } }
+    ]
+  }).populate("items.book").sort({ createdAt: -1, _id: -1 });
   res.json({ orders: orders.map((order) => ({ ...withoutPaymentProofData(order), paymentProof: fileUrl(req, order.paymentProof) })) });
 }
 
