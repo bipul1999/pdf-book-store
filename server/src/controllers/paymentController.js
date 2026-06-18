@@ -164,6 +164,10 @@ function paymentMethodExtraCharge(settings, paymentMethod) {
     : settings.manualPaymentExtraCharge;
 }
 
+function paymentCurrency() {
+  return String(process.env.RAZORPAY_CURRENCY || "INR").trim().toUpperCase() || "INR";
+}
+
 async function paymentSettings() {
   const settings = await PaymentSettings.findOne().sort("-updatedAt");
   return {
@@ -492,9 +496,14 @@ export async function createOrder(req, res) {
   }
 
   const bookTotal = books.length * PDF_SALE_PRICE;
-  const currency = process.env.RAZORPAY_CURRENCY || "INR";
+  const currency = paymentCurrency();
   const settings = await paymentSettings();
-  const razorpay = getRazorpay();
+  let razorpay = null;
+  try {
+    razorpay = getRazorpay();
+  } catch (error) {
+    logRequestEvent("payment", "razorpay_client_init_failed", req, { error: error.message });
+  }
   let razorpayOrder = null;
   let provider = razorpay && paymentMethod !== "upi_manual" ? "razorpay" : "upi_manual";
   let paymentWarning = "";
@@ -502,7 +511,7 @@ export async function createOrder(req, res) {
   let amount = bookTotal + extraCharge;
 
   if (paymentMethod === "razorpay" && !razorpay) {
-    return res.status(422).json({ message: "Online card/payment gateway is not configured yet. Please use UPI." });
+    paymentWarning = "Online payment is temporarily unavailable. Please use Manual UPI for this order.";
   }
 
   if (razorpay && paymentMethod !== "upi_manual") {
@@ -516,9 +525,14 @@ export async function createOrder(req, res) {
         receipt: `order_${Date.now()}`
       });
     } catch (error) {
-      if (!isRazorpayAuthError(error)) return razorpayErrorResponse(error, res);
-      console.error("Razorpay authentication failed. Falling back to manual UPI payment.");
-      paymentWarning = "Razorpay authentication failed. Please use manual UPI for this order.";
+      logRequestEvent("payment", "razorpay_order_create_failed", req, {
+        statusCode: error.statusCode,
+        code: error.error?.code,
+        description: error.error?.description || error.message
+      });
+      paymentWarning = isRazorpayAuthError(error)
+        ? "Razorpay keys are not valid. Please use Manual UPI for this order."
+        : "Razorpay is temporarily unavailable. Please use Manual UPI for this order.";
       provider = "upi_manual";
       extraCharge = paymentMethodExtraCharge(settings, provider);
       amount = bookTotal + extraCharge;
@@ -544,7 +558,14 @@ export async function createOrder(req, res) {
     amount,
     note: upiNote
   });
-  const upiQrDataUrl = razorpayOrder ? null : await QRCode.toDataURL(upiUri, { width: 320, margin: 2 });
+  let upiQrDataUrl = null;
+  if (!razorpayOrder) {
+    try {
+      upiQrDataUrl = await QRCode.toDataURL(upiUri, { width: 320, margin: 2 });
+    } catch (error) {
+      logRequestEvent("payment", "upi_qr_create_failed", req, { orderId: order._id, error: error.message });
+    }
+  }
 
   res.status(201).json({
     message: paymentWarning,
