@@ -7,7 +7,7 @@ import Order from "../models/Order.js";
 import PaymentSettings from "../models/PaymentSettings.js";
 import User from "../models/User.js";
 import { clearPublicResponseCache } from "../middleware/publicResponseCache.js";
-import { getRazorpay } from "../config/razorpay.js";
+import { getRazorpay, getRazorpayKeyId, getRazorpayKeySecret, getRazorpayWebhookSecret } from "../config/razorpay.js";
 import { sendEmail } from "../utils/email.js";
 import { hasOwnerUploadedPdf } from "../utils/bookAvailability.js";
 import { digitalAccessExpiry, initializeDigitalAccess, isVerifiedDigitalOrder, VERIFIED_DIGITAL_ORDER_STATUSES } from "../utils/digitalAccess.js";
@@ -38,10 +38,12 @@ function isRazorpayAuthError(error) {
 function razorpayErrorResponse(error, res) {
   const isAuthError = isRazorpayAuthError(error);
   const status = isAuthError
-    ? 401
-    : 500;
+    ? 422
+    : 503;
   return res.status(status).json({
-    message: status === 401 ? "Razorpay authentication failed" : "Could not create Razorpay order"
+    message: isAuthError
+      ? "Razorpay keys are not valid. Please contact support or use Manual UPI."
+      : "Razorpay is temporarily unavailable. Please try again or use Manual UPI."
   });
 }
 
@@ -384,7 +386,7 @@ export async function startManualBookOrderPayment(req, res) {
     message: paymentMethod === "upi_manual" ? "Your order has been submitted successfully and is pending verification." : "",
     order: withoutPaymentProofData(order),
     razorpay: razorpayOrder
-      ? { keyId: process.env.RAZORPAY_KEY_ID, orderId: razorpayOrder.id, amount: razorpayOrder.amount, currency: razorpayOrder.currency }
+      ? { keyId: getRazorpayKeyId(), orderId: razorpayOrder.id, amount: razorpayOrder.amount, currency: razorpayOrder.currency }
       : null
   });
 }
@@ -466,7 +468,7 @@ export async function createManualBookOrder(req, res) {
     order: withoutPaymentProofData(order),
     razorpay: razorpayOrder
       ? {
-          keyId: process.env.RAZORPAY_KEY_ID,
+          keyId: getRazorpayKeyId(),
           orderId: razorpayOrder.id,
           amount: razorpayOrder.amount,
           currency: razorpayOrder.currency
@@ -548,7 +550,7 @@ export async function createOrder(req, res) {
     message: paymentWarning,
     order,
     razorpay: razorpayOrder
-      ? { keyId: process.env.RAZORPAY_KEY_ID, orderId: razorpayOrder.id, amount: razorpayOrder.amount, currency }
+      ? { keyId: getRazorpayKeyId(), orderId: razorpayOrder.id, amount: razorpayOrder.amount, currency }
       : null,
     upi: razorpayOrder
       ? null
@@ -603,7 +605,8 @@ export async function verifyPayment(req, res) {
   if (!orderId || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
     return res.status(400).json({ message: "Missing Razorpay verification fields" });
   }
-  if (!process.env.RAZORPAY_KEY_SECRET) return res.status(401).json({ message: "Razorpay is not configured" });
+  const keySecret = getRazorpayKeySecret();
+  if (!keySecret) return res.status(422).json({ message: "Razorpay is not configured" });
 
   const order = await Order.findOne({ _id: orderId, user: req.user._id });
   if (!order) return res.status(404).json({ message: "Order not found" });
@@ -623,7 +626,7 @@ export async function verifyPayment(req, res) {
   }
 
   const expected = crypto
-    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+    .createHmac("sha256", keySecret)
     .update(`${razorpay_order_id}|${razorpay_payment_id}`)
     .digest("hex");
 
@@ -644,7 +647,6 @@ export async function verifyPayment(req, res) {
     }
   } catch (error) {
     logRequestEvent("payment", "razorpay_status_fetch_failed", req, { orderId: order._id, error: error.message });
-    return razorpayErrorResponse(error, res);
   }
 
   order.status = order.orderType === "manual_book" ? "confirmed" : "success";
@@ -661,7 +663,7 @@ export async function verifyPayment(req, res) {
 }
 
 export async function razorpayWebhook(req, res) {
-  const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+  const secret = getRazorpayWebhookSecret();
   if (!secret) return res.status(501).json({ message: "Razorpay webhook is not configured" });
 
   const signature = req.headers["x-razorpay-signature"];
