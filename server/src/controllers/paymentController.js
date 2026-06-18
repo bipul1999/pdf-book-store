@@ -494,7 +494,9 @@ export async function createManualBookOrder(req, res) {
 }
 
 export async function createOrder(req, res) {
+  let stage = "start";
   try {
+  stage = "read_request";
   const submittedIds = Array.isArray(req.body.bookIds) ? req.body.bookIds : [];
   if (submittedIds.some((id) => typeof id !== "string" || !mongoose.isValidObjectId(id))) {
     return res.status(422).json({ message: "One or more books are invalid" });
@@ -502,6 +504,7 @@ export async function createOrder(req, res) {
   const ids = [...new Set(submittedIds)];
   const paymentMethod = req.body.paymentMethod || "auto";
   if (!ids.length) return res.status(422).json({ message: "Cart is empty" });
+  stage = "load_books";
   const books = await Book.find({ _id: { $in: ids }, isActive: true }).select("+pdfPath +pdfFileId +pdfStored");
   if (books.length !== ids.length) return res.status(422).json({ message: "One or more books are unavailable" });
   if (books.some((book) => !hasOwnerUploadedPdf(book))) {
@@ -510,6 +513,7 @@ export async function createOrder(req, res) {
 
   const bookTotal = books.length * PDF_SALE_PRICE;
   const currency = paymentCurrency();
+  stage = "load_payment_settings";
   const settings = await paymentSettings();
   let razorpay = null;
   try {
@@ -532,6 +536,7 @@ export async function createOrder(req, res) {
     const amountInPaise = Math.round(amount * 100);
     if (amountInPaise < MIN_RAZORPAY_AMOUNT) return res.status(422).json({ message: "Minimum online payment amount is Rs. 1" });
     try {
+      stage = "create_razorpay_order";
       razorpayOrder = await razorpay.orders.create({
         amount: amountInPaise,
         currency,
@@ -552,6 +557,7 @@ export async function createOrder(req, res) {
     }
   }
 
+  stage = "save_order";
   const order = await Order.create({
     user: req.user._id,
     items: books.map((book) => ({ book: book._id, title: book.title, price: PDF_SALE_PRICE })),
@@ -562,8 +568,10 @@ export async function createOrder(req, res) {
     provider,
     razorpayOrderId: razorpayOrder?.id
   });
+  stage = "log_order_created";
   logRequestEvent("payment", "digital_order_created", req, { orderId: order._id, provider, amount });
 
+  stage = "prepare_upi";
   const upiNote = `PDF Book Store order ${order._id}`;
   const upiUri = upiPaymentUri({
     upiId: settings.upiId || "your-upi-id@bank",
@@ -574,12 +582,14 @@ export async function createOrder(req, res) {
   let upiQrDataUrl = null;
   if (!razorpayOrder) {
     try {
+      stage = "create_upi_qr";
       upiQrDataUrl = await QRCode.toDataURL(upiUri, { width: 320, margin: 2 });
     } catch (error) {
       logRequestEvent("payment", "upi_qr_create_failed", req, { orderId: order._id, error: error.message });
     }
   }
 
+  stage = "send_response";
   res.status(201).json({
     message: paymentWarning,
     order,
@@ -601,12 +611,14 @@ export async function createOrder(req, res) {
   });
   } catch (error) {
     logRequestEvent("payment", "digital_order_create_unhandled", req, {
+      stage,
       error: error.message,
       name: error.name
     });
     res.status(503).json({
-      message: "Payment could not start right now. Please try again in a moment.",
-      code: "PAYMENT_CREATE_FAILED"
+      message: `Payment could not start right now (${stage}). Please try again in a moment.`,
+      code: "PAYMENT_CREATE_FAILED",
+      stage
     });
   }
 }
