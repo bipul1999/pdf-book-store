@@ -168,6 +168,18 @@ function paymentCurrency() {
   return String(process.env.RAZORPAY_CURRENCY || "INR").trim().toUpperCase() || "INR";
 }
 
+export async function getRazorpayStatus(req, res) {
+  const keyId = getRazorpayKeyId();
+  const keySecret = getRazorpayKeySecret();
+  res.setHeader("Cache-Control", "no-store");
+  res.json({
+    configured: Boolean(keyId && keySecret),
+    keyIdPrefix: keyId ? `${keyId.slice(0, 8)}...` : "",
+    mode: keyId.startsWith("rzp_live_") ? "live" : keyId.startsWith("rzp_test_") ? "test" : "unknown",
+    currency: paymentCurrency()
+  });
+}
+
 async function paymentSettings() {
   const settings = await PaymentSettings.findOne().sort("-updatedAt");
   return {
@@ -482,6 +494,7 @@ export async function createManualBookOrder(req, res) {
 }
 
 export async function createOrder(req, res) {
+  try {
   const submittedIds = Array.isArray(req.body.bookIds) ? req.body.bookIds : [];
   if (submittedIds.some((id) => typeof id !== "string" || !mongoose.isValidObjectId(id))) {
     return res.status(422).json({ message: "One or more books are invalid" });
@@ -586,6 +599,16 @@ export async function createOrder(req, res) {
           instructions: settings.instructions
         }
   });
+  } catch (error) {
+    logRequestEvent("payment", "digital_order_create_unhandled", req, {
+      error: error.message,
+      name: error.name
+    });
+    res.status(503).json({
+      message: "Payment could not start right now. Please try again in a moment.",
+      code: "PAYMENT_CREATE_FAILED"
+    });
+  }
 }
 
 export async function confirmManualPayment(req, res) {
