@@ -106,6 +106,18 @@ export default function Checkout() {
       });
       rz.open();
     } catch (error) {
+      if (method === "razorpay") {
+        try {
+          const { data } = await api.post("/payments/create-order", { bookIds: items.map((item) => item._id), paymentMethod: "upi_manual" });
+          setPayment(data);
+          setMethod("upi_manual");
+          toast.error("Razorpay is not available right now. Please pay with Manual UPI.");
+          return;
+        } catch (fallbackError) {
+          toast.error(fallbackError.response?.data?.message || "Payment could not start. Please try Manual UPI.");
+          return;
+        }
+      }
       toast.error(error.response?.data?.message || "Payment could not start");
     } finally {
       setLoading(false);
