@@ -222,7 +222,8 @@ export async function getRazorpayStatus(req, res) {
     keyIdPrefix: keyId ? `${keyId.slice(0, 8)}...` : "",
     mode: keyId.startsWith("rzp_live_") ? "live" : keyId.startsWith("rzp_test_") ? "test" : "unknown",
     currency: paymentCurrency(),
-    createOrderDiagnostics: true
+    createOrderDiagnostics: true,
+    checkoutBookLookupRetries: CHECKOUT_BOOK_LOOKUP_ATTEMPTS
   });
 }
 
