@@ -18,6 +18,11 @@ const MAX_BOOK_QUANTITY = 20;
 const PDF_SALE_PRICE = 99;
 const DIGITAL_ORDER_STATUSES = new Set(["pending", "submitted", "success", "failed"]);
 const MANUAL_BOOK_ORDER_STATUSES = new Set(["pending", "submitted", "confirmed", "completed", "rejected"]);
+const CHECKOUT_BOOK_LOOKUP_ATTEMPTS = 3;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function escapeHtml(value = "") {
   return String(value)
@@ -166,6 +171,46 @@ function paymentMethodExtraCharge(settings, paymentMethod) {
 
 function paymentCurrency() {
   return String(process.env.RAZORPAY_CURRENCY || "INR").trim().toUpperCase() || "INR";
+}
+
+function isTransientDatabaseError(error) {
+  const name = String(error?.name || "");
+  const message = String(error?.message || "").toLowerCase();
+  return (
+    name.includes("MongoNetwork") ||
+    name.includes("MongoServerSelection") ||
+    name.includes("MongoTimeout") ||
+    message.includes("timed out") ||
+    message.includes("topology") ||
+    message.includes("connection") ||
+    message.includes("econnreset") ||
+    message.includes("pool")
+  );
+}
+
+async function loadCheckoutBooks(ids, req) {
+  let lastError;
+  for (let attempt = 1; attempt <= CHECKOUT_BOOK_LOOKUP_ATTEMPTS; attempt += 1) {
+    try {
+      return await Book.find({ _id: { $in: ids }, isActive: true })
+        .select("+pdfPath +pdfFileId +pdfStored")
+        .maxTimeMS(8000)
+        .lean();
+    } catch (error) {
+      lastError = error;
+      logRequestEvent("payment", "checkout_book_lookup_failed", req, {
+        attempt,
+        maxAttempts: CHECKOUT_BOOK_LOOKUP_ATTEMPTS,
+        retryable: isTransientDatabaseError(error),
+        error: error.message,
+        name: error.name
+      });
+      if (!isTransientDatabaseError(error) || attempt === CHECKOUT_BOOK_LOOKUP_ATTEMPTS) break;
+      await sleep(250 * attempt);
+    }
+  }
+  lastError.retryable = isTransientDatabaseError(lastError);
+  throw lastError;
 }
 
 export async function getRazorpayStatus(req, res) {
@@ -506,7 +551,7 @@ export async function createOrder(req, res) {
   const paymentMethod = req.body.paymentMethod || "auto";
   if (!ids.length) return res.status(422).json({ message: "Cart is empty" });
   stage = "load_books";
-  const books = await Book.find({ _id: { $in: ids }, isActive: true }).select("+pdfPath +pdfFileId +pdfStored");
+  const books = await loadCheckoutBooks(ids, req);
   if (books.length !== ids.length) return res.status(422).json({ message: "One or more books are unavailable" });
   if (books.some((book) => !hasOwnerUploadedPdf(book))) {
     return res.status(422).json({ message: "Not uploaded by owner" });
@@ -616,10 +661,14 @@ export async function createOrder(req, res) {
       error: error.message,
       name: error.name
     });
-    res.status(503).json({
-      message: `Payment could not start right now (${stage}). Please try again in a moment.`,
+    const retryable = stage === "load_books" || Boolean(error.retryable || isTransientDatabaseError(error));
+    res.status(retryable ? 503 : 422).json({
+      message: stage === "load_books"
+        ? "We could not load the selected book details. Please refresh the cart and try again."
+        : `Payment could not start right now (${stage}). Please try again in a moment.`,
       code: "PAYMENT_CREATE_FAILED",
-      stage
+      stage,
+      retryable
     });
   }
 }

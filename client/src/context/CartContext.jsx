@@ -7,9 +7,19 @@ import { PDF_SALE_PRICE } from "../utils/pricing.js";
 
 const CartContext = createContext(null);
 
+function storedCartItems() {
+  try {
+    const parsed = JSON.parse(sessionStorage.getItem("pbs_cart") || "[]");
+    return Array.isArray(parsed) ? parsed.filter((item) => item?._id && typeof item._id === "string") : [];
+  } catch {
+    sessionStorage.removeItem("pbs_cart");
+    return [];
+  }
+}
+
 export function CartProvider({ children }) {
   const { isAuthenticated, loading } = useAuth();
-  const [items, setItems] = useState(() => JSON.parse(sessionStorage.getItem("pbs_cart") || "[]"));
+  const [items, setItems] = useState(storedCartItems);
 
   useEffect(() => {
     localStorage.removeItem("pbs_cart");

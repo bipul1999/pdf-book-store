@@ -1,5 +1,5 @@
 import { ArrowLeft, CheckCircle2, CreditCard, Smartphone } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api/client.js";
@@ -7,6 +7,38 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
 import { isBookPdfAvailable, ownerUploadMessage } from "../utils/bookAvailability.js";
 import BookPrice from "../components/BookPrice.jsx";
+
+const CHECKOUT_RETRY_ATTEMPTS = 2;
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetryableCheckoutError(error) {
+  const status = error.response?.status;
+  return Boolean(error.response?.data?.retryable) || status === 408 || status === 429 || status >= 500 || !error.response;
+}
+
+async function checkoutRequestWithRetry(request, label) {
+  let lastError;
+  for (let attempt = 1; attempt <= CHECKOUT_RETRY_ATTEMPTS; attempt += 1) {
+    try {
+      console.info(`[checkout] ${label} attempt ${attempt}`);
+      return await request();
+    } catch (error) {
+      lastError = error;
+      console.error(`[checkout] ${label} failed`, {
+        attempt,
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
+      if (!isRetryableCheckoutError(error) || attempt === CHECKOUT_RETRY_ATTEMPTS) break;
+      await wait(500 * attempt);
+    }
+  }
+  throw lastError;
+}
 
 function loadRazorpayScript() {
   if (window.Razorpay) return Promise.resolve(true);
@@ -38,6 +70,7 @@ export default function Checkout() {
   const [proof, setProof] = useState(null);
   const [paymentNote, setPaymentNote] = useState("");
   const [settings, setSettings] = useState({ manualPaymentExtraCharge: 10, razorpayPaymentExtraCharge: 20 });
+  const paymentInFlight = useRef(false);
   const hasUnavailableItem = items.some((item) => !isBookPdfAvailable(item));
   const extraCharge = Number(method === "razorpay" ? settings.razorpayPaymentExtraCharge : settings.manualPaymentExtraCharge) || 0;
   const finalAmount = total + extraCharge;
@@ -53,14 +86,35 @@ export default function Checkout() {
     return upi.paymentUri || "#";
   }
 
+  async function verifySelectedBooks() {
+    const ids = items.map((item) => item._id);
+    const { data } = await checkoutRequestWithRetry(() => api.get("/books"), "load books");
+    const liveBooksById = new Map((data.books || []).map((book) => [book._id, book]));
+    const missing = ids.filter((id) => !liveBooksById.has(id));
+    if (missing.length) {
+      throw new Error("One or more selected books are no longer available. Please refresh your cart.");
+    }
+    const unavailable = ids.find((id) => !isBookPdfAvailable(liveBooksById.get(id)));
+    if (unavailable) {
+      throw new Error(ownerUploadMessage);
+    }
+    return ids;
+  }
+
   async function startPayment() {
+    if (paymentInFlight.current) return;
     if (hasUnavailableItem) {
       toast.error(ownerUploadMessage);
       return;
     }
+    paymentInFlight.current = true;
     setLoading(true);
     try {
-      const { data } = await api.post("/payments/create-order", { bookIds: items.map((item) => item._id), paymentMethod: method });
+      const bookIds = await verifySelectedBooks();
+      const { data } = await checkoutRequestWithRetry(
+        () => api.post("/payments/create-order", { bookIds, paymentMethod: method }),
+        "create payment order"
+      );
       if (data.message) toast.error(data.message);
       if (!data.razorpay) {
         setPayment(data);
@@ -102,12 +156,15 @@ export default function Checkout() {
         }
       });
       rz.on("payment.failed", (response) => {
+        console.error("[checkout] Razorpay payment failed", response.error);
         toast.error(response.error?.description || "Payment failed. Please try again.");
       });
+      console.info("[checkout] opening Razorpay", { orderId: data.razorpay.orderId, amount: data.razorpay.amount, currency: data.razorpay.currency });
       rz.open();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Payment could not start");
+      toast.error(error.response?.data?.message || error.message || "Payment could not start");
     } finally {
+      paymentInFlight.current = false;
       setLoading(false);
     }
   }
