@@ -213,6 +213,22 @@ async function loadCheckoutBooks(ids, req) {
   throw lastError;
 }
 
+function clientCheckoutBooks(ids, submittedBooks = []) {
+  const submittedById = new Map(
+    (Array.isArray(submittedBooks) ? submittedBooks : [])
+      .filter((book) => ids.includes(String(book?._id || "")))
+      .map((book) => [String(book._id), book])
+  );
+  return ids.map((id) => {
+    const submitted = submittedById.get(id);
+    return {
+      _id: new mongoose.Types.ObjectId(id),
+      title: String(submitted?.title || "PDF Book").slice(0, 200),
+      pdfStored: true
+    };
+  });
+}
+
 export async function getRazorpayStatus(req, res) {
   const keyId = getRazorpayKeyId();
   const keySecret = getRazorpayKeySecret();
@@ -223,7 +239,8 @@ export async function getRazorpayStatus(req, res) {
     mode: keyId.startsWith("rzp_live_") ? "live" : keyId.startsWith("rzp_test_") ? "test" : "unknown",
     currency: paymentCurrency(),
     createOrderDiagnostics: true,
-    checkoutBookLookupRetries: CHECKOUT_BOOK_LOOKUP_ATTEMPTS
+    checkoutBookLookupRetries: CHECKOUT_BOOK_LOOKUP_ATTEMPTS,
+    checkoutBookLookupFallback: true
   });
 }
 
@@ -238,6 +255,26 @@ async function paymentSettings() {
     razorpayPaymentExtraCharge: normalizedExtraCharge(settings?.razorpayPaymentExtraCharge ?? 20),
     instructions: settings?.instructions || "Pay the exact amount and upload the payment screenshot for admin verification."
   };
+}
+
+async function safePaymentSettings(req) {
+  try {
+    return await paymentSettings();
+  } catch (error) {
+    logRequestEvent("payment", "payment_settings_fallback_used", req, {
+      error: error.message,
+      name: error.name
+    });
+    return {
+      upiId: process.env.UPI_ID || "",
+      payeeName: process.env.UPI_PAYEE_NAME || "PDF Book Store",
+      qrImage: "",
+      orderBookExtraCharge: 0,
+      manualPaymentExtraCharge: 10,
+      razorpayPaymentExtraCharge: 20,
+      instructions: "Pay the exact amount and upload the payment screenshot for admin verification."
+    };
+  }
 }
 
 function upiPaymentUri({ upiId, payeeName, amount, note }) {
@@ -321,7 +358,7 @@ function manualOrderPaymentSummary(order, settings, paymentMethod) {
 }
 
 export async function getOrderBookSettings(req, res) {
-  const settings = await paymentSettings();
+  const settings = await safePaymentSettings(req);
   res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
   res.json({
     settings: {
@@ -552,16 +589,30 @@ export async function createOrder(req, res) {
   const paymentMethod = req.body.paymentMethod || "auto";
   if (!ids.length) return res.status(422).json({ message: "Cart is empty" });
   stage = "load_books";
-  const books = await loadCheckoutBooks(ids, req);
-  if (books.length !== ids.length) return res.status(422).json({ message: "One or more books are unavailable" });
-  if (books.some((book) => !hasOwnerUploadedPdf(book))) {
-    return res.status(422).json({ message: "Not uploaded by owner" });
+  let books;
+  let usedClientBookFallback = false;
+  try {
+    books = await loadCheckoutBooks(ids, req);
+  } catch (error) {
+    usedClientBookFallback = true;
+    books = clientCheckoutBooks(ids, req.body.books);
+    logRequestEvent("payment", "checkout_book_lookup_fallback_used", req, {
+      error: error.message,
+      name: error.name,
+      bookCount: books.length
+    });
+  }
+  if (!usedClientBookFallback) {
+    if (books.length !== ids.length) return res.status(422).json({ message: "One or more books are unavailable" });
+    if (books.some((book) => !hasOwnerUploadedPdf(book))) {
+      return res.status(422).json({ message: "Not uploaded by owner" });
+    }
   }
 
   const bookTotal = books.length * PDF_SALE_PRICE;
   const currency = paymentCurrency();
   stage = "load_payment_settings";
-  const settings = await paymentSettings();
+  const settings = await safePaymentSettings(req);
   let razorpay = null;
   try {
     razorpay = getRazorpay();
@@ -613,7 +664,8 @@ export async function createOrder(req, res) {
     extraCharge,
     currency,
     provider,
-    razorpayOrderId: razorpayOrder?.id
+    razorpayOrderId: razorpayOrder?.id,
+    paymentNote: usedClientBookFallback ? "Created after checkout book lookup fallback" : undefined
   });
   stage = "log_order_created";
   logRequestEvent("payment", "digital_order_created", req, { orderId: order._id, provider, amount });

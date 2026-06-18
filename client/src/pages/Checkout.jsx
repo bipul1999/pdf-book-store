@@ -98,7 +98,7 @@ export default function Checkout() {
     if (unavailable) {
       throw new Error(ownerUploadMessage);
     }
-    return ids;
+    return ids.map((id) => liveBooksById.get(id));
   }
 
   async function startPayment() {
@@ -110,9 +110,13 @@ export default function Checkout() {
     paymentInFlight.current = true;
     setLoading(true);
     try {
-      const bookIds = await verifySelectedBooks();
+      const selectedBooks = await verifySelectedBooks();
       const { data } = await checkoutRequestWithRetry(
-        () => api.post("/payments/create-order", { bookIds, paymentMethod: method }),
+        () => api.post("/payments/create-order", {
+          bookIds: selectedBooks.map((book) => book._id),
+          books: selectedBooks.map((book) => ({ _id: book._id, title: book.title })),
+          paymentMethod: method
+        }),
         "create payment order"
       );
       if (data.message) toast.error(data.message);
