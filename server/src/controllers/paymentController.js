@@ -10,7 +10,7 @@ import { clearPublicResponseCache } from "../middleware/publicResponseCache.js";
 import { getRazorpay, getRazorpayKeyId, getRazorpayKeySecret, getRazorpayWebhookSecret } from "../config/razorpay.js";
 import { sendEmail } from "../utils/email.js";
 import { hasOwnerUploadedPdf } from "../utils/bookAvailability.js";
-import { digitalAccessExpiry, initializeDigitalAccess, isVerifiedDigitalOrder, VERIFIED_DIGITAL_ORDER_STATUSES } from "../utils/digitalAccess.js";
+import { digitalAccessExpiry, initializeDigitalAccess, isVerifiedDigitalOrder, LIFETIME_DIGITAL_ACCESS_EXPIRES_AT, VERIFIED_DIGITAL_ORDER_STATUSES } from "../utils/digitalAccess.js";
 import { logEvent, logRequestEvent } from "../utils/logger.js";
 
 const MIN_RAZORPAY_AMOUNT = 100;
@@ -890,6 +890,19 @@ export async function myLibrary(req, res) {
       }
     });
   });
+  const purchasedBookIds = (req.user.purchasedBooks || []).map((bookId) => String(bookId));
+  if (purchasedBookIds.length) {
+    const purchasedBooks = await Book.find({ _id: { $in: purchasedBookIds }, isActive: true }).populate("category");
+    purchasedBooks.forEach((book) => {
+      const key = String(book._id);
+      if (!uniqueBooks.has(key)) {
+        uniqueBooks.set(key, {
+          book,
+          accessExpiresAt: LIFETIME_DIGITAL_ACCESS_EXPIRES_AT
+        });
+      }
+    });
+  }
   res.json({ books: [...uniqueBooks.values()].map(({ book, accessExpiresAt }) => ({ ...publicBook(req, book), accessExpiresAt })) });
 }
 
@@ -901,9 +914,10 @@ export async function myLibraryBook(req, res) {
     orderType: { $ne: "manual_book" },
     "items.book": req.params.id
   });
-  const owns = orders.some((order) => order.items.some((item) =>
+  let owns = orders.some((order) => order.items.some((item) =>
     String(item.book) === req.params.id && digitalAccessExpiry(order, item).getTime() > Date.now()
   ));
+  if (!owns) owns = (req.user.purchasedBooks || []).some((bookId) => String(bookId) === req.params.id);
   if (!owns) return res.status(403).json({ message: "Purchase required or access expired for this PDF" });
   const book = await Book.findById(req.params.id).populate("category");
   if (!book) return res.status(404).json({ message: "Book not found" });
