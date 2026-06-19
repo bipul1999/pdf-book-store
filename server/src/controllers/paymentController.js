@@ -240,7 +240,8 @@ export async function getRazorpayStatus(req, res) {
     currency: paymentCurrency(),
     createOrderDiagnostics: true,
     checkoutBookLookupRetries: CHECKOUT_BOOK_LOOKUP_ATTEMPTS,
-    checkoutBookLookupFallback: true
+    checkoutBookLookupFallback: true,
+    legacyLibraryAccessFallback: true
   });
 }
 
