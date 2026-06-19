@@ -150,7 +150,10 @@ export default function Checkout() {
         },
         handler: async (response) => {
           try {
-            await api.post("/payments/verify", { orderId: data.order._id, ...response });
+            await checkoutRequestWithRetry(
+              () => api.post("/payments/verify", { orderId: data.order._id, ...response }),
+              "verify payment"
+            );
             toast.success("Payment verified. Your PDF is ready to download.");
             clear();
             navigate("/dashboard/library");

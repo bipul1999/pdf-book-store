@@ -32,7 +32,7 @@ export default function PdfReader() {
         setError("");
         const [{ data }, pdfRes] = await Promise.all([
           api.get(`/users/library/${id}`),
-          fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/books/${id}/download`, {
+          fetch(`${api.defaults.baseURL || "/api"}/books/${id}/download`, {
             headers: { Authorization: `Bearer ${getStoredToken()}` }
           })
         ]);

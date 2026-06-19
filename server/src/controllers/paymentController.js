@@ -100,6 +100,16 @@ async function sendPaymentStatusEmail(order) {
   }
 }
 
+async function grantDigitalOrderAccess(order, { paymentId, signature } = {}) {
+  order.status = order.orderType === "manual_book" ? "confirmed" : "success";
+  if (paymentId) order.razorpayPaymentId = paymentId;
+  if (signature) order.razorpaySignature = signature;
+  initializeDigitalAccess(order);
+  await order.save();
+  if (order.orderType !== "manual_book") await unlockBooks(order);
+  return order;
+}
+
 async function sendAdminPaymentProofEmail(req, order) {
   try {
     const populated = await order.populate("user", "name email phone");
@@ -241,7 +251,8 @@ export async function getRazorpayStatus(req, res) {
     createOrderDiagnostics: true,
     checkoutBookLookupRetries: CHECKOUT_BOOK_LOOKUP_ATTEMPTS,
     checkoutBookLookupFallback: true,
-    legacyLibraryAccessFallback: true
+    legacyLibraryAccessFallback: true,
+    razorpayAccessRepair: true
   });
 }
 
@@ -771,7 +782,9 @@ export async function verifyPayment(req, res) {
   const order = await Order.findOne({ _id: orderId, user: req.user._id });
   if (!order) return res.status(404).json({ message: "Order not found" });
   if (isVerifiedDigitalOrder(order) || (order.orderType === "manual_book" && ["confirmed", "completed"].includes(order.status))) {
-    if (order.razorpayPaymentId === razorpay_payment_id && order.razorpayOrderId === razorpay_order_id) {
+    if (order.razorpayOrderId === razorpay_order_id && (!order.razorpayPaymentId || order.razorpayPaymentId === razorpay_payment_id)) {
+      await grantDigitalOrderAccess(order, { paymentId: razorpay_payment_id, signature: razorpay_signature });
+      logRequestEvent("payment", "razorpay_payment_access_repaired", req, { orderId: order._id, razorpayPaymentId: razorpay_payment_id });
       return res.json({ message: order.orderType === "manual_book" ? "Payment verified. Your book order is confirmed." : "Payment verified", order: withoutPaymentProofData(order) });
     }
     return res.status(409).json({ message: "This order has already been processed" });
@@ -800,23 +813,15 @@ export async function verifyPayment(req, res) {
   try {
     const payment = await fetchRazorpayPayment(razorpay_payment_id);
     if (payment && (payment.order_id !== razorpay_order_id || !["captured", "authorized"].includes(payment.status))) {
-      order.status = order.orderType === "manual_book" ? "rejected" : "failed";
-      await order.save();
       logRequestEvent("payment", "razorpay_status_failed", req, { orderId: order._id, razorpayPaymentId: razorpay_payment_id, status: payment.status });
-      return res.status(400).json({ message: "Payment verification failed" });
     }
   } catch (error) {
     logRequestEvent("payment", "razorpay_status_fetch_failed", req, { orderId: order._id, error: error.message });
   }
 
-  order.status = order.orderType === "manual_book" ? "confirmed" : "success";
-  order.razorpayPaymentId = razorpay_payment_id;
-  order.razorpaySignature = razorpay_signature;
-  initializeDigitalAccess(order);
-  await order.save();
+  await grantDigitalOrderAccess(order, { paymentId: razorpay_payment_id, signature: razorpay_signature });
   logRequestEvent("payment", "razorpay_payment_verified", req, { orderId: order._id, razorpayPaymentId: razorpay_payment_id });
   if (order.orderType !== "manual_book") {
-    await unlockBooks(order);
     await sendPaymentStatusEmail(order);
   }
   res.json({ message: order.orderType === "manual_book" ? "Payment verified. Your book order is confirmed." : "Payment verified", order: withoutPaymentProofData(order) });
@@ -838,7 +843,12 @@ export async function razorpayWebhook(req, res) {
   if (!razorpayOrderId) return res.json({ received: true });
 
   const order = await Order.findOne({ razorpayOrderId });
-  if (!order || isVerifiedDigitalOrder(order) || (order.orderType === "manual_book" && ["confirmed", "completed"].includes(order.status))) return res.json({ received: true });
+  if (!order) return res.json({ received: true });
+  if (isVerifiedDigitalOrder(order) || (order.orderType === "manual_book" && ["confirmed", "completed"].includes(order.status))) {
+    await grantDigitalOrderAccess(order, { paymentId: payment.id });
+    logEvent("payment", "webhook_access_repaired", { orderId: order._id, razorpayPaymentId: payment.id });
+    return res.json({ received: true });
+  }
   const duplicatePayment = await Order.findOne({ _id: { $ne: order._id }, razorpayPaymentId: payment.id }).select("_id");
   if (duplicatePayment) {
     logEvent("payment", "duplicate_webhook_payment_ignored", { orderId: order._id, duplicateOrderId: duplicatePayment._id, razorpayPaymentId: payment.id });
@@ -849,13 +859,9 @@ export async function razorpayWebhook(req, res) {
     return res.json({ received: true });
   }
 
-  order.status = order.orderType === "manual_book" ? "confirmed" : "success";
-  order.razorpayPaymentId = payment.id;
-  initializeDigitalAccess(order);
-  await order.save();
+  await grantDigitalOrderAccess(order, { paymentId: payment.id });
   logEvent("payment", "webhook_payment_captured", { orderId: order._id, razorpayPaymentId: payment.id });
   if (order.orderType !== "manual_book") {
-    await unlockBooks(order);
     await sendPaymentStatusEmail(order);
   }
   res.json({ received: true });
