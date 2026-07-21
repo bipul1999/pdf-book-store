@@ -64,10 +64,41 @@ async function unlockBooks(order) {
   await User.findByIdAndUpdate(order.user, { $addToSet: { purchasedBooks: { $each: ids } } });
 }
 
+function orderBookIds(order) {
+  return order.items
+    .map((item) => item.book?._id || item.book)
+    .filter(Boolean)
+    .map((bookId) => String(bookId));
+}
+
+async function syncPurchasedBooksFromOrders(userId, orders) {
+  const ids = [...new Set(orders.flatMap((order) => isVerifiedDigitalOrder(order) ? orderBookIds(order) : []))];
+  if (!ids.length) return ids;
+  await User.findByIdAndUpdate(userId, { $addToSet: { purchasedBooks: { $each: ids } } });
+  return ids;
+}
+
+function publicOrderResponse(req, order) {
+  return {
+    ...withoutPaymentProofData(order),
+    paymentProof: fileUrl(req, order.paymentProof),
+    unlockedBookIds: isVerifiedDigitalOrder(order) ? orderBookIds(order) : []
+  };
+}
+
 async function fetchRazorpayPayment(paymentId) {
   const razorpay = getRazorpay();
   if (!razorpay || !paymentId) return null;
   return razorpay.payments.fetch(paymentId);
+}
+
+async function fetchRazorpayOrderPayments(razorpayOrderId) {
+  const razorpay = getRazorpay();
+  if (!razorpay || !razorpayOrderId || !razorpay.orders?.fetchPayments) return [];
+  const response = await razorpay.orders.fetchPayments(razorpayOrderId);
+  if (Array.isArray(response?.items)) return response.items;
+  if (Array.isArray(response)) return response;
+  return [];
 }
 
 async function lockBooks(order) {
@@ -108,6 +139,43 @@ async function grantDigitalOrderAccess(order, { paymentId, signature } = {}) {
   await order.save();
   if (order.orderType !== "manual_book") await unlockBooks(order);
   return order;
+}
+
+async function reconcileUserRazorpayOrders(req) {
+  let pendingOrders = [];
+  try {
+    pendingOrders = await Order.find({
+      user: req.user._id,
+      provider: "razorpay",
+      status: "pending",
+      razorpayOrderId: { $exists: true, $ne: "" }
+    }).limit(25);
+  } catch (error) {
+    logRequestEvent("payment", "razorpay_reconcile_load_failed", req, { error: error.message });
+    return;
+  }
+  if (!pendingOrders.length) return;
+
+  for (const order of pendingOrders) {
+    try {
+      const payments = await fetchRazorpayOrderPayments(order.razorpayOrderId);
+      const paid = payments.find((payment) => ["captured", "authorized"].includes(payment.status));
+      if (!paid) continue;
+      await grantDigitalOrderAccess(order, { paymentId: paid.id });
+      logRequestEvent("payment", "razorpay_order_reconciled", req, {
+        orderId: order._id,
+        razorpayOrderId: order.razorpayOrderId,
+        razorpayPaymentId: paid.id,
+        status: paid.status
+      });
+    } catch (error) {
+      logRequestEvent("payment", "razorpay_order_reconcile_failed", req, {
+        orderId: order._id,
+        razorpayOrderId: order.razorpayOrderId,
+        error: error.message
+      });
+    }
+  }
 }
 
 async function sendAdminPaymentProofEmail(req, order) {
@@ -252,7 +320,8 @@ export async function getRazorpayStatus(req, res) {
     checkoutBookLookupRetries: CHECKOUT_BOOK_LOOKUP_ATTEMPTS,
     checkoutBookLookupFallback: true,
     legacyLibraryAccessFallback: true,
-    razorpayAccessRepair: true
+    razorpayAccessRepair: true,
+    razorpayOrderReconciliation: true
   });
 }
 
@@ -785,15 +854,20 @@ export async function verifyPayment(req, res) {
     if (order.razorpayOrderId === razorpay_order_id && (!order.razorpayPaymentId || order.razorpayPaymentId === razorpay_payment_id)) {
       await grantDigitalOrderAccess(order, { paymentId: razorpay_payment_id, signature: razorpay_signature });
       logRequestEvent("payment", "razorpay_payment_access_repaired", req, { orderId: order._id, razorpayPaymentId: razorpay_payment_id });
-      return res.json({ message: order.orderType === "manual_book" ? "Payment verified. Your book order is confirmed." : "Payment verified", order: withoutPaymentProofData(order) });
+      return res.json({ message: order.orderType === "manual_book" ? "Payment verified. Your book order is confirmed." : "Payment verified", order: publicOrderResponse(req, order) });
     }
     return res.status(409).json({ message: "This order has already been processed" });
   }
   const duplicatePayment = await Order.findOne({
     _id: { $ne: order._id },
     razorpayPaymentId: razorpay_payment_id
-  }).select("_id");
+  });
   if (duplicatePayment) {
+    if (String(duplicatePayment.user) === String(req.user._id)) {
+      await grantDigitalOrderAccess(duplicatePayment, { paymentId: razorpay_payment_id, signature: razorpay_signature });
+      logRequestEvent("payment", "duplicate_razorpay_payment_recovered", req, { orderId: order._id, duplicateOrderId: duplicatePayment._id });
+      return res.json({ message: "Payment verified", order: publicOrderResponse(req, duplicatePayment) });
+    }
     logRequestEvent("payment", "duplicate_razorpay_payment_blocked", req, { orderId: order._id, duplicateOrderId: duplicatePayment._id });
     return res.status(409).json({ message: "This payment has already been processed" });
   }
@@ -824,7 +898,7 @@ export async function verifyPayment(req, res) {
   if (order.orderType !== "manual_book") {
     await sendPaymentStatusEmail(order);
   }
-  res.json({ message: order.orderType === "manual_book" ? "Payment verified. Your book order is confirmed." : "Payment verified", order: withoutPaymentProofData(order) });
+  res.json({ message: order.orderType === "manual_book" ? "Payment verified. Your book order is confirmed." : "Payment verified", order: publicOrderResponse(req, order) });
 }
 
 export async function razorpayWebhook(req, res) {
@@ -868,21 +942,25 @@ export async function razorpayWebhook(req, res) {
 }
 
 export async function myOrders(req, res) {
-  const visibleStatuses = ["submitted", "success", "failed", "confirmed", "completed", "rejected"];
+  await reconcileUserRazorpayOrders(req);
+  const visibleStatuses = ["pending", "submitted", "success", "failed", "confirmed", "completed", "rejected"];
   const orders = await Order.find({
     user: req.user._id,
     $or: [
       { status: { $in: visibleStatuses } },
       { paymentProof: { $exists: true, $ne: "" } },
-      { razorpayPaymentId: { $exists: true, $ne: "" } }
+      { razorpayPaymentId: { $exists: true, $ne: "" } },
+      { razorpayOrderId: { $exists: true, $ne: "" } }
     ]
   }).populate("items.book").sort({ createdAt: -1, _id: -1 });
-  res.json({ orders: orders.map((order) => ({ ...withoutPaymentProofData(order), paymentProof: fileUrl(req, order.paymentProof) })) });
+  res.json({ orders: orders.map((order) => publicOrderResponse(req, order)) });
 }
 
 export async function myLibrary(req, res) {
+  await reconcileUserRazorpayOrders(req);
   const orders = await Order.find({ user: req.user._id, status: { $in: VERIFIED_DIGITAL_ORDER_STATUSES }, orderType: { $ne: "manual_book" } })
     .populate({ path: "items.book", populate: "category" });
+  await syncPurchasedBooksFromOrders(req.user._id, orders);
   const uniqueBooks = new Map();
   orders.forEach((order) => {
     order.items.forEach((item) => {
@@ -897,7 +975,8 @@ export async function myLibrary(req, res) {
       }
     });
   });
-  const purchasedBookIds = (req.user.purchasedBooks || []).map((bookId) => String(bookId));
+  const freshUser = await User.findById(req.user._id).select("purchasedBooks").lean();
+  const purchasedBookIds = (freshUser?.purchasedBooks || []).map((bookId) => String(bookId));
   if (purchasedBookIds.length) {
     const purchasedBooks = await Book.find({ _id: { $in: purchasedBookIds }, isActive: true }).populate("category");
     purchasedBooks.forEach((book) => {
@@ -915,6 +994,7 @@ export async function myLibrary(req, res) {
 
 export async function myLibraryBook(req, res) {
   if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: "Book not found" });
+  await reconcileUserRazorpayOrders(req);
   const orders = await Order.find({
     user: req.user._id,
     status: { $in: VERIFIED_DIGITAL_ORDER_STATUSES },
@@ -924,7 +1004,11 @@ export async function myLibraryBook(req, res) {
   let owns = orders.some((order) => order.items.some((item) =>
     String(item.book) === req.params.id && digitalAccessExpiry(order, item).getTime() > Date.now()
   ));
-  if (!owns) owns = (req.user.purchasedBooks || []).some((bookId) => String(bookId) === req.params.id);
+  if (!owns) {
+    await syncPurchasedBooksFromOrders(req.user._id, orders);
+    const freshUser = await User.findById(req.user._id).select("purchasedBooks").lean();
+    owns = (freshUser?.purchasedBooks || []).some((bookId) => String(bookId) === req.params.id);
+  }
   if (!owns) return res.status(403).json({ message: "Purchase required or access expired for this PDF" });
   const book = await Book.findById(req.params.id).populate("category");
   if (!book) return res.status(404).json({ message: "Book not found" });
@@ -952,7 +1036,7 @@ export async function updateOrderStatus(req, res) {
     await sendPaymentStatusEmail(order);
   }
   logRequestEvent("payment", "admin_order_status_updated", req, { orderId: order._id, previousStatus, status: order.status });
-  res.json({ order });
+  res.json({ order: publicOrderResponse(req, order) });
 }
 
 export async function updateDigitalAccess(req, res) {

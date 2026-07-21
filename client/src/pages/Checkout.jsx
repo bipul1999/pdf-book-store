@@ -9,6 +9,7 @@ import { isBookPdfAvailable, ownerUploadMessage } from "../utils/bookAvailabilit
 import BookPrice from "../components/BookPrice.jsx";
 
 const CHECKOUT_RETRY_ATTEMPTS = 2;
+const LIBRARY_SYNC_ATTEMPTS = 4;
 
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -38,6 +39,18 @@ async function checkoutRequestWithRetry(request, label) {
     }
   }
   throw lastError;
+}
+
+async function waitForPurchasedBooks(bookIds) {
+  const expectedIds = new Set(bookIds);
+  for (let attempt = 1; attempt <= LIBRARY_SYNC_ATTEMPTS; attempt += 1) {
+    const { data } = await api.get("/users/library");
+    const books = data.books || [];
+    const availableIds = new Set(books.map((book) => book._id));
+    if ([...expectedIds].every((id) => availableIds.has(id))) return books;
+    await wait(350 * attempt);
+  }
+  throw new Error("Payment verified, but your PDF access is still syncing.");
 }
 
 function loadRazorpayScript() {
@@ -149,16 +162,32 @@ export default function Checkout() {
           ondismiss: () => toast.error("Payment cancelled")
         },
         handler: async (response) => {
+          const purchasedBookIds = selectedBooks.map((book) => book._id);
           try {
-            await checkoutRequestWithRetry(
+            const verifyResult = await checkoutRequestWithRetry(
               () => api.post("/payments/verify", { orderId: data.order._id, ...response }),
               "verify payment"
             );
+            await waitForPurchasedBooks(verifyResult.data.order?.unlockedBookIds?.length ? verifyResult.data.order.unlockedBookIds : purchasedBookIds);
             toast.success("Payment verified. Your PDF is ready to download.");
             clear();
             navigate("/dashboard/library");
           } catch (error) {
-            toast.error(error.response?.data?.message || "Payment verification failed");
+            try {
+              await api.get("/users/orders");
+              const { data: libraryData } = await api.get("/users/library");
+              clear();
+              const availableIds = new Set((libraryData.books || []).map((book) => book._id));
+              if (purchasedBookIds.every((id) => availableIds.has(id))) {
+                toast.success("Payment received. Your library is ready.");
+                navigate("/dashboard/library");
+              } else {
+                toast.error("Payment received. We are syncing your PDF access.");
+                navigate("/dashboard/orders");
+              }
+            } catch {
+              toast.error(error.response?.data?.message || "Payment verification failed");
+            }
           }
         }
       });
