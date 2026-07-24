@@ -43,7 +43,11 @@ const orderSchema = new mongoose.Schema(
     razorpayOrderId: String,
     razorpayPaymentId: String,
     razorpaySignature: String,
-    status: { type: String, enum: ["pending", "submitted", "success", "failed", "confirmed", "completed", "rejected"], default: "pending" }
+    status: { type: String, enum: ["pending", "submitted", "success", "failed", "confirmed", "completed", "rejected"], default: "pending" },
+    paymentStatus: { type: String, enum: ["created", "pending_verification", "success", "failed", "rejected"], default: "created" },
+    accessStatus: { type: String, enum: ["pending", "granted", "denied"], default: "pending" },
+    purchaseDate: Date,
+    accessGrantedAt: Date
   },
   { timestamps: true }
 );
@@ -53,5 +57,6 @@ orderSchema.index({ user: 1, status: 1, orderType: 1, "items.book": 1 });
 orderSchema.index({ razorpayOrderId: 1 }, { sparse: true });
 orderSchema.index({ razorpayPaymentId: 1 }, { sparse: true });
 orderSchema.index({ provider: 1, transactionId: 1 }, { sparse: true });
+orderSchema.index({ user: 1, paymentStatus: 1, createdAt: -1 });
 
 export default mongoose.model("Order", orderSchema);
