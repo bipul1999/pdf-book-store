@@ -78,6 +78,19 @@ async function syncPurchasedBooksFromOrders(userId, orders) {
   return ids;
 }
 
+// Orders are the source of truth. Rebuild the user's durable library list from
+// every verified digital payment whenever their orders or library are loaded.
+// This also restores purchases made before purchasedBooks was introduced.
+async function repairDigitalEntitlements(userId) {
+  const verifiedOrders = await Order.find({
+    user: userId,
+    status: { $in: VERIFIED_DIGITAL_ORDER_STATUSES },
+    orderType: { $ne: "manual_book" }
+  }).select("items orderType status");
+  await syncPurchasedBooksFromOrders(userId, verifiedOrders);
+  return verifiedOrders;
+}
+
 function publicOrderResponse(req, order) {
   return {
     ...withoutPaymentProofData(order),
@@ -943,24 +956,20 @@ export async function razorpayWebhook(req, res) {
 
 export async function myOrders(req, res) {
   await reconcileUserRazorpayOrders(req);
-  const visibleStatuses = ["pending", "submitted", "success", "failed", "confirmed", "completed", "rejected"];
-  const orders = await Order.find({
-    user: req.user._id,
-    $or: [
-      { status: { $in: visibleStatuses } },
-      { paymentProof: { $exists: true, $ne: "" } },
-      { razorpayPaymentId: { $exists: true, $ne: "" } },
-      { razorpayOrderId: { $exists: true, $ne: "" } }
-    ]
-  }).populate("items.book").sort({ createdAt: -1, _id: -1 });
+  await repairDigitalEntitlements(req.user._id);
+  // Do not hide abandoned, cancelled, or legacy orders. A signed-in customer
+  // must always see their complete history.
+  const orders = await Order.find({ user: req.user._id })
+    .populate("items.book")
+    .sort({ createdAt: -1, _id: -1 });
   res.json({ orders: orders.map((order) => publicOrderResponse(req, order)) });
 }
 
 export async function myLibrary(req, res) {
   await reconcileUserRazorpayOrders(req);
-  const orders = await Order.find({ user: req.user._id, status: { $in: VERIFIED_DIGITAL_ORDER_STATUSES }, orderType: { $ne: "manual_book" } })
+  const repairedOrders = await repairDigitalEntitlements(req.user._id);
+  const orders = await Order.find({ _id: { $in: repairedOrders.map((order) => order._id) } })
     .populate({ path: "items.book", populate: "category" });
-  await syncPurchasedBooksFromOrders(req.user._id, orders);
   const uniqueBooks = new Map();
   orders.forEach((order) => {
     order.items.forEach((item) => {
@@ -978,7 +987,9 @@ export async function myLibrary(req, res) {
   const freshUser = await User.findById(req.user._id).select("purchasedBooks").lean();
   const purchasedBookIds = (freshUser?.purchasedBooks || []).map((bookId) => String(bookId));
   if (purchasedBookIds.length) {
-    const purchasedBooks = await Book.find({ _id: { $in: purchasedBookIds }, isActive: true }).populate("category");
+    // A past purchase remains available even when its book is no longer shown
+    // in the public catalogue.
+    const purchasedBooks = await Book.find({ _id: { $in: purchasedBookIds } }).populate("category");
     purchasedBooks.forEach((book) => {
       const key = String(book._id);
       if (!uniqueBooks.has(key)) {

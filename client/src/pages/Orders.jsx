@@ -71,11 +71,16 @@ export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [notice, setNotice] = useState(null);
   const [sortBy, setSortBy] = useState("newest");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const loadOrders = () => {
+    setLoading(true);
+    setError("");
     api.get("/users/orders").then(({ data }) => {
-      setOrders(data.orders);
-      const latest = data.orders[0];
+      const nextOrders = Array.isArray(data.orders) ? data.orders : [];
+      setOrders(nextOrders);
+      const latest = nextOrders[0];
       if (latest && latest.orderType !== "manual_book" && ["success", "failed"].includes(latest.status)) {
         setNotice({
           type: latest.status,
@@ -84,7 +89,10 @@ export default function Orders() {
             : "Payment failed. Please try again or contact support."
         });
       }
-    });
+    }).catch((requestError) => setError(requestError.response?.data?.message || "Your orders could not be loaded. Please try again.")).finally(() => setLoading(false));
+  };
+  useEffect(() => {
+    loadOrders();
   }, []);
 
   useEffect(() => {
@@ -125,7 +133,9 @@ export default function Orders() {
           </select>
         </label>
       </div>
-      <div className="space-y-4">
+      {loading && <div className="panel p-8 text-center font-bold text-gray-600">Loading your orders…</div>}
+      {!loading && error && <div className="panel p-8 text-center text-gray-700"><p className="font-bold text-red-600">{error}</p><button className="btn-primary mt-4" onClick={loadOrders} type="button">Try again</button></div>}
+      {!loading && !error && <div className="space-y-4">
         {visibleOrders.map((order) => {
           const status = order.orderType === "manual_book" && order.status === "pending"
             ? manualPendingStatus
@@ -177,7 +187,7 @@ export default function Orders() {
             <Link className="btn-primary mt-4" to="/books">Browse books</Link>
           </div>
         )}
-      </div>
+      </div>}
     </main>
   );
 }
