@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import Book from "../models/Book.js";
 import Order from "../models/Order.js";
+import User from "../models/User.js";
 import { clearPublicResponseCache } from "../middleware/publicResponseCache.js";
 import { hasOwnerUploadedPdf } from "../utils/bookAvailability.js";
 import { digitalAccessExpiry, VERIFIED_DIGITAL_ORDER_STATUSES } from "../utils/digitalAccess.js";
@@ -174,6 +175,13 @@ export async function downloadBook(req, res) {
       const item = order.items.find((orderItem) => String(orderItem.book) === String(book._id));
       return Boolean(item) && digitalAccessExpiry(order, item).getTime() > Date.now();
     });
+  }
+  // Older successful purchases were recorded in purchasedBooks before per-order
+  // expiry data was introduced. Keep that entitlement valid so those readers
+  // are not locked out after a deployment or a data migration.
+  if (!owns) {
+    const user = await User.findById(req.user._id).select("purchasedBooks").lean();
+    owns = (user?.purchasedBooks || []).some((bookId) => String(bookId) === String(book._id));
   }
   if (!owns) return res.status(403).json({ message: "Purchase required or access expired for this PDF" });
   logRequestEvent("security", "pdf_access_granted", req, { bookId: book._id });
