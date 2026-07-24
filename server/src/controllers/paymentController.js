@@ -59,13 +59,9 @@ function signaturesMatch(expected, received) {
   return expectedBuffer.length === receivedBuffer.length && crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
 }
 
-async function unlockBooks(order, session) {
+async function unlockBooks(order) {
   const ids = order.items.map((item) => item.book);
-  await User.findByIdAndUpdate(
-    order.user,
-    { $addToSet: { purchasedBooks: { $each: ids } } },
-    session ? { session } : undefined
-  );
+  await User.findByIdAndUpdate(order.user, { $addToSet: { purchasedBooks: { $each: ids } } });
 }
 
 function orderBookIds(order) {
@@ -86,22 +82,6 @@ async function syncPurchasedBooksFromOrders(userId, orders) {
 // every verified digital payment whenever their orders or library are loaded.
 // This also restores purchases made before purchasedBooks was introduced.
 async function repairDigitalEntitlements(userId) {
-  await Order.updateMany(
-    {
-      user: userId,
-      status: { $in: VERIFIED_DIGITAL_ORDER_STATUSES },
-      orderType: { $ne: "manual_book" },
-      $or: [{ paymentStatus: { $ne: "success" } }, { accessStatus: { $ne: "granted" } }]
-    },
-    [{
-      $set: {
-        paymentStatus: "success",
-        accessStatus: "granted",
-        purchaseDate: { $ifNull: ["$purchaseDate", "$updatedAt"] },
-        accessGrantedAt: { $ifNull: ["$accessGrantedAt", "$updatedAt"] }
-      }
-    }]
-  );
   const verifiedOrders = await Order.find({
     user: userId,
     status: { $in: VERIFIED_DIGITAL_ORDER_STATUSES },
@@ -134,25 +114,9 @@ async function fetchRazorpayOrderPayments(razorpayOrderId) {
   return [];
 }
 
-async function lockBooks(order, session) {
+async function lockBooks(order) {
   const ids = order.items.map((item) => item.book);
-  const stillOwnedQuery = Order.find({
-    _id: { $ne: order._id },
-    user: order.user,
-    status: { $in: VERIFIED_DIGITAL_ORDER_STATUSES },
-    orderType: { $ne: "manual_book" },
-    "items.book": { $in: ids }
-  }).select("items");
-  if (session) stillOwnedQuery.session(session);
-  const stillOwned = await stillOwnedQuery;
-  const retainedIds = new Set(stillOwned.flatMap(orderBookIds));
-  const removableIds = ids.filter((id) => !retainedIds.has(String(id)));
-  if (!removableIds.length) return;
-  await User.findByIdAndUpdate(
-    order.user,
-    { $pull: { purchasedBooks: { $in: removableIds } } },
-    session ? { session } : undefined
-  );
+  await User.findByIdAndUpdate(order.user, { $pull: { purchasedBooks: { $in: ids } } });
 }
 
 async function sendPaymentStatusEmail(order) {
@@ -181,28 +145,13 @@ async function sendPaymentStatusEmail(order) {
 }
 
 async function grantDigitalOrderAccess(order, { paymentId, signature } = {}) {
-  const session = await mongoose.startSession();
-  try {
-    let grantedOrder;
-    await session.withTransaction(async () => {
-      const storedOrder = await Order.findById(order._id).session(session);
-      if (!storedOrder) throw new Error("Order disappeared before access could be granted");
-      storedOrder.status = storedOrder.orderType === "manual_book" ? "confirmed" : "success";
-      storedOrder.paymentStatus = "success";
-      storedOrder.accessStatus = storedOrder.orderType === "manual_book" ? "pending" : "granted";
-      storedOrder.purchaseDate ||= new Date();
-      if (storedOrder.orderType !== "manual_book") storedOrder.accessGrantedAt ||= new Date();
-      if (paymentId) storedOrder.razorpayPaymentId = paymentId;
-      if (signature) storedOrder.razorpaySignature = signature;
-      initializeDigitalAccess(storedOrder);
-      await storedOrder.save({ session });
-      if (storedOrder.orderType !== "manual_book") await unlockBooks(storedOrder, session);
-      grantedOrder = storedOrder;
-    });
-    return grantedOrder;
-  } finally {
-    await session.endSession();
-  }
+  order.status = order.orderType === "manual_book" ? "confirmed" : "success";
+  if (paymentId) order.razorpayPaymentId = paymentId;
+  if (signature) order.razorpaySignature = signature;
+  initializeDigitalAccess(order);
+  await order.save();
+  if (order.orderType !== "manual_book") await unlockBooks(order);
+  return order;
 }
 
 async function reconcileUserRazorpayOrders(req) {
@@ -622,9 +571,7 @@ export async function startManualBookOrderPayment(req, res) {
     paymentNote: transactionId || undefined,
     transactionId: transactionId || undefined,
     razorpayOrderId: razorpayOrder?.id,
-    status: paymentMethod === "upi_manual" ? "submitted" : "pending",
-    paymentStatus: paymentMethod === "upi_manual" ? "pending_verification" : "created",
-    accessStatus: "pending"
+    status: paymentMethod === "upi_manual" ? "submitted" : "pending"
   });
   await order.save();
   logRequestEvent("payment", "manual_book_payment_started", req, { orderId: order._id, provider: paymentMethod, amount: order.amount });
@@ -706,9 +653,7 @@ export async function createManualBookOrder(req, res) {
     paymentNote: transactionId || undefined,
     transactionId: transactionId || undefined,
     razorpayOrderId: razorpayOrder?.id,
-    status: paymentMethod === "upi_manual" ? "submitted" : "pending",
-    paymentStatus: paymentMethod === "upi_manual" ? "pending_verification" : "created",
-    accessStatus: "pending"
+    status: paymentMethod === "upi_manual" ? "submitted" : "pending"
   });
   logRequestEvent("payment", "manual_book_order_created", req, { orderId: order._id, provider: paymentMethod, amount });
   if (paymentMethod === "upi_manual") await sendAdminPaymentProofEmail(req, order);
@@ -896,8 +841,6 @@ export async function confirmManualPayment(req, res) {
     }
   }
   order.status = "submitted";
-  order.paymentStatus = "pending_verification";
-  order.accessStatus = "pending";
   order.paymentProof = req.file.path;
   order.paymentProofData = await fs.promises.readFile(req.file.path);
   order.paymentProofMimeType = req.file.mimetype;
@@ -920,20 +863,6 @@ export async function verifyPayment(req, res) {
 
   const order = await Order.findOne({ _id: orderId, user: req.user._id });
   if (!order) return res.status(404).json({ message: "Order not found" });
-  const expected = crypto
-    .createHmac("sha256", keySecret)
-    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-    .digest("hex");
-
-  if (!signaturesMatch(expected, razorpay_signature) || order.razorpayOrderId !== razorpay_order_id) {
-    order.status = order.orderType === "manual_book" ? "rejected" : "failed";
-    order.paymentStatus = order.orderType === "manual_book" ? "rejected" : "failed";
-    order.accessStatus = "denied";
-    await order.save();
-    logRequestEvent("payment", "razorpay_signature_failed", req, { orderId: order._id, razorpayOrderId: razorpay_order_id });
-    if (order.orderType !== "manual_book") await sendPaymentStatusEmail(order);
-    return res.status(400).json({ message: "Payment verification failed" });
-  }
   if (isVerifiedDigitalOrder(order) || (order.orderType === "manual_book" && ["confirmed", "completed"].includes(order.status))) {
     if (order.razorpayOrderId === razorpay_order_id && (!order.razorpayPaymentId || order.razorpayPaymentId === razorpay_payment_id)) {
       await grantDigitalOrderAccess(order, { paymentId: razorpay_payment_id, signature: razorpay_signature });
@@ -956,19 +885,25 @@ export async function verifyPayment(req, res) {
     return res.status(409).json({ message: "This payment has already been processed" });
   }
 
+  const expected = crypto
+    .createHmac("sha256", keySecret)
+    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+    .digest("hex");
+
+  if (!signaturesMatch(expected, razorpay_signature) || order.razorpayOrderId !== razorpay_order_id) {
+    order.status = order.orderType === "manual_book" ? "rejected" : "failed";
+    await order.save();
+    logRequestEvent("payment", "razorpay_signature_failed", req, { orderId: order._id, razorpayOrderId: razorpay_order_id });
+    if (order.orderType !== "manual_book") await sendPaymentStatusEmail(order);
+    return res.status(400).json({ message: "Payment verification failed" });
+  }
   try {
     const payment = await fetchRazorpayPayment(razorpay_payment_id);
-    if (!payment || payment.order_id !== razorpay_order_id || payment.status !== "captured") {
-      order.status = "failed";
-      order.paymentStatus = "failed";
-      order.accessStatus = "denied";
-      await order.save();
-      logRequestEvent("payment", "razorpay_authenticity_failed", req, { orderId: order._id, razorpayPaymentId: razorpay_payment_id, status: payment?.status || "missing" });
-      return res.status(400).json({ message: "Payment could not be confirmed by Razorpay" });
+    if (payment && (payment.order_id !== razorpay_order_id || !["captured", "authorized"].includes(payment.status))) {
+      logRequestEvent("payment", "razorpay_status_failed", req, { orderId: order._id, razorpayPaymentId: razorpay_payment_id, status: payment.status });
     }
   } catch (error) {
     logRequestEvent("payment", "razorpay_status_fetch_failed", req, { orderId: order._id, error: error.message });
-    return res.status(503).json({ message: "Payment verification is temporarily unavailable. Please retry shortly." });
   }
 
   await grantDigitalOrderAccess(order, { paymentId: razorpay_payment_id, signature: razorpay_signature });
@@ -1099,29 +1034,7 @@ export async function updateOrderStatus(req, res) {
   const allowedStatuses = manualBookOrder ? MANUAL_BOOK_ORDER_STATUSES : DIGITAL_ORDER_STATUSES;
   if (!allowedStatuses.has(req.body.status)) return res.status(422).json({ message: "Invalid order status" });
   const previousStatus = order.status;
-
-  // Digital manual payments approved by an admin use exactly the same atomic
-  // entitlement path as a verified Razorpay payment.
-  if (!manualBookOrder && req.body.status === "success") {
-    const grantedOrder = await grantDigitalOrderAccess(order);
-    if (previousStatus !== "success") await sendPaymentStatusEmail(grantedOrder);
-    logRequestEvent("payment", "admin_order_status_updated", req, { orderId: grantedOrder._id, previousStatus, status: grantedOrder.status });
-    return res.json({ order: publicOrderResponse(req, grantedOrder) });
-  }
-
   order.status = req.body.status;
-  if (isVerifiedDigitalOrder(order)) {
-    order.paymentStatus = "success";
-    order.accessStatus = "granted";
-    order.purchaseDate ||= new Date();
-    order.accessGrantedAt ||= new Date();
-  } else if (["failed", "rejected"].includes(order.status)) {
-    order.paymentStatus = order.status;
-    order.accessStatus = "denied";
-  } else if (["pending", "submitted"].includes(order.status)) {
-    order.paymentStatus = order.status === "submitted" ? "pending_verification" : "created";
-    order.accessStatus = "pending";
-  }
   if (!manualBookOrder && isVerifiedDigitalOrder(order)) initializeDigitalAccess(order);
   await order.save();
   if (manualBookOrder) {
